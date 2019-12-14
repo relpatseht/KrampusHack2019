@@ -1,0 +1,673 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\inline">
+      <UniqueIdentifier>{6cf45c2b-bc10-46ae-aabb-fc83024e21ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\internal">
+      <UniqueIdentifier>{78d90679-651a-486f-a9a9-337b958340eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\opengl">
+      <UniqueIdentifier>{1097b864-19a2-445f-b84b-5178c3539424}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\opengl\GLExt">
+      <UniqueIdentifier>{ff1b5403-3095-45d9-ae70-732ed723ce7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\platform">
+      <UniqueIdentifier>{5b4ee618-1240-407f-97de-4484f4dcd46a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\win">
+      <UniqueIdentifier>{cfcd06dc-66af-4413-b681-93fc52c6c10c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\opengl">
+      <UniqueIdentifier>{757cc0bb-8e27-430a-a606-29fd3b89d343}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\misc">
+      <UniqueIdentifier>{327ce0c4-7623-4e86-a10e-ac1cb31b90df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\generated">
+      <UniqueIdentifier>{6727dc53-54cb-45c7-ba6d-71235fc2c9ee}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\allegro5\platform\alplatf.h">
+      <Filter>Header Files\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="include\allegro5\internal\aintern_acodec_cfg.h">
+      <Filter>Header Files\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="include\allegro5\internal\aintern_audio_cfg.h">
+      <Filter>Header Files\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="include\allegro5\internal\aintern_image_cfg.h">
+      <Filter>Header Files\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="include\allegro5\internal\aintern_native_dialog_cfg.h">
+      <Filter>Header Files\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\alcompat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro_opengl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro_windows.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\altime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap_draw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap_io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap_lock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\blender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\clipboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\cpu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\display.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\drawing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\events.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fixed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fmaths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fshook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fullscreen_mode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\haptic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_aatree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_atomicops.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_bitmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_blend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_convert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_display.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_driver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_dtor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_events.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_exitfunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_float.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_fshook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_haptic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_joystick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_keyboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_memblit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_memdraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_mouse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_opengl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_path.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_pixels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_tls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_touch_input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_tri_soft.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wclipboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wjoyall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wjoydxnu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wjoyxi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wunicode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\alconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\bstrlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\joystick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\keyboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\keycodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\monitor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\mouse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\mouse_cursor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_alias.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_alias.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_alias.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\gl_ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\path.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintuthr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintwin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintwiz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintwthr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintxglx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\albcc32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aldmc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\almsvc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alucfg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alwin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alwiz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alwizcfg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\astdbool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\astdint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\render_state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\threads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\tls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\touch_input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\transformations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\utf8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)src\opengl\ogl_helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(AllegroFolder)src\win\wgl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(AllegroFolder)include\allegro5\inline\fmaths.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="$(AllegroFolder)src\fshook_win.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="$(AllegroFolder)src\scanline_drawers.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="$(AllegroFolder)src\shader_source.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="$(AllegroFolder)src\tls_dll.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="$(AllegroFolder)src\tls_native.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="$(AllegroFolder)src\tls_pthread.inc">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(AllegroFolder)src\allegro.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\bitmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\bitmap_draw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\bitmap_io.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\bitmap_lock.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\bitmap_pixel.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\bitmap_type.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\blenders.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\clipboard.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\config.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\convert.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\cpu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\debug.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\display.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\display_settings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\drawing.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\dtor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\events.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\evtsrc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\exitfunc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\file_slice.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\file_stdio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\fshook.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\fshook_stdio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\fullscreen_mode.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\haptic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\inline.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\joynu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\keybdnu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\libc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\memblit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\memdraw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\memory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\misc\aatree.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\misc\bstrlib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\misc\list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\misc\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\monitor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\mousenu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\mouse_cursor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\extensions.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_bitmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_display.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_draw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_fbo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_lock.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_lock_es.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_render_state.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_shader.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\path.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\pixels.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\shader.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\system.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\threads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\timernu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\tls.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\touch_input.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\transformations.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\tri_soft.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\utf8.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wclipboard.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wgl_disp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\whapall.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\whapdrv.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\whaptic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\whapxi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wjoyall.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wjoydrv.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wjoydxnu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wjoyxi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wkeyboard.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wmcursor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wmouse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wsystem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wthread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wtime.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wtouch_input.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wunicode.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wwindow.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(AllegroFolder)src\win\wxthread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

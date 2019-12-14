@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{B0C6C93F-CEA0-44FC-B207-43A35B4876DE}</ProjectGuid>
+    <RootNamespace>allegro</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(root.props))" Condition="$(RootImported) == ''" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(AllegroIncludePath)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ALLEGRO_STATICLINK;ALLEGRO_SRC;ALLEGRO_LIB_BUILD;allegro_EXPORTS;UNICODE;_UNICODE;WIN32;WINDOWS;_MBCS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(AllegroIncludePath)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ALLEGRO_STATICLINK;ALLEGRO_SRC;ALLEGRO_LIB_BUILD;allegro_EXPORTS;UNICODE;_UNICODE;WIN32;WINDOWS;_MBCS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="$(AllegroFolder)include\allegro5\alcompat.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro5.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro_opengl.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\allegro_windows.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\altime.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\base.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap_draw.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap_io.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\bitmap_lock.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\blender.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\clipboard.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\color.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\config.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\cpu.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\debug.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\display.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\drawing.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\error.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\events.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\file.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fixed.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fmaths.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fshook.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\fullscreen_mode.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\haptic.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_aatree.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_atomicops.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_bitmap.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_blend.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_config.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_convert.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_debug.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_display.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_driver.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_dtor.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_events.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_exitfunc.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_file.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_float.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_fshook.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_haptic.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_joystick.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_keyboard.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_list.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_memblit.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_memdraw.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_mouse.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_opengl.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_path.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_pixels.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_shader.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_system.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_thread.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_timer.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_tls.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_touch_input.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_transform.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_tri_soft.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_vector.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wclipboard.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wjoyall.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wjoydxnu.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wjoyxi.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\aintern_wunicode.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\alconfig.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\internal\bstrlib.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\joystick.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\keyboard.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\keycodes.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\memory.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\monitor.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\mouse.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\mouse_cursor.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_alias.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_api.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_defs.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\glx_ext_list.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_alias.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_api.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_defs.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\gl_ext_list.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_alias.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_api.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_defs.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\GLext\wgl_ext_list.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\opengl\gl_ext.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\path.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintuthr.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintwin.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintwiz.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintwthr.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aintxglx.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\albcc32.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\aldmc.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\almsvc.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alucfg.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alwin.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alwiz.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\alwizcfg.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\astdbool.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\platform\astdint.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\render_state.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\shader.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\system.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\threads.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\timer.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\tls.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\touch_input.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\transformations.h" />
+    <ClInclude Include="$(AllegroFolder)include\allegro5\utf8.h" />
+    <ClInclude Include="$(AllegroFolder)src\opengl\ogl_helpers.h" />
+    <ClInclude Include="$(AllegroFolder)src\win\wgl.h" />
+    <ClInclude Include="include\allegro5\internal\aintern_acodec_cfg.h" />
+    <ClInclude Include="include\allegro5\internal\aintern_audio_cfg.h" />
+    <ClInclude Include="include\allegro5\internal\aintern_image_cfg.h" />
+    <ClInclude Include="include\allegro5\internal\aintern_native_dialog_cfg.h" />
+    <ClInclude Include="include\allegro5\platform\alplatf.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(AllegroFolder)include\allegro5\inline\fmaths.inl" />
+    <None Include="$(AllegroFolder)src\fshook_win.inc" />
+    <None Include="$(AllegroFolder)src\scanline_drawers.inc" />
+    <None Include="$(AllegroFolder)src\shader_source.inc" />
+    <None Include="$(AllegroFolder)src\tls_dll.inc" />
+    <None Include="$(AllegroFolder)src\tls_native.inc" />
+    <None Include="$(AllegroFolder)src\tls_pthread.inc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(AllegroFolder)src\allegro.c" />
+    <ClCompile Include="$(AllegroFolder)src\bitmap.c" />
+    <ClCompile Include="$(AllegroFolder)src\bitmap_draw.c" />
+    <ClCompile Include="$(AllegroFolder)src\bitmap_io.c" />
+    <ClCompile Include="$(AllegroFolder)src\bitmap_lock.c" />
+    <ClCompile Include="$(AllegroFolder)src\bitmap_pixel.c" />
+    <ClCompile Include="$(AllegroFolder)src\bitmap_type.c" />
+    <ClCompile Include="$(AllegroFolder)src\blenders.c" />
+    <ClCompile Include="$(AllegroFolder)src\clipboard.c" />
+    <ClCompile Include="$(AllegroFolder)src\config.c" />
+    <ClCompile Include="$(AllegroFolder)src\convert.c" />
+    <ClCompile Include="$(AllegroFolder)src\cpu.c" />
+    <ClCompile Include="$(AllegroFolder)src\debug.c" />
+    <ClCompile Include="$(AllegroFolder)src\display.c" />
+    <ClCompile Include="$(AllegroFolder)src\display_settings.c" />
+    <ClCompile Include="$(AllegroFolder)src\drawing.c" />
+    <ClCompile Include="$(AllegroFolder)src\dtor.c" />
+    <ClCompile Include="$(AllegroFolder)src\events.c" />
+    <ClCompile Include="$(AllegroFolder)src\evtsrc.c" />
+    <ClCompile Include="$(AllegroFolder)src\exitfunc.c" />
+    <ClCompile Include="$(AllegroFolder)src\file.c" />
+    <ClCompile Include="$(AllegroFolder)src\file_slice.c" />
+    <ClCompile Include="$(AllegroFolder)src\file_stdio.c" />
+    <ClCompile Include="$(AllegroFolder)src\fshook.c" />
+    <ClCompile Include="$(AllegroFolder)src\fshook_stdio.c" />
+    <ClCompile Include="$(AllegroFolder)src\fullscreen_mode.c" />
+    <ClCompile Include="$(AllegroFolder)src\haptic.c" />
+    <ClCompile Include="$(AllegroFolder)src\inline.c" />
+    <ClCompile Include="$(AllegroFolder)src\joynu.c" />
+    <ClCompile Include="$(AllegroFolder)src\keybdnu.c" />
+    <ClCompile Include="$(AllegroFolder)src\libc.c" />
+    <ClCompile Include="$(AllegroFolder)src\math.c" />
+    <ClCompile Include="$(AllegroFolder)src\memblit.c" />
+    <ClCompile Include="$(AllegroFolder)src\memdraw.c" />
+    <ClCompile Include="$(AllegroFolder)src\memory.c" />
+    <ClCompile Include="$(AllegroFolder)src\misc\aatree.c" />
+    <ClCompile Include="$(AllegroFolder)src\misc\bstrlib.c" />
+    <ClCompile Include="$(AllegroFolder)src\misc\list.c" />
+    <ClCompile Include="$(AllegroFolder)src\misc\vector.c" />
+    <ClCompile Include="$(AllegroFolder)src\monitor.c" />
+    <ClCompile Include="$(AllegroFolder)src\mousenu.c" />
+    <ClCompile Include="$(AllegroFolder)src\mouse_cursor.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\extensions.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_bitmap.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_display.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_draw.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_fbo.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_lock.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_lock_es.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_render_state.c" />
+    <ClCompile Include="$(AllegroFolder)src\opengl\ogl_shader.c" />
+    <ClCompile Include="$(AllegroFolder)src\path.c" />
+    <ClCompile Include="$(AllegroFolder)src\pixels.c" />
+    <ClCompile Include="$(AllegroFolder)src\shader.c" />
+    <ClCompile Include="$(AllegroFolder)src\system.c" />
+    <ClCompile Include="$(AllegroFolder)src\threads.c" />
+    <ClCompile Include="$(AllegroFolder)src\timernu.c" />
+    <ClCompile Include="$(AllegroFolder)src\tls.c" />
+    <ClCompile Include="$(AllegroFolder)src\touch_input.c" />
+    <ClCompile Include="$(AllegroFolder)src\transformations.c" />
+    <ClCompile Include="$(AllegroFolder)src\tri_soft.c" />
+    <ClCompile Include="$(AllegroFolder)src\utf8.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wclipboard.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wgl_disp.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\whapall.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\whapdrv.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\whaptic.cpp" />
+    <ClCompile Include="$(AllegroFolder)src\win\whapxi.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wjoyall.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wjoydrv.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wjoydxnu.cpp" />
+    <ClCompile Include="$(AllegroFolder)src\win\wjoyxi.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wkeyboard.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wmcursor.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wmouse.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wsystem.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wthread.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wtime.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wtouch_input.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wunicode.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wwindow.c" />
+    <ClCompile Include="$(AllegroFolder)src\win\wxthread.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

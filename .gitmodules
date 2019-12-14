@@ -4,3 +4,6 @@
 [submodule "code/external/box2d/2.3.1"]
 	path = code/external/box2d/2.3.1
 	url = git@github.com:erincatto/Box2D.git
+[submodule "code/external/glm/0.9.9.6"]
+	path = code/external/glm/0.9.9.6
+	url = git@github.com:g-truc/glm.git

@@ -1,3 +1,6 @@
 [submodule "code/external/allegro/5.2.4"]
 	path = code/external/allegro/5.2.4
 	url = git@github.com:liballeg/allegro5.git
+[submodule "code/external/box2d/2.3.1"]
+	path = code/external/box2d/2.3.1
+	url = git@github.com:erincatto/Box2D.git

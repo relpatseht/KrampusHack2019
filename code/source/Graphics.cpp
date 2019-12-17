@@ -23,7 +23,7 @@ namespace
 		glm::vec3 invPos;
 		uint8_t _padding1[4];
 		glm::float32 scale;
-		glm::float32 type;
+		glm::uint type;
 		uint8_t _padding2[8];
 	};
 
@@ -47,7 +47,7 @@ namespace
 	struct RenderData
 	{
 		DynamicData data;
-		std::vector<float> type;
+		std::vector<uint> type;
 	};
 
 	struct RenderStore

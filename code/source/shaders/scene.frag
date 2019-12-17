@@ -2,6 +2,7 @@
 #extension GL_ARB_shading_language_include : enable
 
 #include "/hg_sdf.glsl"
+#include "/pbr_lighting.glsl"
 
 const float camNear = 0.1;
 const float camFar = 1000.0;
@@ -14,7 +15,7 @@ struct SceneEntry
 	mat3 invRot;
 	vec3 invPos;
 	float scale;
-	float type;
+	uint type;
 };
 
 layout(std140, binding=0) uniform SceneEntryBlock
@@ -83,18 +84,10 @@ vec3 getRayDir(in const vec3 camDir)
 	return normalize(right*pixel.x + up*pixel.y + camDir);
 }
 
-vec3 ComputePhongContribution(vec3 diffuse, vec3 specular, float specPower, vec3 pos, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightColor)
+vec3 GammaCorrectColor(in vec3 color)
 {
-	vec3 lightDir = normalize(lightPos - pos);
-	vec3 viewDir = normalize(eye - pos);
-	vec3 reflectDir = normalize(reflect(-lightDir, normal));
-	float lightViewDot = max(dot(lightDir, viewDir), 0);
-	float reflectViewDot = dot(reflectDir, viewDir);
-
-	if(reflectViewDot < 0)
-		return lightColor * (diffuse * lightViewDot);
-	else
-		return lightColor * (diffuse * lightViewDot + specular * pow(reflectViewDot, specPower));
+	color = color / (color + vec3(1.0));
+	return pow(color, vec3(1.0/2.2));
 }
 
 void main()
@@ -113,30 +106,44 @@ void main()
 		// Hit properties
 		const vec3 hitPos = rayDir * objDist.x + in_camPos;
 		const vec3 hitNormal = ComputeNormal(hitPos);
+		const vec3 viewDir = normalize(in_camPos - hitPos);
 
 		// set depth
 		float pixelScreenDepth = (objDist.x - camNear) / (camFar - camNear);
 		gl_FragDepth = pixelScreenDepth;
 
 		// "material properties" (todo)
-		const vec3 ambient = vec3(0.2, 0.2, 0.2);
-		const vec3 diffuse = vec3(0.7, 0.7, 0.1);
-		const vec3 specular = vec3(1.0, 1.0, 0.8);
-		const float specPower = 8;
+		const vec3 albedo = vec3(0.5, 0.0, 0.0);
+		const float metalness = 0.95;
+		const float roughness = 0.05;
 
 		// compute lighting
-		const vec3 ambientLight = vec3(0.1);
-		vec3 light1Pos = vec3(100, 100, -100);
-		vec3 light2Pos = vec3(-300, 100, 0);
-		vec3 light1Color = vec3(0.3, 0.2, 0.001);
-		vec3 light2Color = vec3(0.4, 0.4, 0.4);
+		const vec3 ambientLight = vec3(0.3);
 
-		vec3 color = ambientLight * ambient;
-		color += ComputePhongContribution(diffuse, specular, specPower, hitPos, hitNormal, in_camPos, light1Pos, light1Color);
+		vec3 light1Color = vec3(500, 400, 200);
+		vec3 light2Color = vec3(300, 300, 300);
 
-		color += ComputePhongContribution(diffuse, specular, specPower, hitPos, hitNormal, in_camPos, light2Pos, light2Color);
+		vec3 light1Pos = vec3(10, 10, -10);
+		vec3 light2Pos = vec3(-30, 10, 0);
 
-		out_color = vec4(color, 1.0);
+		vec3 light1Dir = normalize(light1Pos - hitPos);
+		vec3 light2Dir = normalize(light2Pos - hitPos);
+
+		float light1Dist = length(light1Pos - hitPos);
+		float light2Dist = length(light2Pos - hitPos);
+
+		float light1Attn = 1.0 / (light1Dist * light1Dist);
+		float light2Attn = 1.0 / (light2Dist * light2Dist);
+
+		vec3 light1BRDF = BRDF_CookTorrance(hitNormal, viewDir, light1Dir, albedo, metalness, roughness);
+		vec3 light2BRDF = BRDF_CookTorrance(hitNormal, viewDir, light2Dir, albedo, metalness, roughness);
+
+		vec3 light1Radiance = light1Color*light1Attn*light1BRDF;
+		vec3 light2Radiance = light2Color*light2Attn*light2BRDF;
+
+		vec3 color = (ambientLight * albedo) + light1Radiance + light2Radiance;
+
+		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
 
 	//out_color = vec4(raymarch(in_camPos, rayDir), 1.0);

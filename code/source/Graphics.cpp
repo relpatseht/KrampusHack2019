@@ -23,7 +23,7 @@ namespace
 		glm::vec3 invPos;
 		uint8_t _padding1[4];
 		glm::float32 scale;
-		glm::uint type;
+		glm::float32 type;
 		uint8_t _padding2[8];
 	};
 
@@ -40,14 +40,14 @@ namespace
 		std::vector<glm::mat3x3> invRot;
 		std::vector<glm::vec3> invPos;
 		std::vector<glm::float32> scale;
-		glm::vec3 camPos;
-		glm::vec3 camTarget;
+		glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
+		glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
 	};
 
 	struct RenderData
 	{
 		DynamicData data;
-		std::vector<uint> type;
+		std::vector<float> type;
 	};
 
 	struct RenderStore
@@ -178,7 +178,7 @@ namespace
 
 		static bool CompileShader(const std::string& source, GLenum type, uint* outShader)
 		{
-			const uint shader = glCreateShaderObjectARB(type);
+			const uint shader = glCreateShader(type);
 			const char* sourceStr = source.c_str();
 			bool ret = true;
 
@@ -543,24 +543,17 @@ namespace
 					Update(store, elapsedSec);
 
 					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-					err::Error();
 
 					glUseProgram(g->shader);
-					err::Error();
 					scene::UpdateUniforms(g->sceneUBO, store->gpu);
 
 					glBindVertexArray(g->sceneVAO);
-					err::Error();
 					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-					err::Error();
 
 					glBindVertexArray(0);
-					err::Error();
 					glUseProgram(0);
-					err::Error();
 
 					al_flip_display();
-					err::Error();
 				}
 
 				glDeleteProgram(g->shader);

@@ -3,6 +3,7 @@
 
 #include "/hg_sdf.glsl"
 #include "/pbr_lighting.glsl"
+#include "/noise.glsl"
 
 const float camNear = 0.1;
 const float camFar = 1000.0;
@@ -36,13 +37,20 @@ vec2 StaticScene_Bounds(in const vec3 pos)
 	float t = fBox(pos - vec3(  0.0, 8.1, 0), vec3(10.2, .1, .1));
 	float b = fBox(pos - vec3(  0.0,-8.1, 0), vec3(10.2, .1, .1));
 
-	return vec2(min(l, min(r, min(t, b))), 8.0);
+	return vec2(min(l, min(r, min(t, b))), 0.0);
+}
+
+vec2 StaticScene_Ground(in const vec3 pos)
+{
+    const float height = cos(pos.x*0.25)*(sin(pos.z*0.25)+noise2(pos.zx*0.5))*(pos.z*0.1); // very regular patern + a little bit of noise
+
+    return vec2(pos.y - height, 1.0);
 }
 
 vec2 StaticScene(in const vec3 pos)
 {
 	vec2 bounds = StaticScene_Bounds(pos);
-	vec2 ground = vec2(fPlane(pos - vec3(0.0, -8.0, 0.0), vec3(0, 1, 0), -8), 8);
+	vec2 ground = StaticScene_Ground(pos - vec3(0, -10, 0));
 
 	return bounds.x < ground.x ? bounds : ground;
 }
@@ -87,12 +95,30 @@ vec2 SimpleScene(in const vec3 pos)
 	return dist;
 }
 
+void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal, out vec3 albedo, out float metalness, out float roughness)
+{
+	if(mtl < 1.0) // wood frame, [0, 1)
+	{
+		const vec3 bright = vec3(0.31, 0.09, 0.01)*.5;
+		const vec3 dark = vec3(0.23, 0.07, 0.00)*.24;
+		const float lerp = sin(pos.x*20)*noise2(pos.xy*20) + cos(pos.y*20)*noise2(pos.yx*35);
+		albedo = mix(dark, bright, lerp);
+		metalness = 0.01;
+		roughness = 0.01;
+	}
+	else if(mtl < 2.0) // snow terrain, [1, 2)
+	{
+		albedo = vec3(noise2(pos.xy), noise2(pos.yz), noise2(pos.zx));//vec3(0.8, 0.8, 0.8);
+		metalness = 0.0;
+		roughness = 0.4;
+	}
+}
 
 #define RM_SCENE_FUNC SimpleScene
 
 #include "/raymarch.glsl"
 
-vec3 getRayDir(in const vec3 camDir)
+vec3 RayDir(in const vec3 camDir)
 {
 	const vec2 res = vec2(1024, 768);
 	const vec3 up = vec3(0, 1, 0);
@@ -114,7 +140,7 @@ void main()
 {
 	const float pixelRadius = 0.0001;
 	vec3 camDir = normalize(in_camTarget - in_camPos);
-	vec3 rayDir = getRayDir(camDir);
+	vec3 rayDir = RayDir(camDir);
 	vec2 objDist = RayMarch(rayDir, in_camPos, pixelRadius, camFar);
 
 	if( objDist.x == RM_INFINITY)
@@ -125,17 +151,18 @@ void main()
 	{
 		// Hit properties
 		const vec3 hitPos = rayDir * objDist.x + in_camPos;
-		const vec3 hitNormal = ComputeNormal(hitPos);
 		const vec3 viewDir = normalize(in_camPos - hitPos);
+		vec3 hitNormal = ComputeNormal(hitPos);
 
 		// set depth
 		float pixelScreenDepth = (objDist.x - camNear) / (camFar - camNear);
 		gl_FragDepth = pixelScreenDepth;
 
 		// "material properties" (todo)
-		const vec3 albedo = vec3(0.5, 0.0, 0.0);
-		const float metalness = 0.95;
-		const float roughness = 0.05;
+		vec3 albedo = vec3(0.5, 0.0, 0.0);
+		float metalness = 0.95;
+		float roughness = 0.05;
+		MaterialProperties(hitPos, objDist.y, hitNormal, albedo, metalness, roughness);
 
 		// compute lighting
 		const vec3 ambientLight = vec3(0.3);

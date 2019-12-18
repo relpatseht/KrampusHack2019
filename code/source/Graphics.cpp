@@ -445,11 +445,11 @@ namespace
 							g->sceneVAO = sceneVAO;
 							g->display = display;
 
-							g->meshStores[0].gpu.data.camPos = glm::vec3(0.0f, 3.0f, 8.0f);
-							g->meshStores[0].gpu.data.camTarget = glm::vec3(0.0f, -1.0f, -1.0f);
+							g->meshStores[0].gpu.data.camPos = glm::vec3(0.0f, 4.0f, 8.0f);
+							g->meshStores[0].gpu.data.camTarget = glm::vec3(0.0f, -3.0f, -2.0f);
 
-							g->meshStores[1].gpu.data.camPos = glm::vec3(0.0f, 3.0f, 8.0f);
-							g->meshStores[1].gpu.data.camTarget = glm::vec3(0.0f, -1.0f, -1.0f);
+							g->meshStores[1].gpu.data.camPos = glm::vec3(0.0f, 4.0f, 8.0f);
+							g->meshStores[1].gpu.data.camTarget = glm::vec3(0.0f, -3.0f, -2.0f);
 
 							return true;
 						}

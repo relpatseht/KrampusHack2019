@@ -6,11 +6,15 @@
 #include <fstream>
 #include <filesystem>
 #include <chrono>
+#include "ObjectMap.h"
+#include "ComponentTypes.h"
 #include "glm/glm.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "allegro5/allegro.h"
 #include "allegro5/allegro_opengl.h"
+
+#include "Graphics.h"
 
 typedef unsigned uint;
 
@@ -44,10 +48,21 @@ namespace
 		glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
 	};
 
+	union InternalMeshType
+	{
+		struct
+		{
+			uint mesh : 4;
+			uint mtlInfo : 27;
+			uint initializing : 1;
+		};
+		uint data;
+	};
+
 	struct RenderData
 	{
 		DynamicData data;
-		std::vector<uint> type;
+		std::vector<InternalMeshType> type;
 	};
 
 	struct RenderStore
@@ -56,7 +71,7 @@ namespace
 		DynamicData velocity;
 	};
 
-	enum SwapState : uint
+	enum class SwapState : uint
 	{
 		INITIALIZING,
 		RENDERING,
@@ -70,14 +85,16 @@ namespace
 struct Graphics
 {
 	std::atomic<SwapState> state;
-	ALLEGRO_DISPLAY* display;
-	uint curMeshStore;
+
+	ALLEGRO_DISPLAY* display = nullptr;
 	RenderStore meshStores[2];
 	std::thread renderThread;
 
-	uint sceneVAO;
-	uint sceneUBO;
-	uint shader;
+	uint sceneVAO = 0;
+	uint sceneUBO = 0;
+	uint shader = 0;
+
+	std::atomic_uint curMeshStore;
 };
 
 namespace
@@ -366,7 +383,7 @@ namespace
 				entry->invPos = data.data.invPos[entryIndex];
 				entry->invRot = data.data.invRot[entryIndex];
 				entry->scale = data.data.scale[entryIndex];
-				entry->type = data.type[entryIndex];
+				entry->type = data.type[entryIndex].data;
 			}
 
 			glBindBuffer(GL_UNIFORM_BUFFER, ubo);
@@ -428,11 +445,11 @@ namespace
 							g->sceneVAO = sceneVAO;
 							g->display = display;
 
-							g->meshStores[0].gpu.data.camPos = glm::vec3(0.0f, 5.0f, -10.0f);
-							g->meshStores[0].gpu.data.camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+							g->meshStores[0].gpu.data.camPos = glm::vec3(0.0f, 5.0f, 8.0f);
+							g->meshStores[0].gpu.data.camTarget = glm::vec3(0.0f, -3.0f, 0.0f);
 
-							g->meshStores[1].gpu.data.camPos = glm::vec3(0.0f, 5.0f, -10.0f);
-							g->meshStores[1].gpu.data.camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+							g->meshStores[1].gpu.data.camPos = glm::vec3(0.0f, 5.0f, 8.0f);
+							g->meshStores[1].gpu.data.camTarget = glm::vec3(0.0f, -3.0f, 0.0f);
 
 							return true;
 						}
@@ -454,11 +471,11 @@ namespace
 		{
 			switch (g->state)
 			{
-				case SWAP_MESH_STORE:
+				case SwapState::SWAP_MESH_STORE:
 					g->curMeshStore = !g->curMeshStore;
 					g->state = SwapState::RENDERING;
 				break;
-				case RELOAD_SHADERS:
+				case SwapState::RELOAD_SHADERS:
 				{
 					uint sceneShader, uiShader;
 
@@ -477,11 +494,11 @@ namespace
 					g->state = SwapState::RENDERING;
 				}
 				break;
-				case RESIZE:
+				case SwapState::RESIZE:
 					al_acknowledge_resize(g->display);
 					g->state = SwapState::RENDERING;
 				break;
-				case SHUTDOWN:
+				case SwapState::SHUTDOWN:
 					return false;
 			}
 
@@ -563,6 +580,17 @@ namespace
 			}
 		}
 	}
+
+	static __forceinline void SleepUntilReady( Graphics* g )
+	{
+		SwapState state = g->state;
+
+		while(state != SwapState::RENDERING && state != SwapState::SHUTDOWN )
+		{
+			std::this_thread::yield();
+			state = g->state;
+		}
+	}
 }
 
 namespace gfx
@@ -600,6 +628,112 @@ namespace gfx
 	{
 		assert(g->state == SwapState::RENDERING);
 		g->state = SwapState::RESIZE; // We don't wait for the reload to happen for now. Maybe should if we get too multithreaded with too many states
+	}
+
+	bool AddModel( Graphics* g, ObjectMap* objects, uint objectId, MeshType type )
+	{
+		SleepUntilReady(g);
+
+		const uint backingStoreId = !g->curMeshStore;
+		RenderStore* const backingStore = g->meshStores + backingStoreId;
+		const uint mapId = static_cast<uint>( backingStore->gpu.type.size() );
+
+		if ( mapId < SceneEntryBlock::MAX_ENTRIES )
+		{
+			DynamicData* const pos = &backingStore->gpu.data;
+			DynamicData* const vel = &backingStore->velocity;
+			InternalMeshType intType;
+
+			intType.mesh = static_cast<uint>( type );
+			intType.mtlInfo = 0;
+			intType.initializing = 1;
+
+			backingStore->gpu.type.emplace_back( intType );
+			pos->invPos.emplace_back();
+			pos->invRot.emplace_back();
+			pos->scale.emplace_back();
+			vel->invPos.emplace_back();
+			vel->invRot.emplace_back();
+			vel->scale.emplace_back();
+
+			assert( static_cast<uint>(pos->invPos.size()) == mapId + 1 );
+			assert( static_cast<uint>(pos->invRot.size()) == mapId + 1 );
+			assert( static_cast<uint>(pos->scale.size()) == mapId + 1 );
+			assert( static_cast<uint>(vel->invPos.size()) == mapId + 1 );
+			assert( static_cast<uint>(vel->invRot.size()) == mapId + 1 );
+			assert( static_cast<uint>(vel->scale.size()) == mapId + 1 );
+
+			objects->set_object_mapping( objectId, ComponentType::GFX_MODEL, mapId );
+
+			assert( backingStoreId == !g->curMeshStore );
+			assert( g->state == SwapState::RENDERING );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	void DestroyObjects( Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds )
+	{
+		std::vector<uint> freedMeshIds;
+
+		for ( uint objectId : objectIds )
+		{
+			const uint mapIndex = objects->map_index_for_object( objectId, ComponentType::GFX_MODEL );
+
+			if ( mapIndex < SceneEntryBlock::MAX_ENTRIES )
+				freedMeshIds.emplace_back( mapIndex );
+		}
+
+		std::sort( freedMeshIds.begin(), freedMeshIds.end(), std::greater<uint>() );
+
+		if ( !freedMeshIds.empty() )
+		{
+			SleepUntilReady( g );
+
+			const uint backingStoreId = !g->curMeshStore;
+			RenderStore* const backingStore = g->meshStores + backingStoreId;
+			DynamicData* const pos = &backingStore->gpu.data;
+			DynamicData* const vel = &backingStore->velocity;
+			std::vector<InternalMeshType>* const type = &backingStore->gpu.type;
+			uint lastMeshId = static_cast<uint>( backingStore->gpu.type.size() ) - 1;
+
+			assert( freedMeshIds.size() <= backingStore->gpu.type.size() );
+
+			for ( uint freedMeshId : freedMeshIds )
+			{
+				assert( freedMeshId <= lastMeshId );
+
+				if ( freedMeshId < lastMeshId )
+				{
+					const uint lastMeshObjectId = objects->object_for_map_index( ComponentType::GFX_MODEL, lastMeshId );
+
+					( *type )[freedMeshId] = ( *type )[lastMeshId];
+					pos->invPos[freedMeshId] = pos->invPos[lastMeshId];
+					pos->invRot[freedMeshId] = pos->invRot[lastMeshId];
+					pos->scale[freedMeshId] =  pos->scale[lastMeshId];
+					vel->invPos[freedMeshId] = vel->invPos[lastMeshId];
+					vel->invRot[freedMeshId] = vel->invRot[lastMeshId];
+					vel->scale[freedMeshId] =  vel->scale[lastMeshId];
+					
+					objects->set_object_mapping( lastMeshObjectId, ComponentType::GFX_MODEL, freedMeshId );
+				}
+
+				--lastMeshId;
+			}
+
+			type->resize( lastMeshId + 1 );
+			pos->invPos.resize( lastMeshId + 1 );
+			pos->invRot.resize( lastMeshId + 1 );
+			pos->scale.resize( lastMeshId + 1 );
+			vel->invPos.resize( lastMeshId + 1 );
+			vel->invRot.resize( lastMeshId + 1 );
+			vel->scale.resize( lastMeshId + 1 );
+
+			assert( backingStoreId == !g->curMeshStore );
+			assert( g->state == SwapState::RENDERING );
+		}
 	}
 
 	ALLEGRO_DISPLAY* GetDisplay(Graphics* g)

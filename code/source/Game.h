@@ -6,12 +6,18 @@ typedef unsigned uint;
 
 class ObjectMap;
 struct Graphics;
+struct Gameplay;
 
 struct Game
 {
 	Graphics* gfx;
+	Gameplay* ply;
 	ObjectMap *objects;
-	std::vector<uint> deadObjects;
+	uint nextObjectId;
+	std::vector<uint> initializingObjects;
+	std::vector<uint> dyingObjects;
+
+
 };
 
 namespace game
@@ -21,4 +27,5 @@ namespace game
 
 	uint CreateObject(Game* game);
 	void CleanDeadObjects(Game* game);
+	void EstablishNewObjects( Game* game );
 }

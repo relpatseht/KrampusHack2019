@@ -29,6 +29,24 @@ layout(location = 1) uniform vec3 in_camTarget;
 
 layout (location = 0) out vec4 out_color;
 
+vec2 StaticScene_Bounds(in const vec3 pos)
+{
+	float l = fBox(pos - vec3(-10.1,   0, 0), vec3( 0.1,  8, .1));
+	float r = fBox(pos - vec3( 10.1,   0, 0), vec3( 0.1,  8, .1));
+	float t = fBox(pos - vec3(  0.0, 8.1, 0), vec3(10.2, .1, .1));
+	float b = fBox(pos - vec3(  0.0,-8.1, 0), vec3(10.2, .1, .1));
+
+	return vec2(min(l, min(r, min(t, b))), 8.0);
+}
+
+vec2 StaticScene(in const vec3 pos)
+{
+	vec2 bounds = StaticScene_Bounds(pos);
+	vec2 ground = vec2(fPlane(pos - vec3(0.0, -8.0, 0.0), vec3(0, 1, 0), -8), 8);
+
+	return bounds.x < ground.x ? bounds : ground;
+}
+
 vec2 SimpleScene(in const vec3 pos)
 {
 	const float FLT_MAX = 3.402823466e+38;
@@ -59,10 +77,12 @@ vec2 SimpleScene(in const vec3 pos)
 			dist = objDist;
 	}
 
-	vec2 tstDist = vec2(fSphere(pos, 2), 8);
+	{
+		vec2 staticSceneDist = StaticScene(pos);
 
-	if(tstDist.x < dist.x)
-		dist = tstDist;
+		if(staticSceneDist.x < dist.x)
+			dist = staticSceneDist;
+	}
 
 	return dist;
 }

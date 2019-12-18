@@ -1,8 +1,6 @@
 #pragma once
 
-typedef unsigned uint;
-
-enum class ComponentType : uint
+enum ComponentType
 {
 	TRANSFORM,
 	GFX_MODEL,

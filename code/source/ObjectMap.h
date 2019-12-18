@@ -13,13 +13,13 @@ class ObjectMap
 private:
 	uint objCount;
 	uint objCapacity;
-	uint nextObjectId;
-	uint16_t mapCount;
-	uint16_t mapCapacity;
+	uint mapCount;
+	uint mapCapacity;
 
 	uint* hashes;
 	uint* objectIds;
 	uint** mappedIds;
+	uint** reverseIds;
 
 public:
 	ObjectMap() = default;
@@ -37,9 +37,11 @@ public:
 		for (uint mapIndex = 0; mapIndex < mapCount; ++mapIndex)
 		{
 			delete[] mappedIds[mapIndex];
+			delete[] reverseIds[mapIndex];
 		}
 
 		delete[] mappedIds;
+		delete[] reverseIds;
 	}
 
 	__forceinline bool empty() const
@@ -60,21 +62,27 @@ public:
 		if (newCount > mapCapacity)
 		{
 			uint** oldMaps = mappedIds;
+			uint** oldObjects = reverseIds;
 
 			mapCapacity = pwr2::round_up(newCount);
 			mappedIds = new uint*[mapCapacity];
+			reverseIds = new uint * [mapCapacity];
 			for (uint mapIndex = 0; mapIndex < oldCount; ++mapIndex)
 			{
 				mappedIds[mapIndex] = oldMaps[mapIndex];
+				reverseIds[mapIndex] = oldObjects[mapIndex];
 			}
 
 			delete[] oldMaps;
+			delete[] oldObjects;
 		}
 
 		for (uint mapIndex = oldCount; mapIndex < newCount; ++mapIndex)
 		{
 			mappedIds[mapIndex] = new uint[objCapacity];
+			reverseIds[mapIndex] = new uint[objCapacity];
 			std::memset(mappedIds[mapIndex], ~0u, sizeof(uint) * objCapacity);
+			std::memset( reverseIds[mapIndex], ~0u, sizeof( uint ) * objCapacity );
 		}
 
 		mapCount = newCount;
@@ -86,9 +94,8 @@ public:
 		return add_maps(1);
 	}
 
-	uint add_object()
+	void add_object(uint newObjectId)
 	{
-		const uint newObjectId = nextObjectId++;
 		const uint growThreshold = objCapacity - (objCapacity >> 4);
 		const uint objHash = hash(newObjectId);
 		uint objIndex;
@@ -100,17 +107,34 @@ public:
 
 		assertfmt(inserted, "Object %u already exists in the map.\n", newObjectId);
 		++objCount;
-
-		return objIndex;
 	}
 
-	uint map_object(uint objectId, uint mapId) const
+	void set_object_mapping( uint objectId, uint mapId, uint mapIndex )
 	{
-		const uint index = object_index(objectId);
+		const uint index = object_index( objectId );
 
-		assertfmt(mapId < mapCount, "Map %u does not exist.\n", mapId);
+		assertfmt( mapId < mapCount, "Map %u does not exist.\n", mapId );
+		assertfmt( mapIndex < objCount, "Object map doesn't support multiple components per objects. Keep them in step.\n" );
+
+		mappedIds[mapId][index] = mapIndex;
+		reverseIds[mapId][mapIndex] = objectId;
+	}
+
+	uint map_index_for_object(uint objectId, uint mapId) const
+	{
+		const uint index = object_index( objectId );
+
+		assertfmt( mapId < mapCount, "Map %u does not exist.\n", mapId );
 
 		return mappedIds[mapId][index];
+	}
+
+	uint object_for_map_index( uint mapId, uint mapIndex ) const
+	{
+		assertfmt( mapId < mapCount, "Map %u does not exist.\n", mapId );
+		assertfmt( mapIndex < objCount, "Object map doesn't support multiple components per objects. Keep them in step.\n" );
+
+		return reverseIds[mapId][mapIndex];
 	}
 
 	uint object_index(uint objectId) const
@@ -172,11 +196,22 @@ private:
 			}
 			else
 			{
+				for ( uint mapIndex = 0; mapIndex < mapCount; ++mapIndex )
+				{
+					reverseIds[mapIndex][mappedIds[mapIndex][prevIndex]] = objectIds[index];
+					mappedIds[mapIndex][prevIndex] = mappedIds[mapIndex][index];
+				}
 				objectIds[prevIndex] = objectIds[index];
 				hashes[prevIndex] = hash;
 			}
 		}
 		
+		for ( uint mapIndex = 0; mapIndex < mapCount; ++mapIndex )
+		{
+			reverseIds[mapIndex][mappedIds[mapIndex][prevIndex]] = ~0u;
+			mappedIds[mapIndex][prevIndex] = ~0u;
+		}
+		objectIds[prevIndex] = ~0u;
 		hashes[prevIndex] = 0;
 		--objCount;
 	}
@@ -270,9 +305,15 @@ private:
 		hashes = new uint[objCapacity]; 
 		for (uint mapIndex = 0; mapIndex < mapCount; ++mapIndex)
 		{
+			const uint* const oldReverseIds = reverseIds[mapIndex];
 			oldMappedIds[mapIndex] = mappedIds[mapIndex];
+
+
 			mappedIds[mapIndex] = new uint[objCapacity];
+			reverseIds[mapIndex] = new uint[objCapacity];
 			std::memset(mappedIds[mapIndex], ~0u, sizeof(uint) * objCapacity);
+			std::memcpy( reverseIds[mapIndex], oldReverseIds, sizeof( uint ) * oldCapacity);
+			std::memset( reverseIds[mapIndex] + oldCapacity, ~0u, sizeof( uint ) * ( objCapacity - oldCapacity ) );
 		}
 
 		std::memset(hashes, 0, sizeof(*hashes) * objCapacity);

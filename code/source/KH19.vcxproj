@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gameplay.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -93,6 +94,7 @@
     <ClInclude Include="Assert.h" />
     <ClInclude Include="Bits.h" />
     <ClInclude Include="ComponentTypes.h" />
+    <ClInclude Include="Gameplay.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="ObjectMap.h" />
     <ClInclude Include="Game.h" />

@@ -17,7 +17,8 @@ namespace gfx
 		PLAYER,
 		HELPER,
 		SNOW_FLAKE,
-		SNOW_BALL
+		SNOW_BALL,
+		SNOW_MAN,
 	};
 
 	Graphics* Init();

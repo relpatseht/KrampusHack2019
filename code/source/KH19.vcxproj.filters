@@ -50,4 +50,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\scene_defines.glsl">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

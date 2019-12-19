@@ -7,11 +7,13 @@ typedef unsigned uint;
 class ObjectMap;
 struct Graphics;
 struct Gameplay;
+struct Physics;
 
 struct Game
 {
 	Graphics* gfx;
 	Gameplay* ply;
+	Physics* phy;
 	ObjectMap *objects;
 	uint nextObjectId;
 	std::vector<uint> initializingObjects;

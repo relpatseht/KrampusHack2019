@@ -31,11 +31,6 @@ layout(location = 1) uniform vec3 in_camTarget;
 
 layout (location = 0) out vec4 out_color;
 
-vec2 Snowflake(in const vec3 pos, uint type)
-{
-	
-}
-
 vec2 SimpleScene(in const vec3 pos)
 {
 	const float FLT_MAX = 3.402823466e+38;

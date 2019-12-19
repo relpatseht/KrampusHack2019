@@ -620,12 +620,14 @@ namespace gfx
 
 	void ReloadShaders(Graphics* g)
 	{
+		SleepUntilReady(g);
 		assert(g->state == SwapState::RENDERING);
 		g->state = SwapState::RELOAD_SHADERS; // We don't wait for the reload to happen for now. Maybe should if we get too multithreaded with too many states
 	}
 
 	void Resize(Graphics* g)
 	{
+		SleepUntilReady(g);
 		assert(g->state == SwapState::RENDERING);
 		g->state = SwapState::RESIZE; // We don't wait for the reload to happen for now. Maybe should if we get too multithreaded with too many states
 	}

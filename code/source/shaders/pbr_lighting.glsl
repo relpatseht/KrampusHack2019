@@ -13,15 +13,14 @@
 // Trowbridge-Reitz GGX normal distribution function
 // halfView is the view-light half vector
 // roughness should be between 0 and 1, 0 is perfectly smooth, 1 is perfectly matte
-float Normal_DistributionGGX(in const vec3 normal, in const vec3 halfView, in const float roughness)
+float Normal_DistributionGGX(in const float nDotH, in const vec3 halfView, in const float roughness)
 {
-	const float r2 = roughness*roughness;
-	const float nDotH = max(dot(normal, halfView), 0.0);
-	const float nDotH2 = nDotH * nDotH;
-	const float sqrtDenom = (nDotH2 * (r2 - 1.0)) + 1.0;
-	const float denom = PI * sqrtDenom*sqrtDenom;
-
-	return r2 / denom;
+	// Walter et al. 2007, "Microfacet Models for Refraction through Rough Surfaces"
+    float oneMinusNDotHSquared = 1.0 - nDotH * nDotH;
+    float a = nDotH * roughness;
+    float k = roughness / (oneMinusNDotHSquared + a * a);
+    float d = k * k * INV_PI;
+    return d;
 }
 
 // Roughness to k conversion for Schlick GGX with direct lighting
@@ -76,10 +75,11 @@ vec3 Fresnel_Schlick(in const float cosTheta, in const vec3 F0)
 vec3 BRDF_CookTorrance(in const vec3 normal, in const vec3 view, in const vec3 lightDir, in const vec3 surfAlbedo, in const float surfMetalness, in const float surfRoughness)
 {
 	const vec3 halfView = normalize(view + lightDir);
+	const float nDotH = max(dot(normal, halfView), 0.0);
 	const float nDotV = max(dot(normal, view), 0.0);
 	const float nDotL = max(dot(normal, lightDir), 0.0);
 	const float hDotV = max(dot(halfView, view), 0.0);
-	const float N = Normal_DistributionGGX(normal, halfView, surfRoughness);
+	const float N = Normal_DistributionGGX(nDotH, halfView, surfRoughness);
 	const float G = Geometry_Smith(nDotV, nDotL, Geometry_RoughnessToKDirect(surfRoughness));
 	const vec3 F = Fresnel_Schlick(hDotV, Fresnel_ApproximateF0(surfMetalness, surfAlbedo));
 	const vec3 kS = F;
@@ -90,6 +90,21 @@ vec3 BRDF_CookTorrance(in const vec3 normal, in const vec3 view, in const vec3 l
 	const vec3 lightRadiance = (kD * surfAlbedo * INV_PI) + specular * nDotL;
 
 	return lightRadiance;
+}
+
+vec3 Tonemap_ACES(const vec3 x) {
+    // Narkowicz 2015, "ACES Filmic Tone Mapping Curve"
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return (x * (a * x + b)) / (x * (c * x + d) + e);
+}
+
+vec3 GammaCorrectColor(in vec3 color)
+{
+	return pow(color, vec3(1.0/2.2));
 }
 
 #endif //#ifdef PBR_LIGHTING

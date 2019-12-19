@@ -90,6 +90,67 @@ vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float pixe
 	return vec2(RM_INFINITY, 0.0);	
 }
 
+float RayMarch_Shadow(in const vec3 rayDir, in const vec3 rayOrigin, in const float pixelRadius, in const float hardness, in const float farPlane)
+{
+	const float originDist = RM_SCENE_FUNC(rayOrigin).x;
+	const float sceneFuncSign = sgn(originDist);
+	float stepMult = RM_STEP_MULT;
+	float t = originDist;
+	float prevRadius = abs(originDist);
+	float stepLength = 0.0;
+	float hit = 1.0;
+
+	// Typically, sphere tracing steps along the ray by the distance to the closest object in the scene.
+	// This ensures each subsequent point will be on the boundary of the sphere of the previous. In this
+	// step format, we will never miss what we're aiming for.
+	// To speed things up,  we take steps of the closest distance times RM_STEP_MULT.  As long as this
+	// gives us an intersecting sphere, we're guarenteed not to have stepped over an obstacle. If the 
+	// sphere doesn't intersect, then we need to revert back to the prior sphere's edge before proceeding
+	// with the standard algorithm (no increased step size).
+	for(int stepIndex=0; stepIndex < RM_MAX_ITERATIONS; ++stepIndex)
+	{
+		const vec3 worldPos = rayDir*t + rayOrigin;
+		const float sceneDist = RM_SCENE_FUNC(worldPos).x;
+		const float signedRadius = sceneFuncSign * sceneDist;
+		const float radius = abs(signedRadius);
+		const bool overstep = stepMult > 1.0 && (radius + prevRadius) < stepLength;
+
+		if(overstep)
+		{
+			// These sphere doesn't intersect the previous sphere. We may have stepped
+			// over an object. Step back to the edge of the previous sphere and continue
+			// the algorithm without taking large steps.
+			stepLength -= stepMult * stepLength;
+			stepMult = 1.0;
+			t += stepLength;
+		}
+		else
+		{
+			const float sphereError = radius / t;
+
+			// Hit something, full shadow
+			if(sphereError < pixelRadius)
+			{
+				return 0.0;
+			}
+
+			stepLength = signedRadius * stepMult;
+			t += stepLength;
+
+			hit = min(hit, hardness * sceneDist / t);
+
+			// If we've gone past the far plane, we're done.
+			if(t >= farPlane)
+			{
+				break;
+			}
+		}
+
+		prevRadius = radius;
+	}
+
+	return clamp(hit, 0.0, 1.0);
+}
 
 // Computes a normal using the definition of a derivative with the surface position and scene function
 vec3 ComputeNormal(const vec3 pos)

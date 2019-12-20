@@ -17,6 +17,6 @@
 
 #define HELPER_RADIUS 0.5
 
-#define MAX_SCENE_ENTRIES 512
+#define MAX_SCENE_ENTRIES 256
 
 #endif //#ifndef STATIC_SCENE_DEFINES

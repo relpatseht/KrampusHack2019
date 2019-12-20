@@ -5,6 +5,7 @@
 #include "/pbr_lighting.glsl"
 #include "/noise.glsl"
 #include "/static_scene.glsl"
+#include "/raymarch.glsl"
 
 const float g_camNear = 0.1;
 const float g_camFar = 25.0;
@@ -23,7 +24,7 @@ layout(location = 2) uniform uint in_sceneEntryCount;
 
 layout (location = 0) out vec4 out_color;
 
-vec2 SimpleScene(in vec3 pos)
+vec2 RayMarch_SceneFunc(in vec3 pos)
 {
 	const float FLT_MAX = 3.402823466e+38;
 	vec2 dist = vec2(FLT_MAX, 0.0);
@@ -32,25 +33,26 @@ vec2 SimpleScene(in vec3 pos)
 	{
 		mat4 invTransform = in_entries[i];
 		float type = invTransform[3][3];
-		vec2 objDist;
 
 		invTransform[3][3] = 1.0;
-		pos = (invTransform * vec4(pos, 1.0)).xyz;
+
+		vec3 objPos = (vec4(pos, 1.0)*invTransform).xyz;
+		vec2 objDist;
 
 		if(type < 1.0)
-			objDist = vec2(fSphere(pos, 1.0), type);
+			objDist = vec2(fSphere(objPos, 1.0), type);
 		else if(type < 2.0)
-			objDist = vec2(fBox(pos, vec3(1.0, 1.0, 1.0)), type);
+			objDist = vec2(fBox(objPos, vec3(1.0, 1.0, 1.0)), type);
 		else if(type < 3.0)
-				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
 		else if(type < 4.0)
-				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
 		else if(type < 5.0)
-				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
 		else if(type < 6.0)
-				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
 		else if(type < 7.0)
-				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
 
 		if(objDist.x < dist.x)
 			dist = objDist;
@@ -96,10 +98,6 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 	}
 }
 
-#define RM_SCENE_FUNC SimpleScene
-
-#include "/raymarch.glsl"
-
 vec3 RayDir(in const vec3 camDir)
 {
 	const vec2 res = vec2(1024, 768);
@@ -114,10 +112,9 @@ vec3 RayDir(in const vec3 camDir)
 
 void main()
 {
-	const float pixelRadius = 0.0001;
 	vec3 camDir = normalize(in_camTarget - in_camPos);
 	vec3 rayDir = RayDir(camDir);
-	vec2 objDist = RayMarch(rayDir, in_camPos, pixelRadius, g_camFar);
+	vec2 objDist = RayMarch(rayDir, in_camPos, g_camFar);
 
 	if( objDist.x == RM_INFINITY)
 	{
@@ -149,7 +146,7 @@ void main()
 		float light1Dist = length(light1Pos - hitPos);
 		float light1Attn = 1.0 / (light1Dist * light1Dist);
 		vec3 light1BRDF = BRDF_CookTorrance(hitNormal, viewDir, light1Dir, albedo, metalness, roughness);
-		float light1Shadow = RayMarch_Shadow(light1Dir, hitPos, pixelRadius, 10.0, g_camFar);
+		float light1Shadow = RayMarch_Shadow(light1Dir, hitPos, 10.0, g_camFar);
 		vec3 light1Radiance = light1Color*light1Attn*light1BRDF*light1Shadow;
 
 		vec3 light2Color = vec3(700, 700, 1000);
@@ -159,7 +156,7 @@ void main()
 		float light2Attn = 1.0 / (light2Dist * light2Dist);
 		vec3 light2BRDF = BRDF_CookTorrance(hitNormal, viewDir, light2Dir, albedo, metalness, roughness);
 		vec3 light2Radiance = light2Color*light2Attn*light2BRDF;
-		float light2Shadow = RayMarch_Shadow(light2Dir, hitPos, pixelRadius, 10.0, g_camFar);
+		float light2Shadow = RayMarch_Shadow(light2Dir, hitPos, 10.0, g_camFar);
 
 		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
 		out_color = vec4(GammaCorrectColor(color), 1.0);

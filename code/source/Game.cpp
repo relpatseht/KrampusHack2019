@@ -33,10 +33,13 @@ namespace
 			{
 				Gameplay* ply = new Gameplay; // gravity
 
+				glm::mat4 helperPos = glm::mat4( 1.0f );
+				glm::mat4 playerPos = glm::mat4( 1.0f );
+
 				ply->helperId = game::CreateObject(game);
 				ply->playerId = game::CreateObject(game);
-				const bool helperMeshCreated = gfx::AddModel(game->gfx, game->objects, ply->helperId, gfx::MeshType::HELPER);
-				const bool playerMeshCreated = gfx::AddModel(game->gfx, game->objects, ply->playerId, gfx::MeshType::PLAYER);
+				const bool helperMeshCreated = gfx::AddModel(game->gfx, game->objects, ply->helperId, gfx::MeshType::HELPER, helperPos);
+				const bool playerMeshCreated = gfx::AddModel(game->gfx, game->objects, ply->playerId, gfx::MeshType::PLAYER, playerPos);
 
 				assert(helperMeshCreated && playerMeshCreated);
 

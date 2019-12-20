@@ -30,7 +30,7 @@ namespace gfx
 	void ReloadShaders(Graphics* g);
 	void Resize(Graphics* g);
 
-	bool AddModel( Graphics *g, ObjectMap *objects, uint objectId, MeshType type );
+	bool AddModel( Graphics *g, ObjectMap *objects, uint objectId, MeshType type, const glm::mat4& transform );
 	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<glm::mat4>& transforms);
 
 	void DestroyObjects( Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds );

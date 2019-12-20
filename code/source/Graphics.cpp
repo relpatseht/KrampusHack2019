@@ -25,6 +25,8 @@ namespace
 		static const uint MAX_ENTRIES = MAX_SCENE_ENTRIES;
 		glm::mat4 entries[MAX_ENTRIES]; // entries[X][3][3] is type, not 1. Fix in shader
 	};
+
+	static_assert( sizeof( SceneEntryBlock ) <= 16 * 1024, "OpenGL spec as 16KB is the lower min" );
 }
 
 struct Graphics
@@ -33,7 +35,7 @@ struct Graphics
 	glm::uint sceneEntryCount;
 	glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
-
+	
 	ALLEGRO_DISPLAY* display = nullptr;
 	uint sceneVAO = 0;
 	uint sceneUBO = 0;
@@ -307,6 +309,8 @@ namespace
 			glUniform3fv(camTargetBinding, 1, glm::value_ptr(g.camTarget));
 			glUniform1ui(sceneEntryCountBinding, g.sceneEntryCount);
 			
+			glBindBufferBase( GL_UNIFORM_BUFFER, sceneBlockBinding, g.sceneUBO );
+
 			glBindBuffer(GL_UNIFORM_BUFFER, g.sceneUBO);
 			glBufferSubData(GL_UNIFORM_BUFFER, 0, g.sceneEntryCount * sizeof(glm::mat4), g.scene.entries);
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -462,7 +466,7 @@ namespace gfx
 		al_acknowledge_resize(g->display);
 	}
 
-	bool AddModel( Graphics* g, ObjectMap* objects, uint objectId, MeshType type )
+	bool AddModel( Graphics* g, ObjectMap* objects, uint objectId, MeshType type, const glm::mat4 &transform )
 	{
 		const uint mapId = g->sceneEntryCount;
 
@@ -472,7 +476,7 @@ namespace gfx
 			const float typeNum = static_cast<float>(type);
 			const float typeFrac = rand() / static_cast<float>(RAND_MAX + 1);
 
-			*model = glm::mat4(1.0f);
+			*model = glm::inverse( transform );
 			(*model)[3][3] = typeNum + typeFrac;
 
 			objects->set_object_mapping( objectId, ComponentType::GFX_MODEL, mapId );

@@ -15,11 +15,9 @@
 #define RM_NORMAL_DERIVATIVE_EPSILON 0.0001
 #endif //#ifndef RM_NORMAL_DERIVATIVE_EPSILON
 
-#ifndef RM_SCENE_FUNC
-#error RM_SCENE_FUNC must be defined as the scene distance function "vec2 (*SceneFunc) (in vec3 pos)"
-#endif //#ifndef RM_SCENE_FUNC
-
 const float RM_INFINITY = (1.0/0.0);
+
+vec2 RayMarch_SceneFunc (in vec3 pos);
 
 // Performs enhansed sphere tracing with relaxed step size
 // see http://lgdv.cs.fau.de/get/2234
@@ -31,9 +29,9 @@ const float RM_INFINITY = (1.0/0.0);
 // rayOrigin - Start point of the ray
 // pixelRadius - Radius of a pixel at rayDir*t + rayOrigin where t = 1
 // farPlane - Maximum t value to consider
-vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float pixelRadius, in const float farPlane)
+vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float farPlane, in const float pixelRadius)
 {
-	const float originDist = RM_SCENE_FUNC(rayOrigin).x;
+	const float originDist = RayMarch_SceneFunc(rayOrigin).x;
 	const float sceneFuncSign = sgn(originDist);
 	float stepMult = RM_STEP_MULT;
 	float t = originDist;
@@ -50,7 +48,7 @@ vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float pixe
 	for(int stepIndex=0; stepIndex < RM_MAX_ITERATIONS; ++stepIndex)
 	{
 		const vec3 worldPos = rayDir*t + rayOrigin;
-		const vec2 sceneRet = RM_SCENE_FUNC(worldPos);
+		const vec2 sceneRet = RayMarch_SceneFunc(worldPos);
 		const float signedRadius = sceneFuncSign * sceneRet.x;
 		const float radius = abs(signedRadius);
 		const bool overstep = stepMult > 1.0 && (radius + prevRadius) < stepLength;
@@ -90,9 +88,14 @@ vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float pixe
 	return vec2(RM_INFINITY, 0.0);	
 }
 
-float RayMarch_Shadow(in const vec3 rayDir, in const vec3 rayOrigin, in const float pixelRadius, in const float hardness, in const float farPlane)
+vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float farPlane)
 {
-	const float originDist = RM_SCENE_FUNC(rayOrigin).x;
+	return RayMarch(rayDir, rayOrigin, farPlane, 0.0001);
+}
+
+float RayMarch_Shadow(in const vec3 rayDir, in const vec3 rayOrigin, in const float hardness, in const float farPlane, in const float pixelRadius)
+{
+	const float originDist = RayMarch_SceneFunc(rayOrigin).x;
 	const float sceneFuncSign = sgn(originDist);
 	float stepMult = RM_STEP_MULT;
 	float t = originDist;
@@ -110,7 +113,7 @@ float RayMarch_Shadow(in const vec3 rayDir, in const vec3 rayOrigin, in const fl
 	for(int stepIndex=0; stepIndex < RM_MAX_ITERATIONS; ++stepIndex)
 	{
 		const vec3 worldPos = rayDir*t + rayOrigin;
-		const float sceneDist = RM_SCENE_FUNC(worldPos).x;
+		const float sceneDist = RayMarch_SceneFunc(worldPos).x;
 		const float signedRadius = sceneFuncSign * sceneDist;
 		const float radius = abs(signedRadius);
 		const bool overstep = stepMult > 1.0 && (radius + prevRadius) < stepLength;
@@ -152,15 +155,20 @@ float RayMarch_Shadow(in const vec3 rayDir, in const vec3 rayOrigin, in const fl
 	return clamp(hit, 0.0, 1.0);
 }
 
+float RayMarch_Shadow(in const vec3 rayDir, in const vec3 rayOrigin, in const float hardness, in const float farPlane)
+{
+	return RayMarch_Shadow(rayDir, rayOrigin, hardness, farPlane, 0.01);
+}
+
 // Computes a normal using the definition of a derivative with the surface position and scene function
 vec3 ComputeNormal(const vec3 pos)
 {
 	const vec2 nd = vec2(RM_NORMAL_DERIVATIVE_EPSILON, 0.0);
 	vec3 normal;
 
-	normal.x = RM_SCENE_FUNC(pos + nd.xyy).x - RM_SCENE_FUNC(pos - nd.xyy).x;
-	normal.y = RM_SCENE_FUNC(pos + nd.yxy).x - RM_SCENE_FUNC(pos - nd.yxy).x;
-	normal.z = RM_SCENE_FUNC(pos + nd.yyx).x - RM_SCENE_FUNC(pos - nd.yyx).x;
+	normal.x = RayMarch_SceneFunc(pos + nd.xyy).x - RayMarch_SceneFunc(pos - nd.xyy).x;
+	normal.y = RayMarch_SceneFunc(pos + nd.yxy).x - RayMarch_SceneFunc(pos - nd.yxy).x;
+	normal.z = RayMarch_SceneFunc(pos + nd.yyx).x - RayMarch_SceneFunc(pos - nd.yyx).x;
 
 	return normalize(normal);
 }

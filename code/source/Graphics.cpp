@@ -1,14 +1,14 @@
 #define ALLEGRO_UNSTABLE
 #define ALLEGRO_WINDOWS
 #include <vector>
-#include <atomic>
-#include <thread>
 #include <fstream>
 #include <filesystem>
 #include <chrono>
 #include "ObjectMap.h"
 #include "ComponentTypes.h"
+#include "shaders/scene_defines.glsl"
 #include "glm/glm.hpp"
+#include "glm/gtx/euler_angles.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "allegro5/allegro.h"
@@ -20,81 +20,24 @@ typedef unsigned uint;
 
 namespace 
 {
-	struct SceneEntry
-	{
-		glm::mat3 invRot;
-		uint8_t _padding0[4];
-		glm::vec3 invPos;
-		uint8_t _padding1[4];
-		glm::float32 scale;
-		glm::uint type;
-		uint8_t _padding2[8];
-	};
-
 	struct SceneEntryBlock
 	{
-		static const uint MAX_ENTRIES = 512;
-		glm::uint entryCount;
-		uint8_t _padding[12];
-		SceneEntry entries[MAX_ENTRIES];
-	};
-
-	struct DynamicData
-	{
-		std::vector<glm::mat3x3> invRot;
-		std::vector<glm::vec3> invPos;
-		std::vector<glm::float32> scale;
-		glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
-		glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
-	};
-
-	union InternalMeshType
-	{
-		struct
-		{
-			uint mesh : 4;
-			uint mtlInfo : 27;
-			uint initializing : 1;
-		};
-		uint data;
-	};
-
-	struct RenderData
-	{
-		DynamicData data;
-		std::vector<InternalMeshType> type;
-	};
-
-	struct RenderStore
-	{
-		RenderData gpu;
-		DynamicData velocity;
-	};
-
-	enum class SwapState : uint
-	{
-		INITIALIZING,
-		RENDERING,
-		SWAP_MESH_STORE,
-		RELOAD_SHADERS,
-		RESIZE,
-		SHUTDOWN
+		static const uint MAX_ENTRIES = MAX_SCENE_ENTRIES;
+		glm::mat4 entries[MAX_ENTRIES]; // entries[X][3][3] is type, not 1. Fix in shader
 	};
 }
 
 struct Graphics
 {
-	std::atomic<SwapState> state;
+	SceneEntryBlock scene;
+	glm::uint sceneEntryCount;
+	glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
 
 	ALLEGRO_DISPLAY* display = nullptr;
-	RenderStore meshStores[2];
-	std::thread renderThread;
-
 	uint sceneVAO = 0;
 	uint sceneUBO = 0;
 	uint shader = 0;
-
-	std::atomic_uint curMeshStore;
 };
 
 namespace
@@ -353,42 +296,19 @@ namespace
 			return true;
 		}
 
-		static bool UpdateUniforms(uint ubo, const RenderData& data)
+		static bool UpdateUniforms(const Graphics &g)
 		{
 			static const uint camPosBinding = 0;
 			static const uint camTargetBinding = 1;
+			static const uint sceneEntryCountBinding = 2;
 			static const uint sceneBlockBinding = 0;
-			std::vector<SceneEntry> entries;
 
-			glUniform3fv(camPosBinding, 1, glm::value_ptr(data.data.camPos));
-			glUniform3fv(camTargetBinding, 1, glm::value_ptr(data.data.camTarget));
+			glUniform3fv(camPosBinding, 1, glm::value_ptr(g.camPos));
+			glUniform3fv(camTargetBinding, 1, glm::value_ptr(g.camTarget));
+			glUniform1ui(sceneEntryCountBinding, g.sceneEntryCount);
 			
-			uint entryCount = static_cast<uint>(data.data.invPos.size());
-
-			if (entryCount > SceneEntryBlock::MAX_ENTRIES)
-			{
-				printf("Warning: %u/%u scene entries. Discarding last %u.\n", entryCount, SceneEntryBlock::MAX_ENTRIES, entryCount - SceneEntryBlock::MAX_ENTRIES);
-				entryCount = SceneEntryBlock::MAX_ENTRIES;
-			}
-			entries.resize(entryCount);
-
-			assert(data.data.invPos.size() == data.data.invRot.size());
-			assert(data.data.invRot.size() == data.data.scale.size());
-			assert(data.data.scale.size() == data.type.size());
-
-			for (uint entryIndex = 0; entryIndex < entryCount; ++entryIndex)
-			{
-				SceneEntry* const entry = entries.data() + entryIndex;
-
-				entry->invPos = data.data.invPos[entryIndex];
-				entry->invRot = data.data.invRot[entryIndex];
-				entry->scale = data.data.scale[entryIndex];
-				entry->type = data.type[entryIndex].data;
-			}
-
-			glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-			glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(uint), &entryCount);
-			glBufferSubData(GL_UNIFORM_BUFFER, 16, entryCount * sizeof(SceneEntry), entries.data());
+			glBindBuffer(GL_UNIFORM_BUFFER, g.sceneUBO);
+			glBufferSubData(GL_UNIFORM_BUFFER, 0, g.sceneEntryCount * sizeof(glm::mat4), g.scene.entries);
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 			return err::Error();
@@ -439,17 +359,15 @@ namespace
 						}
 						else
 						{
-							g->curMeshStore = 0;
 							g->shader = sceneShader;
 							g->sceneUBO = sceneUBO;
 							g->sceneVAO = sceneVAO;
 							g->display = display;
 
-							g->meshStores[0].gpu.data.camPos = glm::vec3(0.0f, 4.0f, 8.0f);
-							g->meshStores[0].gpu.data.camTarget = glm::vec3(0.0f, -3.0f, -2.0f);
-
-							g->meshStores[1].gpu.data.camPos = glm::vec3(0.0f, 4.0f, 8.0f);
-							g->meshStores[1].gpu.data.camTarget = glm::vec3(0.0f, -3.0f, -2.0f);
+							g->sceneEntryCount = 0;
+							g->camPos = glm::vec3(0.0f, 4.0f, 8.0f);
+							g->camTarget = glm::vec3(0.0f, -3.0f, -2.0f);
+							std::memset(&g->scene, 0, sizeof(g->scene));
 
 							return true;
 						}
@@ -467,128 +385,20 @@ namespace
 			return false;
 		}
 
-		static bool UpdateState(Graphics* g)
+		static void Render(const Graphics &g)
 		{
-			switch (g->state)
-			{
-				case SwapState::SWAP_MESH_STORE:
-					g->curMeshStore = !g->curMeshStore;
-					g->state = SwapState::RENDERING;
-				break;
-				case SwapState::RELOAD_SHADERS:
-				{
-					uint sceneShader, uiShader;
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-					shader::LoadShaders("shaders", &sceneShader, &uiShader);
+			glUseProgram(g.shader);
+			scene::UpdateUniforms(g);
 
-					if (sceneShader != 0)
-					{
-						glDeleteProgram(g->shader);
-						g->shader = sceneShader;
-					}
-					else
-					{
-						printf("Shaders failed to compile. Not reloading.\n");
-					}
+			glBindVertexArray(g.sceneVAO);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-					g->state = SwapState::RENDERING;
-				}
-				break;
-				case SwapState::RESIZE:
-					al_acknowledge_resize(g->display);
-					g->state = SwapState::RENDERING;
-				break;
-				case SwapState::SHUTDOWN:
-					return false;
-			}
+			glBindVertexArray(0);
+			glUseProgram(0);
 
-			return true;
-		}
-
-		static void Update(RenderStore* store, float elapsedSeconds)
-		{
-			DynamicData* const cur = &store->gpu.data;
-			const DynamicData& vel = store->velocity;
-
-			assert(cur->invPos.size() == vel.invPos.size());
-			for (size_t posIndex = 0; posIndex < cur->invPos.size(); ++posIndex)
-			{
-				cur->invPos[posIndex] += vel.invPos[posIndex] * elapsedSeconds;
-			}
-
-			assert(cur->invRot.size() == vel.invRot.size());
-			assert(cur->invRot.size() == cur->invPos.size());
-			for (size_t rotIndex = 0; rotIndex < cur->invRot.size(); ++rotIndex)
-			{
-				cur->invRot[rotIndex] *= vel.invRot[rotIndex] * elapsedSeconds;
-			}
-
-			assert(cur->scale.size() == vel.scale.size());
-			assert(cur->scale.size() == cur->invRot.size());
-			for (size_t rotIndex = 0; rotIndex < cur->invRot.size(); ++rotIndex)
-			{
-				cur->scale[rotIndex] += vel.scale[rotIndex] * elapsedSeconds;
-			}
-
-			cur->camPos += vel.camPos * elapsedSeconds;
-			cur->camTarget += vel.camTarget * elapsedSeconds;
-		}
-
-		static void Render(Graphics* g)
-		{
-			assert(g->state == SwapState::INITIALIZING);
-
-			if (!Init(g))
-			{
-				g->state = SwapState::SHUTDOWN;
-			}
-			else
-			{
-				g->state = SwapState::RENDERING;
-
-				auto frameStart = std::chrono::high_resolution_clock::now();
-
-				while (UpdateState(g))
-				{
-					RenderStore* const store = g->meshStores + g->curMeshStore;
-					const RenderData& data = store->gpu;
-					const auto frameEnd = std::chrono::high_resolution_clock::now();
-					std::chrono::duration<float> frameDurationSec = frameEnd - frameStart;
-					const float elapsedSec = frameDurationSec.count();
-					frameStart = frameEnd;
-
-					Update(store, elapsedSec);
-
-					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-					glUseProgram(g->shader);
-					scene::UpdateUniforms(g->sceneUBO, store->gpu);
-
-					glBindVertexArray(g->sceneVAO);
-					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-					glBindVertexArray(0);
-					glUseProgram(0);
-
-					al_flip_display();
-				}
-
-				glDeleteProgram(g->shader);
-				glDeleteBuffers(1, &g->sceneUBO);
-				glDeleteVertexArrays(1, &g->sceneVAO);
-				al_destroy_display(g->display);
-			}
-		}
-	}
-
-	static __forceinline void SleepUntilReady( Graphics* g )
-	{
-		SwapState state = g->state;
-
-		while(state != SwapState::RENDERING && state != SwapState::SHUTDOWN )
-		{
-			std::this_thread::yield();
-			state = g->state;
+			al_flip_display();
 		}
 	}
 }
@@ -599,18 +409,9 @@ namespace gfx
 	{
 		Graphics* g = new Graphics;
 
-		g->state = SwapState::INITIALIZING;
-		g->renderThread = std::thread(render::Render, g);
-
-		while (g->state == SwapState::INITIALIZING)
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		}
-
-		if (g->state != SwapState::RENDERING)
+		if (!render::Init(g))
 		{
 			printf("Graphics failed to initialize.\n");
-			g->renderThread.join();
 			delete g;
 			g = nullptr;
 		}
@@ -618,57 +419,63 @@ namespace gfx
 		return g;
 	}
 
+	void Shutdown(Graphics* g)
+	{
+		glDeleteProgram(g->shader);
+		glDeleteBuffers(1, &g->sceneUBO);
+		glDeleteVertexArrays(1, &g->sceneVAO);
+		al_destroy_display(g->display);
+
+		delete g;
+	}
+
+
+	void Update(Graphics* g)
+	{
+		render::Render(*g);
+	}
+
+	ALLEGRO_DISPLAY* GetDisplay(Graphics* g)
+	{
+		return g->display;
+	}
+
 	void ReloadShaders(Graphics* g)
 	{
-		SleepUntilReady(g);
-		assert(g->state == SwapState::RENDERING);
-		g->state = SwapState::RELOAD_SHADERS; // We don't wait for the reload to happen for now. Maybe should if we get too multithreaded with too many states
+		uint sceneShader, uiShader;
+
+		shader::LoadShaders("shaders", &sceneShader, &uiShader);
+
+		if (sceneShader != 0)
+		{
+			glDeleteProgram(g->shader);
+			g->shader = sceneShader;
+		}
+		else
+		{
+			printf("Shaders failed to compile. Not reloading.\n");
+		}
 	}
 
 	void Resize(Graphics* g)
 	{
-		SleepUntilReady(g);
-		assert(g->state == SwapState::RENDERING);
-		g->state = SwapState::RESIZE; // We don't wait for the reload to happen for now. Maybe should if we get too multithreaded with too many states
+		al_acknowledge_resize(g->display);
 	}
 
 	bool AddModel( Graphics* g, ObjectMap* objects, uint objectId, MeshType type )
 	{
-		SleepUntilReady(g);
-
-		const uint backingStoreId = !g->curMeshStore;
-		RenderStore* const backingStore = g->meshStores + backingStoreId;
-		const uint mapId = static_cast<uint>( backingStore->gpu.type.size() );
+		const uint mapId = g->sceneEntryCount;
 
 		if ( mapId < SceneEntryBlock::MAX_ENTRIES )
 		{
-			DynamicData* const pos = &backingStore->gpu.data;
-			DynamicData* const vel = &backingStore->velocity;
-			InternalMeshType intType;
+			glm::mat4* const model = g->scene.entries + (g->sceneEntryCount++);
+			const float typeNum = static_cast<float>(type);
+			const float typeFrac = rand() / static_cast<float>(RAND_MAX + 1);
 
-			intType.mesh = static_cast<uint>( type );
-			intType.mtlInfo = 0;
-			intType.initializing = 1;
-
-			backingStore->gpu.type.emplace_back( intType );
-			pos->invPos.emplace_back();
-			pos->invRot.emplace_back();
-			pos->scale.emplace_back();
-			vel->invPos.emplace_back();
-			vel->invRot.emplace_back();
-			vel->scale.emplace_back();
-
-			assert( static_cast<uint>(pos->invPos.size()) == mapId + 1 );
-			assert( static_cast<uint>(pos->invRot.size()) == mapId + 1 );
-			assert( static_cast<uint>(pos->scale.size()) == mapId + 1 );
-			assert( static_cast<uint>(vel->invPos.size()) == mapId + 1 );
-			assert( static_cast<uint>(vel->invRot.size()) == mapId + 1 );
-			assert( static_cast<uint>(vel->scale.size()) == mapId + 1 );
+			*model = glm::mat4(1.0f);
+			(*model)[3][3] = typeNum + typeFrac;
 
 			objects->set_object_mapping( objectId, ComponentType::GFX_MODEL, mapId );
-
-			assert( backingStoreId == !g->curMeshStore );
-			assert( g->state == SwapState::RENDERING );
 
 			return true;
 		}
@@ -676,33 +483,22 @@ namespace gfx
 		return false;
 	}
 
+	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<glm::mat4>& transforms)
+	{
+		return false;
+	}
+
 	void DestroyObjects( Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds )
 	{
+		uint mapTypes[] = { ComponentType::GFX_MODEL };
 		std::vector<uint> freedMeshIds;
 
-		for ( uint objectId : objectIds )
-		{
-			const uint mapIndex = objects->map_index_for_object( objectId, ComponentType::GFX_MODEL );
-
-			if ( mapIndex < SceneEntryBlock::MAX_ENTRIES )
-				freedMeshIds.emplace_back( mapIndex );
-		}
-
-		std::sort( freedMeshIds.begin(), freedMeshIds.end(), std::greater<uint>() );
+		GatherMappedIds(*objects, objectIds, mapTypes, &freedMeshIds);
 
 		if ( !freedMeshIds.empty() )
 		{
-			SleepUntilReady( g );
-
-			const uint backingStoreId = !g->curMeshStore;
-			RenderStore* const backingStore = g->meshStores + backingStoreId;
-			DynamicData* const pos = &backingStore->gpu.data;
-			DynamicData* const vel = &backingStore->velocity;
-			std::vector<InternalMeshType>* const type = &backingStore->gpu.type;
-			uint lastMeshId = static_cast<uint>( backingStore->gpu.type.size() ) - 1;
-
-			assert( freedMeshIds.size() <= backingStore->gpu.type.size() );
-
+			uint lastMeshId = static_cast<uint>( g->sceneEntryCount ) - 1;
+			
 			for ( uint freedMeshId : freedMeshIds )
 			{
 				assert( freedMeshId <= lastMeshId );
@@ -711,13 +507,7 @@ namespace gfx
 				{
 					const uint lastMeshObjectId = objects->object_for_map_index( ComponentType::GFX_MODEL, lastMeshId );
 
-					( *type )[freedMeshId] = ( *type )[lastMeshId];
-					pos->invPos[freedMeshId] = pos->invPos[lastMeshId];
-					pos->invRot[freedMeshId] = pos->invRot[lastMeshId];
-					pos->scale[freedMeshId] =  pos->scale[lastMeshId];
-					vel->invPos[freedMeshId] = vel->invPos[lastMeshId];
-					vel->invRot[freedMeshId] = vel->invRot[lastMeshId];
-					vel->scale[freedMeshId] =  vel->scale[lastMeshId];
+					g->scene.entries[freedMeshId] = g->scene.entries[lastMeshId];
 					
 					objects->set_object_mapping( lastMeshObjectId, ComponentType::GFX_MODEL, freedMeshId );
 				}
@@ -725,29 +515,8 @@ namespace gfx
 				--lastMeshId;
 			}
 
-			type->resize( lastMeshId + 1 );
-			pos->invPos.resize( lastMeshId + 1 );
-			pos->invRot.resize( lastMeshId + 1 );
-			pos->scale.resize( lastMeshId + 1 );
-			vel->invPos.resize( lastMeshId + 1 );
-			vel->invRot.resize( lastMeshId + 1 );
-			vel->scale.resize( lastMeshId + 1 );
-
-			assert( backingStoreId == !g->curMeshStore );
-			assert( g->state == SwapState::RENDERING );
+			g->sceneEntryCount = lastMeshId + 1;
 		}
 	}
 
-	ALLEGRO_DISPLAY* GetDisplay(Graphics* g)
-	{
-		return g->display;
-	}
-
-	void Shutdown(Graphics *g)
-	{
-		g->state = SwapState::SHUTDOWN;
-		g->renderThread.join();
-
-		delete g;
-	}
 }

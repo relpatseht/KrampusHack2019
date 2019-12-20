@@ -12,52 +12,46 @@ const float g_camFar = 25.0;
 layout(location = 0) in vec3 in_worldPos;
 layout(location = 1) in vec3 in_ray;
 
-struct SceneEntry
-{
-	mat3 invRot;
-	vec3 invPos;
-	float scale;
-	uint type;
-};
-
 layout(std140, binding=0) uniform SceneEntryBlock
 {
-	uint in_entryCount;
-	SceneEntry in_entries[512];
+	mat4 in_entries[MAX_SCENE_ENTRIES];
 };
 
 layout(location = 0) uniform vec3 in_camPos;
 layout(location = 1) uniform vec3 in_camTarget;
+layout(location = 2) uniform uint in_sceneEntryCount;
 
 layout (location = 0) out vec4 out_color;
 
-vec2 SimpleScene(in const vec3 pos)
+vec2 SimpleScene(in vec3 pos)
 {
 	const float FLT_MAX = 3.402823466e+38;
 	vec2 dist = vec2(FLT_MAX, 0.0);
 
-	for(uint i=0; i<in_entryCount; ++i)
+	for(uint i=0; i<in_sceneEntryCount; ++i)
 	{
-		float objScale = in_entries[i].scale;
-		vec3 objPos = (in_entries[i].invRot * (pos + in_entries[i].invPos)) / objScale;
+		mat4 invTransform = in_entries[i];
+		float type = invTransform[3][3];
 		vec2 objDist;
 
-		switch(in_entries[i].type)
-		{
-			case 0:
-				objDist = vec2(fSphere(objPos, 1.0), 1.0);
-			break;
-			case 1:
-				objDist = vec2(fBox(objPos, vec3(1.0, 1.0, 1.0)), 0.5);
-			break;
-			case 2:
-				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), 0.3);
-			break;
-			default:
-				objDist = vec2(FLT_MAX, 0.0);
-		}
+		invTransform[3][3] = 1.0;
+		pos = (invTransform * vec4(pos, 1.0)).xyz;
 
-		objDist.x *= objScale;
+		if(type < 1.0)
+			objDist = vec2(fSphere(pos, 1.0), type);
+		else if(type < 2.0)
+			objDist = vec2(fBox(pos, vec3(1.0, 1.0, 1.0)), type);
+		else if(type < 3.0)
+				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+		else if(type < 4.0)
+				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+		else if(type < 5.0)
+				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+		else if(type < 6.0)
+				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+		else if(type < 7.0)
+				objDist = vec2(fCylinder(pos, 1.0f, 1.0f), type);
+
 		if(objDist.x < dist.x)
 			dist = objDist;
 	}

@@ -2,8 +2,8 @@
 
 enum ComponentType
 {
-	TRANSFORM,
 	GFX_MODEL,
-	PHY_MODEL,
+	PHY_BODY,
+	PHY_SOFT_ANCHOR,
 	COUNT
 };

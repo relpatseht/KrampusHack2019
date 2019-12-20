@@ -66,6 +66,8 @@ namespace
 
 int main(int argc, char* argv[])
 {
+	srand(0);
+
 	if (!InitAllegro())
 	{
 		printf("Failed to initialize allegro.\n");
@@ -89,7 +91,8 @@ int main(int argc, char* argv[])
 			while (state.isRunning)
 			{
 				ProcessEvents(eventQueue, &state);
-				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+				game::Update(&state.game);
 			}
 
 			game::Shutdown(&state.game);

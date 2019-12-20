@@ -89,6 +89,8 @@
     <ClCompile Include="Gameplay.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ObjectMap.cpp" />
+    <ClCompile Include="Physics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assert.h" />
@@ -98,6 +100,7 @@
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="ObjectMap.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Physics.h" />
     <ClInclude Include="Power2.h" />
   </ItemGroup>
   <ItemGroup>

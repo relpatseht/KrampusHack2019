@@ -2,7 +2,8 @@
 
 #include <cstdint>
 #include <cstring>
-#include <wmmintrin.h>
+#include <vector>
+#include <xhash>
 #include "Power2.h"
 #include "Assert.h"
 
@@ -166,10 +167,11 @@ private:
 
 	__forceinline uint hash(uint objectId) const
 	{
-		const __m128i hash128 = _mm_aesenc_si128(_mm_set1_epi32(objectId), _mm_set1_epi32(0xBAADF00D));
-		const uint hash32 = hash128.m128i_u32[0];
-
-		return hash32 == 0 ? 1 : hash32;
+		return static_cast<uint>(std::hash<uint>()(objectId));
+		//const __m128i hash128 = _mm_aesenc_si128(_mm_set1_epi32(objectId), _mm_set1_epi32(0xBAADF00D));
+		//const uint hash32 = hash128.m128i_u32[0];
+		//
+		//return hash32 == 0 ? 1 : hash32;
 	}
 
 	__forceinline uint distance_from_ideal(uint index) const
@@ -347,3 +349,39 @@ private:
 		delete[] oldObjectIds;
 	}
 };
+
+void GatherMappedIds(const ObjectMap& objects, const std::vector<uint>& objectIds, const uint* mapIndices, uint count, std::vector<uint>* outMappedIds);
+
+template<uint MapCount>
+void GatherMappedIds(const ObjectMap& objects, const std::vector<uint>& objectIds, const uint(&mapIndices)[MapCount], std::vector<uint> *outMappedIds)
+{
+	GatherMappedIds(objects, objectIds, mapIndices, MapCount, outMappedIds);
+}
+
+template<typename T, typename Deleter>
+void ReturnMappedIds(uint mapType, const std::vector<uint>& freedIds, ObjectMap *objects, std::vector<T>* mappedType, Deleter Delete)
+{
+	for (uint freedId : freedIds)
+	{
+		const uint lastIndex = static_cast<uint>(mappedType->size() - 1);
+
+		assert(freedId <= lastIndex);
+
+		if (freedId < lastIndex)
+		{
+			const uint lastObjectId = objects->object_for_map_index(mapType, lastIndex);
+
+			std::swap((*mappedType)[freedId], mappedType->back());
+			objects->set_object_mapping(lastObjectId, mapType, freedId);
+		}
+
+		Delete(mappedType->back());
+		mappedType->pop_back();
+	}
+}
+
+template<typename T>
+void ReturnMappedIds(uint mapType, const std::vector<uint>& freedIds, ObjectMap* objects, std::vector<T>* mappedType)
+{
+	ReturnMappedIds(mapType, freedIds, objects, mappedType, [](const T&) {});
+}

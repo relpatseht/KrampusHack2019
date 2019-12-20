@@ -16,10 +16,7 @@ struct Game
 	Physics* phy;
 	ObjectMap *objects;
 	uint nextObjectId;
-	std::vector<uint> initializingObjects;
 	std::vector<uint> dyingObjects;
-
-
 };
 
 namespace game
@@ -27,7 +24,8 @@ namespace game
 	bool Init(Game* outGame);
 	void Shutdown(Game* game);
 
+	void Update(Game* game);
+
 	uint CreateObject(Game* game);
 	void CleanDeadObjects(Game* game);
-	void EstablishNewObjects( Game* game );
 }

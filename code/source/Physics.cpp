@@ -58,11 +58,13 @@ namespace
 			b2Fixture* b = contact->GetFixtureB();
 			const b2Filter* aFilter = &a->GetFilterData();
 			const b2Filter* bFilter = &b->GetFilterData();
+			float sign = 1.0f;
 
 			if (aFilter->categoryBits > bFilter->categoryBits)
 			{
 				std::swap(a, b);
 				std::swap(aFilter, bFilter);
+				sign = -1.0f;
 			}
 			
 			if (aFilter->categoryBits == BodyGroup::PLATFORM)
@@ -71,7 +73,7 @@ namespace
 
 				// 1-driectional platforms. Can jump up through them
 				contact->GetWorldManifold(&worldManifold);
-				if (worldManifold.normal.y > 0.5f)
+				if (sign*worldManifold.normal.y < 0.5f)
 					contact->SetEnabled(false);
 			}
 		}

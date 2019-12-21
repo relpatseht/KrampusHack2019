@@ -327,6 +327,14 @@ int main(int argc, char* argv[])
 				al_register_event_source(eventQueue, al_get_keyboard_event_source());
 				al_register_event_source(eventQueue, al_get_display_event_source(display));
 
+				state.staticPlatformsId = game::CreateObject(state.game);
+				gfx::AddModel(state.game->gfx, state.staticPlatformsId, gfx::MeshType::STATIC_PLATFORMS, glm::mat4(1.0f));
+				phy::AddBody(state.game->phy, state.staticPlatformsId, phy::BodyType::STATIC_PLATFORMS);
+
+				state.worldBoundsId = game::CreateObject(state.game);
+				gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
+				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
+
 				const float playerStartX = -8.0f;
 				const float playerStartY = -6.0f;
 				state.playerId = game::CreateObject(state.game);
@@ -340,14 +348,6 @@ int main(int argc, char* argv[])
 				phy::AddBody(state.game->phy, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
 				phy::AddSoftAnchor(state.game->phy, state.helperId);
 
-				state.staticPlatformsId = game::CreateObject(state.game);
-				gfx::AddModel(state.game->gfx, state.staticPlatformsId, gfx::MeshType::STATIC_PLATFORMS, glm::mat4(1.0f));
-				phy::AddBody(state.game->phy, state.staticPlatformsId, phy::BodyType::STATIC_PLATFORMS);
-
-				state.worldBoundsId = game::CreateObject(state.game);
-				gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
-				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
-				
 				uint frameCount = 0;
 				while (state.isRunning)
 				{

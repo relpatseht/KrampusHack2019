@@ -70,12 +70,6 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 	}*/
 
 	{
-		vec2 snowflat = Mesh_Snowball(pos - vec3(0.0, 4.0, 0.0), 0.1);
-		if(snowflat.x < dist.x)
-		dist = snowflat;
-	}
-
-	{
 		const float noise = noise(pos*32)*0.004 + 0.998;
 		const float bottom = fSphere(pos*noise - vec3(0.0, -6.25, 0.0), 2.0) / noise;
 		const float mid = fSphere(pos*noise - vec3(0.0, -3.5, 0.0), 1.5) / noise;
@@ -137,16 +131,16 @@ void main()
 		float light1Shadow = RayMarch_Shadow(light1Dir, hitPos, 25.0, g_camFar);
 		vec3 light1Radiance = light1Color*light1Attn*light1BRDF*light1Shadow;
 
-		vec3 light2Color = vec3(2, 10, 2);
-		vec3 light2Pos = -(in_entries[1])[3].xyz;//vec3(-20, 20, 30); // Hack, helper light
-		vec3 light2Dir = normalize(light2Pos - hitPos);
-		float light2Dist = length(light2Pos - hitPos);
-		float light2Attn = 1.0 / (light2Dist * light2Dist);
-		vec3 light2BRDF = BRDF_CookTorrance(hitNormal, viewDir, light2Dir, albedo, metalness, roughness);
+		//vec3 light2Color = vec3(2, 10, 2);
+		//vec3 light2Pos = -(in_entries[1])[3].xyz;//vec3(-20, 20, 30); // Hack, helper light
+		//vec3 light2Dir = normalize(light2Pos - hitPos);
+		//float light2Dist = length(light2Pos - hitPos);
+		//float light2Attn = 1.0 / (light2Dist * light2Dist);
+		//vec3 light2BRDF = BRDF_CookTorrance(hitNormal, viewDir, light2Dir, albedo, metalness, roughness);
 		//float light2Shadow = RayMarch_Shadow(light2Dir, hitPos, 10.0, g_camFar);
-		vec3 light2Radiance = light2Color*light2Attn*light2BRDF;//*light2Shadow;
+		//vec3 light2Radiance = light2Color*light2Attn*light2BRDF;//*light2Shadow;
 
-		vec3 color = (ambientLight * albedo) + light1Radiance + light2Radiance;
+		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
 		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
 }

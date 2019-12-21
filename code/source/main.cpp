@@ -49,6 +49,30 @@ namespace
 		return false;
 	}
 
+	// each frame is 1/60 seconds
+	static void AddPeriodics(GameState* state, uint frameCount)
+	{
+		if (frameCount % 30 == 0) // ever 0.5 seconds
+		{
+			if (state->snowflakeCount < state->snowflakeIds.size())
+			{
+				const float x = ((rand() / static_cast<float>(RAND_MAX)) - 0.5f)* BOUNDS_HALF_WIDTH * 2.0f;
+				const float y = static_cast<float>(BOUNDS_HALF_HEIGHT + SNOWFLAKE_RADIUS);
+				const uint objId = game::CreateObject(state->game);
+
+				if (gfx::AddModel(state->game->gfx, objId, gfx::MeshType::SNOW_FLAKE, glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f))))
+				{
+					phy::AddBody(state->game->phy, objId, phy::BodyType::SNOW_FLAKE, x, y);
+
+					state->snowflakeIds[state->snowflakeCount++] = objId;
+				}
+				else
+					state->game->dyingObjects.emplace_back(objId);
+
+			}
+		}
+	}
+
 	static void ProcessEvents(ALLEGRO_EVENT_QUEUE* queue, GameState* state)
 	{
 		while (!al_is_event_queue_empty(queue))
@@ -89,19 +113,6 @@ namespace
 					phy::SetSoftAnchorTarget(state->game->phy, state->helperId, x, y);
 				}
 				break;
-				case ALLEGRO_EVENT_TIMER:
-					if (state->snowflakeCount < state->snowflakeIds.size())
-					{
-						const float x = ((rand() / static_cast<float>(RAND_MAX)) - 0.5f)* BOUNDS_HALF_WIDTH * 4.0f;
-						const float y = static_cast<float>(BOUNDS_HALF_HEIGHT + SNOWFLAKE_RADIUS);
-						const uint objId = game::CreateObject(state->game);
-
-						gfx::AddModel(state->game->gfx, objId, gfx::MeshType::SNOW_FLAKE, glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f)));
-						phy::AddBody(state->game->phy, objId, phy::BodyType::SNOW_FLAKE, x, y);
-
-						state->snowflakeIds[state->snowflakeCount++] = objId;
-					}
-				break;
 			}
 		}
 	}
@@ -136,7 +147,7 @@ namespace
 					}
 				}
 
-				*outT = glm::translate(glm::mat4(1.0f), glm::vec3(phyT.x, phyT.y, 0.0f)) * glm::eulerAngleY(phyT.rot);
+				*outT = glm::translate(glm::mat4(1.0f), glm::vec3(phyT.x, phyT.y, 0.0f)) * glm::eulerAngleZ(phyT.rot);
 			}
 
 			gfx::UpdateModels(game->gfx, updatedObjs, gfxTransforms);
@@ -174,14 +185,11 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				ALLEGRO_TIMER* const snowflakeTimer = al_create_timer(0.5);
-
 				// Create event queue
 				ALLEGRO_EVENT_QUEUE* const eventQueue = al_create_event_queue();
 				al_register_event_source(eventQueue, al_get_mouse_event_source());
 				al_register_event_source(eventQueue, al_get_keyboard_event_source());
 				al_register_event_source(eventQueue, al_get_display_event_source(display));
-				al_register_event_source(eventQueue, al_get_timer_event_source(snowflakeTimer));
 
 				const float playerStartX = -8.0f;
 				const float playerStartY = -6.0f;
@@ -203,11 +211,12 @@ int main(int argc, char* argv[])
 				state.worldBoundsId = game::CreateObject(state.game);
 				gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
 				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
-
-				al_start_timer(snowflakeTimer);
-
+				
+				uint frameCount = 0;
 				while (state.isRunning)
 				{
+					AddPeriodics(&state, frameCount);
+
 					ProcessEvents(eventQueue, &state);
 
 					phy::Update(state.game->phy);
@@ -215,6 +224,7 @@ int main(int argc, char* argv[])
 					gfx::Update(state.game->gfx);
 
 					game::CleanDeadObjects(state.game);
+					++frameCount;
 				}
 
 				game::Shutdown(state.game);

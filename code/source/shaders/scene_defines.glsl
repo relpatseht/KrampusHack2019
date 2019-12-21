@@ -15,7 +15,7 @@
 #define PLAYER_WIDTH 0.5
 #define PLAYER_HEIGHT 1.5
 
-#define HELPER_RADIUS 0.5
+#define HELPER_RADIUS 0.4
 
 #define SNOWFLAKE_RADIUS 0.25
 

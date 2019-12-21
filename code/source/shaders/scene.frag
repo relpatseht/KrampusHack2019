@@ -62,13 +62,12 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 		if(objDist.x < dist.x)
 			dist = objDist;
 	}
-
-	{
+/*{
 		vec2 staticSceneDist = StaticScene(pos);
 
 		if(staticSceneDist.x < dist.x)
 			dist = staticSceneDist;
-	}
+	}*/
 
 	{
 		vec2 snowflat = Mesh_Snowball(pos - vec3(0.0, 4.0, 0.0), 0.1);
@@ -77,7 +76,7 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 	}
 
 	{
-		const float noise = noise3(pos*32)*0.004 + 0.998;
+		const float noise = noise(pos*32)*0.004 + 0.998;
 		const float bottom = fSphere(pos*noise - vec3(0.0, -6.25, 0.0), 2.0) / noise;
 		const float mid = fSphere(pos*noise - vec3(0.0, -3.5, 0.0), 1.5) / noise;
 		const float top = fSphere(pos*noise - vec3(0.0, -1.35, 0.0), 1.1) / noise;

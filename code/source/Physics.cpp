@@ -231,6 +231,9 @@ namespace
 				bodyDef.type = b2_dynamicBody;
 				bodyDef.position.Set(x, y);
 				bodyDef.gravityScale = 0.1f;
+				bodyDef.linearDamping = 0.4f;
+				bodyDef.linearVelocity = b2Vec2(0.0f, -2.0f);
+				bodyDef.angularVelocity = 6.0f * ((rand() / static_cast<float>(RAND_MAX)) - 0.5f);
 				bodyDef.allowSleep = false;
 
 				shape.m_radius = static_cast<float>(SNOWFLAKE_RADIUS);
@@ -245,6 +248,55 @@ namespace
 				flake->CreateFixture(&fixtureDef);
 
 				return flake;
+			}
+		}
+	}
+
+	namespace logic
+	{
+		static void ApplySuction(b2Contact* listHead)
+		{
+			for (b2Contact* contact = listHead; contact; contact = contact->GetNext())
+			{
+				b2Fixture* a = contact->GetFixtureA();
+				b2Fixture* b = contact->GetFixtureB();
+				const b2Filter* aFilter = &a->GetFilterData();
+				const b2Filter* bFilter = &b->GetFilterData();
+
+				if (aFilter->categoryBits > bFilter->categoryBits)
+				{
+					std::swap(a, b);
+					std::swap(aFilter, bFilter);
+				}
+
+				// Apply helper suction force to snowflakes
+				if (aFilter->categoryBits == BodyGroup::HELPER && bFilter->categoryBits == BodyGroup::SNOW_FLAKE)
+				{
+					const float maxForce = 0.7f;
+					b2Body* const flake = b->GetBody();
+					b2Body* const helper = a->GetBody();
+					const b2Vec2 flakeCenter = flake->GetWorldCenter();
+					const b2Vec2 helperCenter = helper->GetWorldCenter();
+					const float flakeRadius = b->GetShape()->m_radius;
+					const float helperRadius = a->GetShape()->m_radius;
+					const b2Vec2 flakeToHelper = helperCenter - flakeCenter;
+					b2Vec2 flakeToHelperDir = flakeToHelper;
+					const float flakeToHelperLen = flakeToHelperDir.Normalize();
+					const float flakeDist = std::max(flakeToHelperLen - flakeRadius, 0.0f);
+					const float forceLerp = 1.0f - (flakeDist / helperRadius);
+					const float forceLerp2 = forceLerp * forceLerp;
+					const float forceMag = maxForce * forceLerp2;
+					b2Vec2 force = flakeToHelperDir;
+					b2WorldManifold worldManifold;
+
+					force *= forceMag * flake->GetMass();
+
+					b2Vec2 flakeToHitPos = flakeToHelper;
+					flakeToHitPos *= (flakeToHelperLen - helperRadius);
+					b2Vec2 flakeHitPos = flakeCenter + flakeToHitPos;
+
+					flake->ApplyLinearImpulse(force, flakeHitPos, true);
+				}
 			}
 		}
 	}
@@ -277,6 +329,8 @@ namespace phy
 		static const uint positionIterations = 3;
 
 		p->world.Step(p->timestep, velocityIterations, positionIterations);
+
+		logic::ApplySuction(p->world.GetContactList());
 	}
 
 	bool AddBody(Physics* p, uint objectId, BodyType type, float x, float y)
@@ -312,6 +366,7 @@ namespace phy
 
 		if (body)
 		{
+			body->SetUserData(reinterpret_cast<void*>((uintptr_t)objectId));
 			p->bodies.add_to_object(objectId) = body;
 		}
 

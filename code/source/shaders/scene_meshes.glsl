@@ -3,6 +3,7 @@
 
 #include "/hg_sdf.glsl"
 #include "/scene_defines.glsl"
+#include "/noise.glsl"
 
 void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal, out vec3 albedo, out float metalness, out float roughness)
 {
@@ -10,7 +11,7 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 	{
 		const vec3 bright = vec3(0.31, 0.09, 0.01)*.5;
 		const vec3 dark = vec3(0.23, 0.07, 0.00)*.24;
-		const float lerp = sin(pos.x*20)*noise2(pos.xy*20) + cos(pos.y*20)*noise2(pos.yx*35);
+		const float lerp = noise(pos.xyx*20);
 		albedo = mix(dark, bright, lerp);
 		metalness = 0.01;
 		roughness = 0.01;

@@ -3,7 +3,7 @@
 #include <vector>
 #include "Box2D/Box2D.h"
 #include "ComponentTypes.h"
-#include "ObjectMap.h"
+#include "Component.h"
 #include "shaders/scene_defines.glsl"
 
 #include "Physics.h"
@@ -31,8 +31,8 @@ struct Physics
 	float timestep;
 
 	b2Body* nullBody;
-	std::vector<b2Body*> bodies;
-	std::vector<b2MouseJoint*> anchors;
+	component_list<b2Body*> bodies;
+	component_list<b2MouseJoint*> anchors;
 
 	Physics(b2Vec2 gravity) : world(gravity) {}
 };
@@ -279,10 +279,9 @@ namespace phy
 		p->world.Step(p->timestep, velocityIterations, positionIterations);
 	}
 
-	bool AddBody(Physics* p, ObjectMap* objects, uint objectId, BodyType type, float x, float y)
+	bool AddBody(Physics* p, uint objectId, BodyType type, float x, float y)
 	{
 		b2Body* body = nullptr;
-		const uint mapId = static_cast<uint>(p->bodies.size());
 		
 		switch (type)
 		{
@@ -313,21 +312,19 @@ namespace phy
 
 		if (body)
 		{
-			objects->set_object_mapping(objectId, ComponentType::PHY_BODY, mapId);
-			p->bodies.emplace_back(body);
+			p->bodies.add_to_object(objectId) = body;
 		}
 
 		return body != nullptr;
 	}
 
-	bool AddSoftAnchor(Physics* p, ObjectMap* objects, uint objectId)
+	bool AddSoftAnchor(Physics* p, uint objectId)
 	{
-		const uint bodyId = objects->map_index_for_object(objectId, ComponentType::PHY_BODY);
+		b2Body** const bodyPtr = p->bodies.for_object(objectId);
 
-		if (bodyId < p->bodies.size())
+		if (bodyPtr)
 		{
-			b2Body* const body = p->bodies[bodyId];
-			const uint mapId = static_cast<uint>(p->anchors.size());
+			b2Body* const body = *bodyPtr;
 
 			b2MouseJointDef anchorDef;
 
@@ -337,71 +334,60 @@ namespace phy
 			anchorDef.maxForce = 50.0f * body->GetMass();
 			anchorDef.dampingRatio = 0.99999f;
 			
-			b2MouseJoint *anchor = (b2MouseJoint*)p->world.CreateJoint(&anchorDef);
-			p->anchors.emplace_back(anchor);
+			p->anchors.add_to_object(objectId) = (b2MouseJoint*)p->world.CreateJoint(&anchorDef);
 
-			objects->set_object_mapping(objectId, ComponentType::PHY_SOFT_ANCHOR, mapId);
 			return true;
 		}
 
 		return false;
 	}
 
-	void GatherTransforms(const Physics &p, const ObjectMap &objects, std::vector<uint>* outIds, std::vector<Transform>* outTransforms)
+	void GatherTransforms(const Physics &p, std::vector<uint>* outIds, std::vector<Transform>* outTransforms)
 	{
-		const uint maxBodyId = static_cast<uint>(p.bodies.size());
+		*outIds = p.bodies.idToObj;
+		outTransforms->resize(p.bodies.size());
 
-		for (uint bodyId = 0; bodyId < maxBodyId; ++bodyId)
+		for (size_t bodyId = 0; bodyId < p.bodies.size(); ++bodyId)
 		{
+			Transform* const outT = outTransforms->data() + bodyId;
 			const b2Body& body = *p.bodies[bodyId];
 
-			if (body.GetType() != b2_staticBody)
-			{
-				const uint objId = objects.object_for_map_index(ComponentType::PHY_BODY, bodyId);
-				Transform* const outT = &outTransforms->emplace_back();
-
-				outT->x = body.GetPosition().x;
-				outT->y = body.GetPosition().y;
-				outT->rot = body.GetAngle();
-
-				outIds->emplace_back(objId);
-			}
+			outT->x = body.GetPosition().x;
+			outT->y = body.GetPosition().y;
+			outT->rot = body.GetAngle();
 		}
 	}
 
-	void ApplyImpulse(Physics* p, ObjectMap* objects, uint objectId, float x, float y)
+	void ApplyImpulse(Physics* p, uint objectId, float x, float y)
 	{
-		const uint bodyId = objects->map_index_for_object(objectId, ComponentType::PHY_BODY);
+		b2Body** bodyPtr = p->bodies.for_object(objectId);
 
-		if (bodyId < p->bodies.size())
+		if (bodyPtr)
 		{
-			b2Body* const body = p->bodies[bodyId];
+			b2Body* const body = *bodyPtr;
 
 			body->ApplyLinearImpulseToCenter(b2Vec2(x * body->GetMass(), y * body->GetMass()), true);
 		}
 	}
 
-	void SetSoftAnchorTarget(Physics* p, ObjectMap* objects, uint objectId, float x, float y)
+	void SetSoftAnchorTarget(Physics* p, uint objectId, float x, float y)
 	{
-		const uint anchorId = objects->map_index_for_object(objectId, ComponentType::PHY_SOFT_ANCHOR);
-		b2MouseJoint* const joint = p->anchors[anchorId];
+		b2MouseJoint** jointPtr = p->anchors.for_object(objectId);
 
-		assert(anchorId < p->anchors.size());
-		joint->SetTarget(b2Vec2(x, y));
+		if (jointPtr)
+		{
+			b2MouseJoint* const joint = *jointPtr;
+			joint->SetTarget(b2Vec2(x, y));
+		}
 	}
 
-	void DestroyObjects(Physics* p, ObjectMap* objects, const std::vector<uint>& objectIds)
+	void DestroyObjects(Physics* p, const std::vector<uint>& objectIds)
 	{
-		uint mapTypes[] = { ComponentType::PHY_BODY, ComponentType::PHY_SOFT_ANCHOR };
-		const uint mapTypeCount = sizeof(mapTypes) / sizeof(mapTypes[0]);
-		std::vector<uint> freedIds[mapTypeCount];
-
-		GatherMappedIds(*objects, objectIds, mapTypes, freedIds);
-
-		ReturnMappedIds(mapTypes[0], freedIds[0], objects, &p->bodies, [p](b2Body* body)
+		p->bodies.remove_objs(objectIds, [p](b2Body* body)
 		{
 			p->world.DestroyBody(body);
 		});
-		ReturnMappedIds(mapTypes[1], freedIds[1], objects, &p->anchors);
+
+		p->anchors.remove_objs(objectIds);
 	}
 }

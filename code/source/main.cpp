@@ -72,7 +72,7 @@ namespace
 							state->isRunning = false;
 						break;
 						case ALLEGRO_KEY_SPACE:
-							phy::ApplyImpulse(state->game->phy, state->game->objects, state->playerId, 0.0f, 10.0f);
+							phy::ApplyImpulse(state->game->phy, state->playerId, 0.0f, 10.0f);
 						break;
 						case ALLEGRO_KEY_F3:
 							printf("Reloading shaders\n");
@@ -86,7 +86,7 @@ namespace
 					float y = evt.mouse.y;
 
 					gfx::PixelToWolrd(*state->game->gfx, &x, &y);
-					phy::SetSoftAnchorTarget(state->game->phy, state->game->objects, state->helperId, x, y);
+					phy::SetSoftAnchorTarget(state->game->phy, state->helperId, x, y);
 				}
 				break;
 				case ALLEGRO_EVENT_TIMER:
@@ -96,8 +96,8 @@ namespace
 						const float y = static_cast<float>(BOUNDS_HALF_HEIGHT + SNOWFLAKE_RADIUS);
 						const uint objId = game::CreateObject(state->game);
 
-						gfx::AddModel(state->game->gfx, state->game->objects, objId, gfx::MeshType::SNOW_FLAKE, glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f)));
-						phy::AddBody(state->game->phy, state->game->objects, objId, phy::BodyType::SNOW_FLAKE, x, y);
+						gfx::AddModel(state->game->gfx, objId, gfx::MeshType::SNOW_FLAKE, glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f)));
+						phy::AddBody(state->game->phy, objId, phy::BodyType::SNOW_FLAKE, x, y);
 
 						state->snowflakeIds[state->snowflakeCount++] = objId;
 					}
@@ -112,7 +112,7 @@ namespace
 		std::vector<phy::Transform> objTransforms;
 		std::vector<uint> updatedObjs;
 
-		phy::GatherTransforms(*game->phy, *game->objects, &updatedObjs, &objTransforms);
+		phy::GatherTransforms(*game->phy, &updatedObjs, &objTransforms);
 		if (!updatedObjs.empty())
 		{
 			std::vector<glm::mat4> gfxTransforms;
@@ -139,7 +139,7 @@ namespace
 				*outT = glm::translate(glm::mat4(1.0f), glm::vec3(phyT.x, phyT.y, 0.0f)) * glm::eulerAngleY(phyT.rot);
 			}
 
-			gfx::UpdateModels(game->gfx, game->objects, updatedObjs, gfxTransforms);
+			gfx::UpdateModels(game->gfx, updatedObjs, gfxTransforms);
 		}
 	}
 }
@@ -186,23 +186,23 @@ int main(int argc, char* argv[])
 				const float playerStartX = -8.0f;
 				const float playerStartY = -6.0f;
 				state.playerId = game::CreateObject(state.game);
-				gfx::AddModel(state.game->gfx, state.game->objects, state.playerId, gfx::MeshType::PLAYER, glm::translate(glm::mat4(1.0f), glm::vec3(playerStartX, playerStartY, 0.0f)));
-				phy::AddBody(state.game->phy, state.game->objects, state.playerId, phy::BodyType::PLAYER, playerStartX, playerStartY);
+				gfx::AddModel(state.game->gfx, state.playerId, gfx::MeshType::PLAYER, glm::translate(glm::mat4(1.0f), glm::vec3(playerStartX, playerStartY, 0.0f)));
+				phy::AddBody(state.game->phy, state.playerId, phy::BodyType::PLAYER, playerStartX, playerStartY);
 				
 				const float helperStartX = 0.0f;
 				const float helperStartY = 4.0f;
 				state.helperId = game::CreateObject(state.game);
-				gfx::AddModel(state.game->gfx, state.game->objects, state.helperId, gfx::MeshType::HELPER, glm::translate(glm::mat4(1.0f), glm::vec3(helperStartX, helperStartY, 0.0f)));
-				phy::AddBody(state.game->phy, state.game->objects, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
-				phy::AddSoftAnchor(state.game->phy, state.game->objects, state.helperId);
+				gfx::AddModel(state.game->gfx, state.helperId, gfx::MeshType::HELPER, glm::translate(glm::mat4(1.0f), glm::vec3(helperStartX, helperStartY, 0.0f)));
+				phy::AddBody(state.game->phy, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
+				phy::AddSoftAnchor(state.game->phy, state.helperId);
 
 				state.staticPlatformsId = game::CreateObject(state.game);
-				gfx::AddModel(state.game->gfx, state.game->objects, state.staticPlatformsId, gfx::MeshType::STATIC_PLATFORMS, glm::mat4(1.0f));
-				phy::AddBody(state.game->phy, state.game->objects, state.staticPlatformsId, phy::BodyType::STATIC_PLATFORMS);
+				gfx::AddModel(state.game->gfx, state.staticPlatformsId, gfx::MeshType::STATIC_PLATFORMS, glm::mat4(1.0f));
+				phy::AddBody(state.game->phy, state.staticPlatformsId, phy::BodyType::STATIC_PLATFORMS);
 
 				state.worldBoundsId = game::CreateObject(state.game);
-				gfx::AddModel(state.game->gfx, state.game->objects, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
-				phy::AddBody(state.game->phy, state.game->objects, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
+				gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
+				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
 
 				al_start_timer(snowflakeTimer);
 

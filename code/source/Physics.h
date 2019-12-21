@@ -3,7 +3,6 @@
 #include <vector>
 
 struct Physics;
-class ObjectMap;
 class b2Body;
 
 typedef unsigned uint;
@@ -30,13 +29,13 @@ namespace phy
 	void Shutdown(Physics* p);
 	void Update(Physics* p);
 
-	bool AddBody(Physics* p, ObjectMap* objects, uint objectId, BodyType type, float x = 0.0f, float y = 0.0f);
-	bool AddSoftAnchor(Physics* p, ObjectMap* objects, uint objectId);
+	bool AddBody(Physics* p, uint objectId, BodyType type, float x = 0.0f, float y = 0.0f);
+	bool AddSoftAnchor(Physics* p, uint objectId);
 
-	void GatherTransforms(const Physics &p, const ObjectMap &objects, std::vector<uint>* outIds, std::vector<Transform>* outTransforms);
+	void GatherTransforms(const Physics &p, std::vector<uint>* outIds, std::vector<Transform>* outTransforms);
 
-	void ApplyImpulse(Physics* p, ObjectMap* objects, uint objectId, float x, float y);
-	void SetSoftAnchorTarget(Physics* p, ObjectMap* objects, uint objectId, float x, float y);
+	void ApplyImpulse(Physics* p, uint objectId, float x, float y);
+	void SetSoftAnchorTarget(Physics* p, uint objectId, float x, float y);
 
-	void DestroyObjects(Physics* p, ObjectMap* objects, const std::vector<uint>& objectIds);
+	void DestroyObjects(Physics* p, const std::vector<uint>& objectIds);
 }

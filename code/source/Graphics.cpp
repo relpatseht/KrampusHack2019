@@ -4,8 +4,10 @@
 #include <fstream>
 #include <filesystem>
 #include <chrono>
-#include "ObjectMap.h"
+#include <unordered_map>
 #include "ComponentTypes.h"
+#include "Component.h"
+#include "Game.h"
 #include "shaders/scene_defines.glsl"
 #include "glm/glm.hpp"
 #include "glm/gtx/euler_angles.hpp"
@@ -18,21 +20,11 @@
 
 typedef unsigned uint;
 
-namespace 
-{
-	struct SceneEntryBlock
-	{
-		static const uint MAX_ENTRIES = MAX_SCENE_ENTRIES;
-		glm::mat4 entries[MAX_ENTRIES]; // entries[X][3][3] is type, not 1. Fix in shader
-	};
-
-	static_assert( sizeof( SceneEntryBlock ) <= 16 * 1024, "OpenGL spec as 16KB is the lower min" );
-}
-
 struct Graphics
 {
-	SceneEntryBlock scene;
-	glm::uint sceneEntryCount;
+
+	static const uint MAX_ENTRIES = MAX_SCENE_ENTRIES;
+	component_list<glm::mat4> sceneEntries;
 	glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
 	glm::float1 camInvFov;
@@ -43,6 +35,7 @@ struct Graphics
 	uint sceneUBO = 0;
 	uint shader = 0;
 	std::vector<uint> meshTypeRemap;
+	std::unordered_map<uint, uint> objToMesh;
 };
 
 namespace
@@ -288,7 +281,7 @@ namespace
 
 			glGenBuffers(1, &ubo);
 			glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-			glBufferData(GL_UNIFORM_BUFFER, sizeof(SceneEntryBlock), nullptr, GL_DYNAMIC_DRAW);
+			glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*Graphics::MAX_ENTRIES, nullptr, GL_DYNAMIC_DRAW);
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 			if (err::Error())
@@ -310,18 +303,19 @@ namespace
 			static const uint resolutionBinding = 6;
 			static const uint sceneEntryCountBinding = 7;
 			static const uint sceneBlockBinding = 0;
+			const uint sceneEntryCount = static_cast<uint>(g.sceneEntries.size());
 
 			glUniform3fv(camPosBinding, 1, glm::value_ptr(g.camPos));
 			glUniform3fv(camTargetBinding, 1, glm::value_ptr(g.camTarget));
 			glUniform1f(camInvFovBinding, g.camInvFov);
 			glUniformMatrix3fv(camViewBinding, 1, true, glm::value_ptr(g.camViewMtx));
 			glUniform2fv(resolutionBinding, 1, glm::value_ptr(g.res));
-			glUniform1ui(sceneEntryCountBinding, g.sceneEntryCount);
+			glUniform1ui(sceneEntryCountBinding, sceneEntryCount);
 			
 			glBindBufferBase( GL_UNIFORM_BUFFER, sceneBlockBinding, g.sceneUBO );
 
 			glBindBuffer(GL_UNIFORM_BUFFER, g.sceneUBO);
-			glBufferSubData(GL_UNIFORM_BUFFER, 0, g.sceneEntryCount * sizeof(glm::mat4), g.scene.entries);
+			glBufferSubData(GL_UNIFORM_BUFFER, 0, sceneEntryCount * sizeof(glm::mat4), g.sceneEntries.data());
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 			return err::Error();
@@ -367,14 +361,11 @@ namespace
 						g->sceneVAO = sceneVAO;
 
 						const float fov = 45.0f;
-						g->sceneEntryCount = 0;
 						g->camPos = glm::vec3(0.0f, 0.0f, 39.0f);
 						g->camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 						g->camInvFov = static_cast<float>(1.0 / std::tan((fov * 3.1415926535898) / 360.0));
 						g->camViewMtx = glm::lookAt(g->camPos, g->camTarget, glm::vec3(0.0f, 1.0f, 0.0f));
-
-						std::memset(&g->scene, 0, sizeof(g->scene));
-
+						
 						g->meshTypeRemap.resize(MESH_TYPE_COUNT);
 						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::PLAYER)] = MESH_TYPE_PLAYER;
 						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::HELPER)] = MESH_TYPE_HELPER;
@@ -482,20 +473,18 @@ namespace gfx
 		*inoutY = worldPos.y;
 	}
 
-	bool AddModel( Graphics* g, ObjectMap* objects, uint objectId, MeshType type, const glm::mat4 &transform )
+	bool AddModel( Graphics* g, uint objectId, MeshType type, const glm::mat4 &transform )
 	{
-		const uint mapId = g->sceneEntryCount;
+		const uint modelId = static_cast<uint>(g->sceneEntries.size());
 
-		if ( mapId < SceneEntryBlock::MAX_ENTRIES )
+		if (modelId < Graphics::MAX_ENTRIES )
 		{
-			glm::mat4* const model = g->scene.entries + (g->sceneEntryCount++);
+			glm::mat4* const model = &g->sceneEntries.add_to_object(objectId);
 			const float typeNum = static_cast<float>(g->meshTypeRemap[static_cast<uint>(type)]);
 			const float typeFrac = rand() / static_cast<float>(RAND_MAX + 1);
 
 			*model = glm::inverse( transform );
 			(*model)[3][3] = typeNum + typeFrac;
-
-			objects->set_object_mapping( objectId, ComponentType::GFX_MODEL, mapId );
 
 			return true;
 		}
@@ -503,19 +492,18 @@ namespace gfx
 		return false;
 	}
 
-	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<uint> &objectIds, const std::vector<glm::mat4>& transforms)
+	bool UpdateModels(Graphics* g, const std::vector<uint> &objectIds, const std::vector<glm::mat4>& transforms)
 	{
 		assert(objectIds.size() == transforms.size());
 
 		for (size_t objIndex = 0; objIndex < objectIds.size(); ++objIndex)
 		{
 			const uint objId = objectIds[objIndex];
-			const uint meshId = objects->map_index_for_object(objId, ComponentType::GFX_MODEL);
+			glm::mat4* const outTrans = g->sceneEntries.for_object(objId);
 
-			if (meshId < g->sceneEntryCount)
+			if (outTrans)
 			{
 				const glm::mat4 &trans = transforms[objIndex];
-				glm::mat4* const outTrans = g->scene.entries + meshId;
 				const float meshType = (*outTrans)[3][3];
 
 				*outTrans = glm::inverse(trans);
@@ -526,35 +514,9 @@ namespace gfx
 		return true;
 	}
 
-	void DestroyObjects( Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds )
+	void DestroyObjects( Graphics* g, const std::vector<uint>& objectIds )
 	{
-		uint mapTypes[] = { ComponentType::GFX_MODEL };
-		std::vector<uint> freedMeshIds;
-
-		GatherMappedIds(*objects, objectIds, mapTypes, &freedMeshIds);
-
-		if ( !freedMeshIds.empty() )
-		{
-			uint lastMeshId = static_cast<uint>( g->sceneEntryCount ) - 1;
-			
-			for ( uint freedMeshId : freedMeshIds )
-			{
-				assert( freedMeshId <= lastMeshId );
-
-				if ( freedMeshId < lastMeshId )
-				{
-					const uint lastMeshObjectId = objects->object_for_map_index( ComponentType::GFX_MODEL, lastMeshId );
-
-					g->scene.entries[freedMeshId] = g->scene.entries[lastMeshId];
-					
-					objects->set_object_mapping( lastMeshObjectId, ComponentType::GFX_MODEL, freedMeshId );
-				}
-
-				--lastMeshId;
-			}
-
-			g->sceneEntryCount = lastMeshId + 1;
-		}
+		g->sceneEntries.remove_objs(objectIds);
 	}
 
 }

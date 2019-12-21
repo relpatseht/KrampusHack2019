@@ -1,4 +1,3 @@
-#include "ObjectMap.h"
 #include "ComponentTypes.h"
 #include "Graphics.h"
 #include "Physics.h"
@@ -13,8 +12,6 @@ namespace game
 	{
 		std::memset(outGame, 0, sizeof(*outGame));
 
-		outGame->objects = new ObjectMap;
-		outGame->objects->add_maps(static_cast<uint>(ComponentType::COUNT));
 		outGame->nextObjectId = 0;
 		outGame->gfx = gfx::Init();
 
@@ -34,15 +31,11 @@ namespace game
 	void Shutdown(Game* game)
 	{
 		gfx::Shutdown(game->gfx);
-		delete game->objects;
 	}
 
 	uint CreateObject(Game* game)
 	{
-		const uint objectId = game->nextObjectId++;
-
-		game->objects->add_object(objectId);
-		return objectId;
+		return game->nextObjectId++;
 	}
 	
 	void CleanDeadObjects(Game* game)
@@ -54,13 +47,8 @@ namespace game
 			if(newEnd != game->dyingObjects.end())
 				game->dyingObjects.resize(newEnd - game->dyingObjects.begin());
 
-			gfx::DestroyObjects(game->gfx, game->objects, game->dyingObjects);
-			phy::DestroyObjects(game->phy, game->objects, game->dyingObjects);
-
-			for (uint object : game->dyingObjects)
-			{
-				game->objects->remove_object(object);
-			}
+			gfx::DestroyObjects(game->gfx, game->dyingObjects);
+			phy::DestroyObjects(game->phy, game->dyingObjects);
 
 			game->dyingObjects.clear();
 		}

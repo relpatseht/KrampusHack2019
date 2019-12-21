@@ -10,8 +10,6 @@ namespace game
 {
 	bool Init(Game* outGame)
 	{
-		std::memset(outGame, 0, sizeof(*outGame));
-
 		outGame->nextObjectId = 0;
 		outGame->gfx = gfx::Init();
 
@@ -21,6 +19,7 @@ namespace game
 
 			if (outGame->phy != nullptr)
 			{
+				outGame->dyingObjects.reserve(1024);
 				return true;
 			}
 		}
@@ -43,9 +42,7 @@ namespace game
 		if (!game->dyingObjects.empty())
 		{
 			std::sort(game->dyingObjects.begin(), game->dyingObjects.end());
-			auto newEnd = std::unique(game->dyingObjects.begin(), game->dyingObjects.end());
-			if(newEnd != game->dyingObjects.end())
-				game->dyingObjects.resize(newEnd - game->dyingObjects.begin());
+			game->dyingObjects.erase(std::unique(game->dyingObjects.begin(), game->dyingObjects.end()), game->dyingObjects.end());
 
 			gfx::DestroyObjects(game->gfx, game->dyingObjects);
 			phy::DestroyObjects(game->phy, game->dyingObjects);

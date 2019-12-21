@@ -77,9 +77,13 @@ struct component_list
 
 				if (cId != lastId)
 				{
-					objToId[idToObj[lastId]] = cId;
-					idToObj[cId] = idToObj[lastId];
-					components[cId] = std::move(components[lastId]);
+					const uint lastObjId = idToObj[lastId];
+					auto objToIdIt = objToId.find(lastObjId);
+
+					assert(objToIdIt != objToId.end());
+					objToIdIt->second = cId;
+					idToObj[cId] = lastObjId;
+					std::swap(components[cId], components[lastId]);
 				}
 
 				Delete(components.back());

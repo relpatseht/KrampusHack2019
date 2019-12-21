@@ -26,6 +26,9 @@ namespace
 		std::array<uint, 8> activeSnowballIds;
 		uint snowballCount;
 
+		float maxSnow = 20.0f;
+		float snowMeter = 0.0f;
+
 		bool isRunning;
 	};
 
@@ -117,6 +120,16 @@ namespace
 		}
 	}
 
+	const phy::Transform* GetTransform(const std::vector<uint>& objIds, const std::vector<phy::Transform>& transforms, uint objectId)
+	{
+		auto objIdIt = std::find(objIds.begin(), objIds.end(), objectId);
+
+		if (objIdIt != objIds.end())
+			return transforms.data() + *objIdIt;
+
+		return nullptr;
+	}
+
 	static void UpdatePositions(GameState* state)
 	{
 		Game* const game = state->game;
@@ -127,20 +140,34 @@ namespace
 		if (!updatedObjs.empty())
 		{
 			std::vector<glm::mat4> gfxTransforms;
+			const phy::Transform* const helperT = GetTransform(updatedObjs, objTransforms, state->helperId);
+			const phy::Transform* const playerT = GetTransform(updatedObjs, objTransforms, state->playerId);
 
 			assert(updatedObjs.size() == objTransforms.size());
 
-			for(size_t objIndex =0; objIndex<updatedObjs.size(); ++objIndex)
+			for(size_t objIndex = 0; objIndex<updatedObjs.size(); ++objIndex)
 			{
 				const uint objId = updatedObjs[objIndex];
 				const phy::Transform& phyT = objTransforms[objIndex];
 				glm::mat4* const outT = &gfxTransforms.emplace_back();
+				auto flakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, objId);
 
-				if (phyT.y < -BOUNDS_HALF_HEIGHT)
+				if (flakeIt < state->snowflakeIds.data() + state->snowflakeCount)
 				{
-					auto flakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, objId);
+					if (helperT)
+					{
+						const float xDist = (helperT->x - phyT.x);
+						const float yDist = (helperT->y - phyT.y);
+						const float helperFlakeDist = std::sqrt(xDist * xDist + yDist * yDist);
 
-					if (flakeIt < state->snowflakeIds.data() + state->snowflakeCount)
+						if (helperFlakeDist <= (HELPER_RADIUS + SNOWFLAKE_RADIUS) * 0.7)
+						{
+							state->snowMeter = std::min(state->snowMeter + 1.0f, state->maxSnow);
+							state->game->dyingObjects.emplace_back(objId);
+						}
+					}
+
+					if (phyT.y < -BOUNDS_HALF_HEIGHT)
 					{
 						game->dyingObjects.emplace_back(*flakeIt);
 						*flakeIt = state->snowflakeIds[--state->snowflakeCount];

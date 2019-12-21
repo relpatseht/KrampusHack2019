@@ -28,6 +28,7 @@ namespace gfx
 
 	void ReloadShaders(Graphics* g);
 	void Resize(Graphics* g, uint width, uint height);
+	void PixelToWolrd(const Graphics &g, float* inoutX, float* inoutY);
 
 	bool AddModel( Graphics *g, ObjectMap *objects, uint objectId, MeshType type, const glm::mat4& transform );
 	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds, const std::vector<glm::mat4>& transforms);

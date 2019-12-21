@@ -69,6 +69,9 @@ namespace
 						case ALLEGRO_KEY_ESCAPE:
 							state->isRunning = false;
 						break;
+						case ALLEGRO_KEY_SPACE:
+							phy::ApplyImpulse(state->game.phy, state->game.objects, state->playerId, 0.0f, 100.0f);
+						break;
 						case ALLEGRO_KEY_F3:
 							printf("Reloading shaders\n");
 							gfx::ReloadShaders(state->game.gfx);
@@ -76,8 +79,14 @@ namespace
 					}
 				break;
 				case ALLEGRO_EVENT_MOUSE_AXES:
-					phy::SetSoftAnchorTarget(state->game.phy, state->game.objects, state->helperId, (20.0f * evt.mouse.x / 1024.0f) - 10.0f, (-16.0f * evt.mouse.y / 768.0f) + 8.0f);
-					break;
+				{
+					float x = evt.mouse.x;
+					float y = evt.mouse.y;
+
+					gfx::PixelToWolrd(*state->game.gfx, &x, &y);
+					phy::SetSoftAnchorTarget(state->game.phy, state->game.objects, state->helperId, x, y);
+				}
+				break;
 			}
 		}
 	}

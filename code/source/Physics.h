@@ -35,6 +35,7 @@ namespace phy
 
 	void GatherTransforms(const Physics &p, const ObjectMap &objects, std::vector<uint>* outIds, std::vector<Transform>* outTransforms);
 
+	void ApplyImpulse(Physics* p, ObjectMap* objects, uint objectId, float x, float y);
 	void SetSoftAnchorTarget(Physics* p, ObjectMap* objects, uint objectId, float x, float y);
 
 	void DestroyObjects(Physics* p, ObjectMap* objects, const std::vector<uint>& objectIds);

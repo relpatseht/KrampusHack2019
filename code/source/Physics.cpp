@@ -344,6 +344,18 @@ namespace phy
 		}
 	}
 
+	void ApplyImpulse(Physics* p, ObjectMap* objects, uint objectId, float x, float y)
+	{
+		const uint bodyId = objects->map_index_for_object(objectId, ComponentType::PHY_BODY);
+
+		if (bodyId < p->bodies.size())
+		{
+			b2Body* const body = p->bodies[bodyId];
+
+			body->ApplyLinearImpulseToCenter(b2Vec2(x, y), true);
+		}
+	}
+
 	void SetSoftAnchorTarget(Physics* p, ObjectMap* objects, uint objectId, float x, float y)
 	{
 		const uint anchorId = objects->map_index_for_object(objectId, ComponentType::PHY_SOFT_ANCHOR);

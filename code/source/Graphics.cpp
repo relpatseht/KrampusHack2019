@@ -468,6 +468,20 @@ namespace gfx
 		g->res = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 	}
 
+
+	void PixelToWolrd(const Graphics& g, float* inoutX, float* inoutY)
+	{
+		const glm::vec2 pixel = glm::vec2(g.res.x - *inoutX, *inoutY) - (g.res * 0.5f);
+		const float z = g.res.y * g.camInvFov;
+		const glm::vec3 viewRayDir = glm::normalize(glm::vec3(pixel, z));
+		const glm::vec3 worldRayDir = g.camViewMtx * viewRayDir;
+		const float t = -g.camPos.z / worldRayDir.z;
+		const glm::vec3 worldPos = g.camPos + worldRayDir * t;
+
+		*inoutX = worldPos.x;
+		*inoutY = worldPos.y;
+	}
+
 	bool AddModel( Graphics* g, ObjectMap* objects, uint objectId, MeshType type, const glm::mat4 &transform )
 	{
 		const uint mapId = g->sceneEntryCount;

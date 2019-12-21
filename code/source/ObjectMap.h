@@ -208,9 +208,9 @@ private:
 			}
 		}
 		
+		// Don't kill reversed id. That was already set to new value
 		for ( uint mapIndex = 0; mapIndex < mapCount; ++mapIndex )
 		{
-			reverseIds[mapIndex][mappedIds[mapIndex][prevIndex]] = ~0u;
 			mappedIds[mapIndex][prevIndex] = ~0u;
 		}
 		objectIds[prevIndex] = ~0u;
@@ -301,7 +301,7 @@ private:
 		uint** oldMappedIds = (uint**)_malloca(sizeof(uint*) * mapCount);
 		uint* const oldToNewIndex = (uint*)_malloca(sizeof(uint) * oldCapacity);
 		
-		objCapacity = objCapacity ? (objCapacity << 2) : 8;
+		objCapacity = objCapacity ? (objCapacity << 1) : 8;
 
 		objectIds = new uint[objCapacity];
 		hashes = new uint[objCapacity]; 
@@ -310,12 +310,13 @@ private:
 			const uint* const oldReverseIds = reverseIds[mapIndex];
 			oldMappedIds[mapIndex] = mappedIds[mapIndex];
 
-
 			mappedIds[mapIndex] = new uint[objCapacity];
 			reverseIds[mapIndex] = new uint[objCapacity];
 			std::memset(mappedIds[mapIndex], ~0u, sizeof(uint) * objCapacity);
 			std::memcpy( reverseIds[mapIndex], oldReverseIds, sizeof( uint ) * oldCapacity);
 			std::memset( reverseIds[mapIndex] + oldCapacity, ~0u, sizeof( uint ) * ( objCapacity - oldCapacity ) );
+
+			delete[] oldReverseIds;
 		}
 
 		std::memset(hashes, 0, sizeof(*hashes) * objCapacity);
@@ -325,9 +326,7 @@ private:
 			uint newIndex = ~0u;
 
 			if (oldHash != 0)
-			{
 				insert_helper_r(ideal_index(oldHash), 0, oldHash, oldObjectIds[hashIndex], &newIndex);
-			}
 
 			oldToNewIndex[hashIndex] = newIndex;
 		}
@@ -339,7 +338,10 @@ private:
 
 			for (uint oldHashIndex = 0; oldHashIndex < oldCapacity; ++oldHashIndex)
 			{
-				newMap[oldToNewIndex[oldHashIndex]] = oldMap[oldHashIndex];
+				const uint newIndex = oldToNewIndex[oldHashIndex];
+
+				if(newIndex < objCapacity)
+					newMap[newIndex] = oldMap[oldHashIndex];
 			}
 		}
 

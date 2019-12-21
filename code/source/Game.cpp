@@ -5,6 +5,7 @@
 #include "Game.h"
 #include "glm/gtx/euler_angles.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include <algorithm>
 
 namespace game
 {
@@ -36,32 +37,6 @@ namespace game
 		delete game->objects;
 	}
 
-	void Update(Game* game)
-	{
-		phy::Update(game->phy);
-		
-		std::vector<phy::Transform> objTransforms;
-		std::vector<uint> updatedObjs;
-
-		phy::GatherTransforms(*game->phy, *game->objects, &updatedObjs, &objTransforms);
-		if (!updatedObjs.empty())
-		{
-			std::vector<glm::mat4> gfxTransforms;
-
-			for (const phy::Transform& phyT : objTransforms)
-			{
-				glm::mat4* const outT = &gfxTransforms.emplace_back();
-
-				*outT = glm::translate(glm::mat4(1.0f), glm::vec3(phyT.x, phyT.y, 0.0f)) * glm::eulerAngleY(phyT.rot);
-			}
-
-			gfx::UpdateModels(game->gfx, game->objects, updatedObjs, gfxTransforms);
-		}
-
-		gfx::Update(game->gfx);
-
-	}
-
 	uint CreateObject(Game* game)
 	{
 		const uint objectId = game->nextObjectId++;
@@ -69,17 +44,25 @@ namespace game
 		game->objects->add_object(objectId);
 		return objectId;
 	}
-
+	
 	void CleanDeadObjects(Game* game)
 	{
-		gfx::DestroyObjects( game->gfx, game->objects, game->dyingObjects );
-		phy::DestroyObjects(game->phy, game->objects, game->dyingObjects);
-
-		for ( uint object : game->dyingObjects )
+		if (!game->dyingObjects.empty())
 		{
-			game->objects->remove_object( object );
-		}
+			std::sort(game->dyingObjects.begin(), game->dyingObjects.end());
+			auto newEnd = std::unique(game->dyingObjects.begin(), game->dyingObjects.end());
+			if(newEnd != game->dyingObjects.end())
+				game->dyingObjects.resize(newEnd - game->dyingObjects.begin());
 
-		game->dyingObjects.clear();
+			gfx::DestroyObjects(game->gfx, game->objects, game->dyingObjects);
+			phy::DestroyObjects(game->phy, game->objects, game->dyingObjects);
+
+			for (uint object : game->dyingObjects)
+			{
+				game->objects->remove_object(object);
+			}
+
+			game->dyingObjects.clear();
+		}
 	}
 }

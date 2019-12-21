@@ -143,7 +143,7 @@ namespace
 			}
 		}
 
-		namespace players
+		namespace dynamics
 		{
 			static b2Body* Player(b2World* world, float x, float y)
 			{
@@ -176,7 +176,7 @@ namespace
 				shape.Set(capsule, sizeof(capsule) / sizeof(capsule[0]));
 
 				fixtureDef.shape = &shape;
-				fixtureDef.density = 20.0f;
+				fixtureDef.density = 100.0f;
 				fixtureDef.friction = 2.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::PLAYER;
 				fixtureDef.filter.maskBits = BodyGroup::WORLD_BOUNDS | BodyGroup::PLATFORM;
@@ -221,6 +221,31 @@ namespace
 
 				return helper;
 			}
+
+			static b2Body* Snowflake(b2World* world, float x, float y)
+			{
+				b2BodyDef bodyDef;
+				b2CircleShape shape;
+				b2FixtureDef fixtureDef;
+
+				bodyDef.type = b2_dynamicBody;
+				bodyDef.position.Set(x, y);
+				bodyDef.gravityScale = 0.1f;
+				bodyDef.allowSleep = false;
+
+				shape.m_radius = static_cast<float>(SNOWFLAKE_RADIUS);
+
+				fixtureDef.shape = &shape;
+				fixtureDef.density = 0.3f;
+				fixtureDef.friction = 1.0f;
+				fixtureDef.filter.categoryBits = BodyGroup::SNOW_FLAKE;
+				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_BALL;
+
+				b2Body* flake = world->CreateBody(&bodyDef);
+				flake->CreateFixture(&fixtureDef);
+
+				return flake;
+			}
 		}
 	}
 }
@@ -229,7 +254,7 @@ namespace phy
 {
 	Physics* Init()
 	{
-		Physics* phy = new Physics(b2Vec2(0.0f, -10.0f)); // gravity
+		Physics* phy = new Physics(b2Vec2(0.0f, -15.0f)); // gravity
 		b2BodyDef nullDef;
 
 		phy->nullBody = phy->world.CreateBody(&nullDef);
@@ -262,10 +287,10 @@ namespace phy
 		switch (type)
 		{
 			case BodyType::PLAYER:
-				body = init::players::Player(&p->world, x, y);
+				body = init::dynamics::Player(&p->world, x, y);
 			break;
 			case BodyType::HELPER:
-				body = init::players::Helper(&p->world, x, y);
+				body = init::dynamics::Helper(&p->world, x, y);
 			break;
 			case BodyType::WORLD_BOUNDS:
 				assert(x == 0.0f && y == 0.0f);
@@ -276,7 +301,7 @@ namespace phy
 				body = init::static_world::Platforms(&p->world);
 			break;
 			case BodyType::SNOW_FLAKE:
-
+				body = init::dynamics::Snowflake(&p->world, x, y);
 			break;
 			case BodyType::SNOW_BALL:
 
@@ -309,8 +334,8 @@ namespace phy
 			anchorDef.bodyA = p->nullBody;
 			anchorDef.bodyB = body;
 			anchorDef.target = body->GetPosition();
-			anchorDef.maxForce = 1000.0f * body->GetMass();
-			anchorDef.dampingRatio = 1.0f;
+			anchorDef.maxForce = 50.0f * body->GetMass();
+			anchorDef.dampingRatio = 0.99999f;
 			
 			b2MouseJoint *anchor = (b2MouseJoint*)p->world.CreateJoint(&anchorDef);
 			p->anchors.emplace_back(anchor);
@@ -352,7 +377,7 @@ namespace phy
 		{
 			b2Body* const body = p->bodies[bodyId];
 
-			body->ApplyLinearImpulseToCenter(b2Vec2(x, y), true);
+			body->ApplyLinearImpulseToCenter(b2Vec2(x * body->GetMass(), y * body->GetMass()), true);
 		}
 	}
 

@@ -38,9 +38,10 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 vec2 Mesh_Player(in const vec3 pos, float typeFrac)
 {
 	const float playerMtl = 2.0;
-	vec3 offsetPos = pos - vec3(0.0, PLAYER_HEIGHT*0.5, 0.0); // Player drawn from feet
+	const vec3 bottom = vec3(0, PLAYER_WIDTH*0.5, 0.0);
+	const vec3 top = vec3(0.0, PLAYER_HEIGHT - PLAYER_WIDTH*0.5, 0.0);
 
-	return vec2(fBox(offsetPos, vec3(PLAYER_WIDTH*0.5, PLAYER_HEIGHT*0.5, PLAYER_WIDTH*0.5)), playerMtl);
+	return vec2(fCapsule(pos, bottom, top, PLAYER_WIDTH*0.5), playerMtl);
 }
 
 vec2 Mesh_Helper(in const vec3 pos, float typeFrac)
@@ -48,6 +49,23 @@ vec2 Mesh_Helper(in const vec3 pos, float typeFrac)
 	const float helperMtl = 3.0;
 
 	return vec2(fSphere(pos, HELPER_RADIUS), helperMtl);
+}
+
+
+vec2 Mesh_Snowflake(in vec3 pos, float typeFrac)
+{
+	const float snowMtl = 1.0;
+
+	pR(pos.yz, PI*0.5);
+	return vec2(fHexagonCircumcircle(pos, vec2(SNOWFLAKE_RADIUS, 0.1)), snowMtl);
+}
+
+vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
+{
+	const float snowMtl = 1.0;
+	float dist = fBlob(pos / SNOWBALL_RADIUS) * SNOWBALL_RADIUS;
+
+	return vec2(dist, snowMtl);
 }
 
 vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)

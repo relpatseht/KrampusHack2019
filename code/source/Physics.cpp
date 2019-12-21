@@ -12,10 +12,10 @@ namespace
 {
 	enum BodyGroup : uint16_t
 	{
-		WORLD_BOUNDS = 1<<2,
-		PLATFORM     = 1<<3,
-		PLAYER       = 1<<0,
-		HELPER       = 1<<1,
+		WORLD_BOUNDS = 1<<0,
+		PLATFORM     = 1<<1,
+		PLAYER       = 1<<2,
+		HELPER       = 1<<3,
 		SNOW_FLAKE   = 1<<4,
 		SNOW_BALL    = 1<<5,
 		SNOW_MAN     = 1<<6
@@ -71,7 +71,7 @@ namespace
 
 				// 1-driectional platforms. Can jump up through them
 				contact->GetWorldManifold(&worldManifold);
-				if (worldManifold.normal.y < 0.5f)
+				if (worldManifold.normal.y > 0.5f)
 					contact->SetEnabled(false);
 			}
 		}
@@ -123,7 +123,7 @@ namespace
 
 				for (int side = 1; side > -2; side -= 2)
 				{
-					for (uint vertIndex = 0; vertIndex < 3; ++vertIndex)
+					for (int vertIndex = 0; vertIndex < 3; ++vertIndex)
 					{
 						const float w = static_cast<float>(BOTTOM_PLATFORM_WIDTH - (vertIndex * PLATFORM_WIDTH_DROP));
 						const float h = static_cast<float>(PLATFORM_DIM);
@@ -176,7 +176,7 @@ namespace
 				shape.Set(capsule, sizeof(capsule) / sizeof(capsule[0]));
 
 				fixtureDef.shape = &shape;
-				fixtureDef.density = 100.0f;
+				fixtureDef.density = 5.0f;
 				fixtureDef.friction = 2.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::PLAYER;
 				fixtureDef.filter.maskBits = BodyGroup::WORLD_BOUNDS | BodyGroup::PLATFORM;
@@ -243,6 +243,31 @@ namespace
 				fixtureDef.friction = 1.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::SNOW_FLAKE;
 				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_BALL;
+
+				b2Body* flake = world->CreateBody(&bodyDef);
+				flake->CreateFixture(&fixtureDef);
+
+				return flake;
+			}
+
+			static b2Body* Snowball(b2World* world, float x, float y)
+			{
+				b2BodyDef bodyDef;
+				b2CircleShape shape;
+				b2FixtureDef fixtureDef;
+
+				bodyDef.type = b2_dynamicBody;
+				bodyDef.position.Set(x, y);
+				bodyDef.angularVelocity = 6.0f * ((rand() / static_cast<float>(RAND_MAX)) - 0.5f);
+				bodyDef.allowSleep = false;
+
+				shape.m_radius = static_cast<float>(SNOWBALL_RADIUS);
+
+				fixtureDef.shape = &shape;
+				fixtureDef.density = 7.0f;
+				fixtureDef.friction = 1.0f;
+				fixtureDef.filter.categoryBits = BodyGroup::SNOW_BALL;
+				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_MAN | BodyGroup::PLATFORM | BodyGroup::WORLD_BOUNDS;
 
 				b2Body* flake = world->CreateBody(&bodyDef);
 				flake->CreateFixture(&fixtureDef);
@@ -357,7 +382,7 @@ namespace phy
 				body = init::dynamics::Snowflake(&p->world, x, y);
 			break;
 			case BodyType::SNOW_BALL:
-
+				body = init::dynamics::Snowball(&p->world, x, y);
 			break;
 			case BodyType::SNOW_MAN:
 
@@ -421,7 +446,7 @@ namespace phy
 		{
 			b2Body* const body = *bodyPtr;
 
-			body->ApplyLinearImpulseToCenter(b2Vec2(x * body->GetMass(), y * body->GetMass()), true);
+			body->ApplyLinearImpulseToCenter(b2Vec2(x, y), true);
 		}
 	}
 

@@ -12,6 +12,10 @@
 
 namespace
 {
+	const float SNOW_PER_FLAKE = 1.0f;
+	const float SNOW_PER_BALL = 2.5f;
+	const float SNOWBALL_IMPULSE = 30.0f;
+
 	struct GameState
 	{
 		Game *game;
@@ -26,6 +30,11 @@ namespace
 		std::array<uint, 8> activeSnowballIds;
 		uint snowballCount;
 
+		glm::vec2 playerPos;
+
+		glm::vec2 gunRay = glm::vec2(0.0f);
+		glm::vec2 gunDir = glm::vec2(0.0f);
+		
 		float maxSnow = 20.0f;
 		float snowMeter = 0.0f;
 
@@ -70,8 +79,56 @@ namespace
 					state->snowflakeIds[state->snowflakeCount++] = objId;
 				}
 				else
+				{
 					state->game->dyingObjects.emplace_back(objId);
+				}
+			}
+		}
+	}
 
+	static void UpdateGun(GameState* state, const glm::vec2& vec)
+	{
+		state->gunRay += vec;
+		const float rayLen = glm::length(state->gunRay);
+
+		if (rayLen < 0.1f)
+		{
+			state->gunRay = glm::vec2(0.0f, 0.0f);
+			state->gunDir = glm::vec2(0.0f, 0.0f);
+		}
+		else
+		{
+			state->gunDir = state->gunRay / rayLen;
+		}
+	}
+
+	static void FireGun(GameState* state)
+	{
+		if (state->snowMeter >= SNOW_PER_BALL)
+		{
+			if (state->snowballCount < state->activeSnowballIds.size())
+			{
+				const uint ballId = game::CreateObject(state->game);
+				glm::vec2 gunDir = state->gunDir;
+				glm::vec2 ballPos = state->playerPos + glm::vec2(0.0f, PLAYER_HEIGHT*0.5f);
+				glm::vec2 impulseDir;
+
+				if (glm::length(gunDir) < 0.99f)
+					gunDir = glm::vec2(0.0f, -1.0f);
+
+				ballPos += gunDir * static_cast<float>(SNOWBALL_RADIUS);
+
+				impulseDir = gunDir * SNOWBALL_IMPULSE;
+
+				gfx::AddModel(state->game->gfx, ballId, gfx::MeshType::SNOW_BALL, glm::translate(glm::mat4(1.0f), glm::vec3(ballPos, 0.0f)));
+				phy::AddBody(state->game->phy, ballId, phy::BodyType::SNOW_BALL, ballPos.x, ballPos.y);
+
+				phy::ApplyImpulse(state->game->phy, ballId, impulseDir.x, impulseDir.y);
+				phy::ApplyImpulse(state->game->phy, state->playerId, -impulseDir.x, -impulseDir.y);
+
+				state->snowMeter -= SNOW_PER_BALL;
+
+				state->activeSnowballIds[state->snowballCount++] = ballId;
 			}
 		}
 	}
@@ -92,14 +149,53 @@ namespace
 					al_acknowledge_resize(evt.display.source);
 					gfx::Resize(state->game->gfx, static_cast<uint>(evt.display.width), static_cast<uint>(evt.display.height));
 				break;
+				case ALLEGRO_EVENT_KEY_DOWN:
+					switch (evt.keyboard.keycode)
+					{
+						case ALLEGRO_KEY_W:
+						case ALLEGRO_KEY_UP:
+							UpdateGun(state, glm::vec2(0.0f, 1.0f));
+						break;
+						case ALLEGRO_KEY_A:
+						case ALLEGRO_KEY_LEFT:
+							UpdateGun(state, glm::vec2(-1.0f, 0.0f));
+						break;
+						case ALLEGRO_KEY_S:
+						case ALLEGRO_KEY_DOWN:
+							UpdateGun(state, glm::vec2(0.0f, -1.0f));
+						break;
+						case ALLEGRO_KEY_D:
+						case ALLEGRO_KEY_RIGHT:
+							UpdateGun(state, glm::vec2(1.0f, 0.0f));
+						break;
+
+						case ALLEGRO_KEY_SPACE:
+							FireGun(state);
+						break;
+					}
+				break;
 				case ALLEGRO_EVENT_KEY_UP:
 					switch (evt.keyboard.keycode)
 					{
+						case ALLEGRO_KEY_W:
+						case ALLEGRO_KEY_UP:
+							UpdateGun(state, -glm::vec2(0.0f, 1.0f));
+						break;
+						case ALLEGRO_KEY_A:
+						case ALLEGRO_KEY_LEFT:
+							UpdateGun(state, -glm::vec2(-1.0f, 0.0f));
+						break;
+						case ALLEGRO_KEY_S:
+						case ALLEGRO_KEY_DOWN:
+							UpdateGun(state, -glm::vec2(0.0f, -1.0f));
+						break;
+						case ALLEGRO_KEY_D:
+						case ALLEGRO_KEY_RIGHT:
+							UpdateGun(state, -glm::vec2(1.0f, 0.0f));
+						break;
+
 						case ALLEGRO_KEY_ESCAPE:
 							state->isRunning = false;
-						break;
-						case ALLEGRO_KEY_SPACE:
-							phy::ApplyImpulse(state->game->phy, state->playerId, 0.0f, 10.0f);
 						break;
 						case ALLEGRO_KEY_F3:
 							printf("Reloading shaders\n");
@@ -137,13 +233,16 @@ namespace
 		std::vector<uint> updatedObjs;
 
 		phy::GatherTransforms(*game->phy, &updatedObjs, &objTransforms);
+		assert(updatedObjs.size() == objTransforms.size());
+
 		if (!updatedObjs.empty())
 		{
 			std::vector<glm::mat4> gfxTransforms;
 			const phy::Transform* const helperT = GetTransform(updatedObjs, objTransforms, state->helperId);
 			const phy::Transform* const playerT = GetTransform(updatedObjs, objTransforms, state->playerId);
 
-			assert(updatedObjs.size() == objTransforms.size());
+			if (playerT)
+				state->playerPos = glm::vec2(playerT->x, playerT->y);
 
 			for(size_t objIndex = 0; objIndex<updatedObjs.size(); ++objIndex)
 			{
@@ -162,7 +261,7 @@ namespace
 
 						if (helperFlakeDist <= (HELPER_RADIUS + SNOWFLAKE_RADIUS) * 0.7)
 						{
-							state->snowMeter = std::min(state->snowMeter + 1.0f, state->maxSnow);
+							state->snowMeter = std::min(state->snowMeter + SNOW_PER_FLAKE, state->maxSnow);
 							state->game->dyingObjects.emplace_back(objId);
 						}
 					}

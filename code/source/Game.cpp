@@ -2,52 +2,9 @@
 #include "ComponentTypes.h"
 #include "Graphics.h"
 #include "Physics.h"
-
-#include "Box2D/Box2D.h"
-#include "shaders/scene_defines.glsl"
-
 #include "Game.h"
-#include <array>
-
-
-struct Gameplay
-{
-	uint helperId;
-	uint playerId;
-	uint snowmanId;
-	std::array<uint, 256> snowflakeIds;
-	uint snowflakeCount;
-	std::array<uint, 8> activeSnowballIds;
-	uint snowballCount;
-
-
-};
-
-namespace
-{
-	namespace ply
-	{
-		namespace init
-		{
-			static void InitializeWorld(Game *game)
-			{
-				Gameplay* ply = new Gameplay; // gravity
-
-				glm::mat4 helperPos = glm::mat4( 1.0f );
-				glm::mat4 playerPos = glm::mat4( 1.0f );
-
-				ply->helperId = game::CreateObject(game);
-				ply->playerId = game::CreateObject(game);
-				const bool helperMeshCreated = gfx::AddModel(game->gfx, game->objects, ply->helperId, gfx::MeshType::HELPER, helperPos);
-				const bool playerMeshCreated = gfx::AddModel(game->gfx, game->objects, ply->playerId, gfx::MeshType::PLAYER, playerPos);
-
-				assert(helperMeshCreated && playerMeshCreated);
-
-				game->ply = ply;
-			}
-		}
-	}
-}
+#include "glm/gtx/euler_angles.hpp"
+#include "glm/ext/matrix_transform.hpp"
 
 namespace game
 {
@@ -66,8 +23,6 @@ namespace game
 
 			if (outGame->phy != nullptr)
 			{
-				ply::init::InitializeWorld(outGame);
-
 				return true;
 			}
 		}
@@ -84,7 +39,27 @@ namespace game
 	void Update(Game* game)
 	{
 		phy::Update(game->phy);
+		
+		std::vector<phy::Transform> objTransforms;
+		std::vector<uint> updatedObjs;
+
+		phy::GatherTransforms(*game->phy, *game->objects, &updatedObjs, &objTransforms);
+		if (!updatedObjs.empty())
+		{
+			std::vector<glm::mat4> gfxTransforms;
+
+			for (const phy::Transform& phyT : objTransforms)
+			{
+				glm::mat4* const outT = &gfxTransforms.emplace_back();
+
+				*outT = glm::translate(glm::mat4(1.0f), glm::vec3(phyT.x, phyT.y, 0.0f)) * glm::eulerAngleY(phyT.rot);
+			}
+
+			gfx::UpdateModels(game->gfx, game->objects, updatedObjs, gfxTransforms);
+		}
+
 		gfx::Update(game->gfx);
+
 	}
 
 	uint CreateObject(Game* game)

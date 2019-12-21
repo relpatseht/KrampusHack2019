@@ -35,11 +35,14 @@ struct Graphics
 	glm::uint sceneEntryCount;
 	glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
+	glm::float1 camInvFov;
+	glm::mat3 camViewMtx;
+	glm::vec2 res{ 1024.0f, 768.0f };
 	
-	ALLEGRO_DISPLAY* display = nullptr;
 	uint sceneVAO = 0;
 	uint sceneUBO = 0;
 	uint shader = 0;
+	std::vector<uint> meshTypeRemap;
 };
 
 namespace
@@ -302,11 +305,17 @@ namespace
 		{
 			static const uint camPosBinding = 0;
 			static const uint camTargetBinding = 1;
-			static const uint sceneEntryCountBinding = 2;
+			static const uint camInvFovBinding = 2;
+			static const uint camViewBinding = 3;
+			static const uint resolutionBinding = 6;
+			static const uint sceneEntryCountBinding = 7;
 			static const uint sceneBlockBinding = 0;
 
 			glUniform3fv(camPosBinding, 1, glm::value_ptr(g.camPos));
 			glUniform3fv(camTargetBinding, 1, glm::value_ptr(g.camTarget));
+			glUniform1f(camInvFovBinding, g.camInvFov);
+			glUniformMatrix3fv(camViewBinding, 1, true, glm::value_ptr(g.camViewMtx));
+			glUniform2fv(resolutionBinding, 1, glm::value_ptr(g.res));
 			glUniform1ui(sceneEntryCountBinding, g.sceneEntryCount);
 			
 			glBindBufferBase( GL_UNIFORM_BUFFER, sceneBlockBinding, g.sceneUBO );
@@ -323,67 +332,66 @@ namespace
 	{
 		static bool Init(Graphics* g)
 		{
-			al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE | ALLEGRO_OPENGL | ALLEGRO_OPENGL_3_0 | ALLEGRO_OPENGL_FORWARD_COMPATIBLE);
-			
-			ALLEGRO_DISPLAY* const display = al_create_display(1024, 768);
+			uint sceneShader, uiShader;
 
-			if (!display)
+			shader::LoadShaders("shaders", &sceneShader, &uiShader);
+
+			if (sceneShader == 0)
 			{
-				printf("Failed to create display.\n");
+				printf("Failed to find shaders in 'shaders' directory.\n");
 			}
 			else
 			{
-				uint sceneShader, uiShader;
+				uint sceneVAO;
 
-				shader::LoadShaders("shaders", &sceneShader, &uiShader);
+				scene::GenVAO(&sceneVAO);
 
-				if (sceneShader == 0)
+				if (sceneVAO == 0)
 				{
-					printf("Failed to find shaders in 'shaders' directory.\n");
+					printf("Failed to generate verts for scene.\n");
 				}
 				else
 				{
-					uint sceneVAO;
+					uint sceneUBO;
 
-					scene::GenVAO(&sceneVAO);
+					scene::GenUBO(&sceneUBO);
 
-					if (sceneVAO == 0)
+					if (sceneUBO == 0)
 					{
-						printf("Failed to generate verts for scene.\n");
+						printf("Failed to generate uniform buffer for scene.\n");
 					}
 					else
 					{
-						uint sceneUBO;
+						g->shader = sceneShader;
+						g->sceneUBO = sceneUBO;
+						g->sceneVAO = sceneVAO;
 
-						scene::GenUBO(&sceneUBO);
+						const float fov = 45.0f;
+						g->sceneEntryCount = 0;
+						g->camPos = glm::vec3(0.0f, 0.0f, 39.0f);
+						g->camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+						g->camInvFov = static_cast<float>(1.0 / std::tan((fov * 3.1415926535898) / 360.0));
+						g->camViewMtx = glm::lookAt(g->camPos, g->camTarget, glm::vec3(0.0f, 1.0f, 0.0f));
 
-						if (sceneUBO == 0)
-						{
-							printf("Failed to generate uniform buffer for scene.\n");
-						}
-						else
-						{
-							g->shader = sceneShader;
-							g->sceneUBO = sceneUBO;
-							g->sceneVAO = sceneVAO;
-							g->display = display;
+						std::memset(&g->scene, 0, sizeof(g->scene));
 
-							g->sceneEntryCount = 0;
-							g->camPos = glm::vec3(0.0f, 4.0f, 8.0f);
-							g->camTarget = glm::vec3(0.0f, -3.0f, -2.0f);
-							std::memset(&g->scene, 0, sizeof(g->scene));
+						g->meshTypeRemap.resize(MESH_TYPE_COUNT);
+						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::PLAYER)] = MESH_TYPE_PLAYER;
+						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::HELPER)] = MESH_TYPE_HELPER;
+						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_FLAKE)] = MESH_TYPE_SNOW_FLAKE;
+						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_BALL)] = MESH_TYPE_SNOW_BALL;
+						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_MAN)] = MESH_TYPE_SNOW_MAN;
+						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::STATIC_PLATFORMS)] = MESH_TYPE_STATIC_PLATFORMS;
+						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::WORLD_BOUNDS)] = MESH_TYPE_WORLD_BOUNDS;
 
-							return true;
-						}
-
-						glDeleteVertexArrays(1, &sceneVAO);
+						return true;
 					}
 
-					glDeleteProgram(sceneShader);
-					glDeleteProgram(uiShader);
+					glDeleteVertexArrays(1, &sceneVAO);
 				}
 
-				al_destroy_display(display);
+				glDeleteProgram(sceneShader);
+				glDeleteProgram(uiShader);
 			}
 
 			return false;
@@ -428,7 +436,6 @@ namespace gfx
 		glDeleteProgram(g->shader);
 		glDeleteBuffers(1, &g->sceneUBO);
 		glDeleteVertexArrays(1, &g->sceneVAO);
-		al_destroy_display(g->display);
 
 		delete g;
 	}
@@ -438,12 +445,7 @@ namespace gfx
 	{
 		render::Render(*g);
 	}
-
-	ALLEGRO_DISPLAY* GetDisplay(Graphics* g)
-	{
-		return g->display;
-	}
-
+	
 	void ReloadShaders(Graphics* g)
 	{
 		uint sceneShader, uiShader;
@@ -461,9 +463,9 @@ namespace gfx
 		}
 	}
 
-	void Resize(Graphics* g)
+	void Resize(Graphics* g, uint x, uint y)
 	{
-		al_acknowledge_resize(g->display);
+		g->res = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 	}
 
 	bool AddModel( Graphics* g, ObjectMap* objects, uint objectId, MeshType type, const glm::mat4 &transform )
@@ -473,7 +475,7 @@ namespace gfx
 		if ( mapId < SceneEntryBlock::MAX_ENTRIES )
 		{
 			glm::mat4* const model = g->scene.entries + (g->sceneEntryCount++);
-			const float typeNum = static_cast<float>(type);
+			const float typeNum = static_cast<float>(g->meshTypeRemap[static_cast<uint>(type)]);
 			const float typeFrac = rand() / static_cast<float>(RAND_MAX + 1);
 
 			*model = glm::inverse( transform );
@@ -487,9 +489,27 @@ namespace gfx
 		return false;
 	}
 
-	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<glm::mat4>& transforms)
+	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<uint> &objectIds, const std::vector<glm::mat4>& transforms)
 	{
-		return false;
+		assert(objectIds.size() == transforms.size());
+
+		for (size_t objIndex = 0; objIndex < objectIds.size(); ++objIndex)
+		{
+			const uint objId = objectIds[objIndex];
+			const uint meshId = objects->map_index_for_object(objId, ComponentType::GFX_MODEL);
+
+			if (meshId < g->sceneEntryCount)
+			{
+				const glm::mat4 &trans = transforms[objIndex];
+				glm::mat4* const outTrans = g->scene.entries + meshId;
+				const float meshType = (*outTrans)[3][3];
+
+				*outTrans = glm::inverse(trans);
+				(*outTrans)[3][3] = meshType;
+			}
+		}
+
+		return true;
 	}
 
 	void DestroyObjects( Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds )

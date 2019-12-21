@@ -3,13 +3,28 @@
 #include "allegro5/allegro.h"
 #include "Game.h"
 #include "Graphics.h"
+#include "Physics.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include <array>
 
 namespace
 {
 	struct GameState
 	{
-		bool isRunning;
 		Game game;
+
+		uint helperId;
+		uint playerId;
+		uint staticPlatformsId;
+		uint worldBoundsId;
+		uint snowmanId;
+		std::array<uint, 256> snowflakeIds;
+		uint snowflakeCount;
+		std::array<uint, 8> activeSnowballIds;
+		uint snowballCount;
+
+		bool isRunning;
 	};
 
 	bool InitAllegro()
@@ -45,7 +60,8 @@ namespace
 					state->isRunning = false;
 				break;
 				case ALLEGRO_EVENT_DISPLAY_RESIZE:
-					gfx::Resize(state->game.gfx);
+					al_acknowledge_resize(evt.display.source);
+					gfx::Resize(state->game.gfx, static_cast<uint>(evt.display.width), static_cast<uint>(evt.display.height));
 				break;
 				case ALLEGRO_EVENT_KEY_UP:
 					switch (evt.keyboard.keycode)
@@ -59,6 +75,9 @@ namespace
 						break;
 					}
 				break;
+				case ALLEGRO_EVENT_MOUSE_AXES:
+					phy::SetSoftAnchorTarget(state->game.phy, state->game.objects, state->helperId, (20.0f * evt.mouse.x / 1024.0f) - 10.0f, (-16.0f * evt.mouse.y / 768.0f) + 8.0f);
+					break;
 			}
 		}
 	}
@@ -74,30 +93,67 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		GameState state{ true };
+		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE | ALLEGRO_OPENGL | ALLEGRO_OPENGL_3_0 | ALLEGRO_OPENGL_FORWARD_COMPATIBLE);
 
-		if (!game::Init(&state.game))
+		ALLEGRO_DISPLAY* const display = al_create_display(1024, 768);
+
+		if (!display)
 		{
-			printf("Failed to initialize game.\n");
+			printf("Failed to create display.\n");
 		}
 		else
 		{
-			// Create event queue
-			ALLEGRO_EVENT_QUEUE* const eventQueue = al_create_event_queue();
-			al_register_event_source(eventQueue, al_get_mouse_event_source());
-			al_register_event_source(eventQueue, al_get_keyboard_event_source());
-			al_register_event_source(eventQueue, al_get_display_event_source(gfx::GetDisplay(state.game.gfx)));
+			GameState state = {};
 
-			while (state.isRunning)
+			state.isRunning = true;
+
+			if (!game::Init(&state.game))
 			{
-				ProcessEvents(eventQueue, &state);
+				printf("Failed to initialize game.\n");
+			}
+			else
+			{
+				// Create event queue
+				ALLEGRO_EVENT_QUEUE* const eventQueue = al_create_event_queue();
+				al_register_event_source(eventQueue, al_get_mouse_event_source());
+				al_register_event_source(eventQueue, al_get_keyboard_event_source());
+				al_register_event_source(eventQueue, al_get_display_event_source(display));
 
-				game::Update(&state.game);
+				const float playerStartX = -8.0f;
+				const float playerStartY = -6.0f;
+				state.playerId = game::CreateObject(&state.game);
+				gfx::AddModel(state.game.gfx, state.game.objects, state.playerId, gfx::MeshType::PLAYER, glm::translate(glm::mat4(1.0f), glm::vec3(playerStartX, playerStartY, 0.0f)));
+				phy::AddBody(state.game.phy, state.game.objects, state.playerId, phy::BodyType::PLAYER, playerStartX, playerStartY);
+				
+				const float helperStartX = 0.0f;
+				const float helperStartY = 4.0f;
+				state.helperId = game::CreateObject(&state.game);
+				gfx::AddModel(state.game.gfx, state.game.objects, state.helperId, gfx::MeshType::HELPER, glm::translate(glm::mat4(1.0f), glm::vec3(helperStartX, helperStartY, 0.0f)));
+				phy::AddBody(state.game.phy, state.game.objects, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
+				phy::AddSoftAnchor(state.game.phy, state.game.objects, state.helperId);
+
+				state.staticPlatformsId = game::CreateObject(&state.game);
+				gfx::AddModel(state.game.gfx, state.game.objects, state.staticPlatformsId, gfx::MeshType::STATIC_PLATFORMS, glm::mat4(1.0f));
+				phy::AddBody(state.game.phy, state.game.objects, state.staticPlatformsId, phy::BodyType::STATIC_PLATFORMS);
+
+				state.worldBoundsId = game::CreateObject(&state.game);
+				gfx::AddModel(state.game.gfx, state.game.objects, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
+				phy::AddBody(state.game.phy, state.game.objects, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
+
+				while (state.isRunning)
+				{
+					ProcessEvents(eventQueue, &state);
+
+					game::Update(&state.game);
+					game::CleanDeadObjects(&state.game);
+				}
+
+				game::Shutdown(&state.game);
+
+				al_destroy_event_queue(eventQueue);
 			}
 
-			game::Shutdown(&state.game);
-
-			al_destroy_event_queue(eventQueue);
+			al_destroy_display(display);
 		}
 
 		al_uninstall_keyboard();

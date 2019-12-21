@@ -59,7 +59,7 @@ namespace
 			const b2Filter* aFilter = &a->GetFilterData();
 			const b2Filter* bFilter = &b->GetFilterData();
 
-			if (aFilter->categoryBits < bFilter->categoryBits)
+			if (aFilter->categoryBits > bFilter->categoryBits)
 			{
 				std::swap(a, b);
 				std::swap(aFilter, bFilter);
@@ -103,7 +103,7 @@ namespace
 				topWallShape.SetAsBox((BOUNDS_HALF_WIDTH + 2.0f), 1.0f, b2Vec2(0.0f, (BOUNDS_HALF_HEIGHT + 1.0f)), 0.0f);
 				bottomWallShape.SetAsBox((BOUNDS_HALF_WIDTH + 2.0f), 1.0f, b2Vec2(0.0f, -(BOUNDS_HALF_HEIGHT + 1.0f)), 0.0f);
 
-				wallsFilter.categoryBits = BodyGroup::PLAYER;
+				wallsFilter.categoryBits = BodyGroup::WORLD_BOUNDS;
 
 				walls->CreateFixture(&leftWallShape, 0.0f)->SetFilterData(wallsFilter);
 				walls->CreateFixture(&rightWallShape, 0.0f)->SetFilterData(wallsFilter);
@@ -145,7 +145,7 @@ namespace
 
 		namespace players
 		{
-			static b2Body* Player(b2World* world)
+			static b2Body* Player(b2World* world, float x, float y)
 			{
 				const float x0 = static_cast<float>(PLAYER_WIDTH * 0.25);
 				const float x1 = static_cast<float>(PLAYER_WIDTH * 0.5);
@@ -169,7 +169,7 @@ namespace
 				};
 
 				bodyDef.type = b2_dynamicBody;
-				bodyDef.position.Set(-8.0f, -6.0f);
+				bodyDef.position.Set(x, y);
 				bodyDef.fixedRotation = true;
 				bodyDef.allowSleep = false;
 
@@ -187,7 +187,7 @@ namespace
 				return player;
 			}
 
-			static b2Body* Helper(b2World* world)
+			static b2Body* Helper(b2World* world, float x, float y)
 			{
 				b2BodyDef bodyDef;
 				b2CircleShape helperShape;
@@ -196,7 +196,7 @@ namespace
 				b2FixtureDef scutionFixtureDef;
 
 				bodyDef.type = b2_dynamicBody;
-				bodyDef.position.Set(0.0f, 4.0f);
+				bodyDef.position.Set(x, y);
 				bodyDef.gravityScale = 0.1f;
 				bodyDef.fixedRotation = true;
 				bodyDef.allowSleep = false;
@@ -254,7 +254,7 @@ namespace phy
 		p->world.Step(p->timestep, velocityIterations, positionIterations);
 	}
 
-	bool AddBody(Physics* p, ObjectMap* objects, uint objectId, BodyType type)
+	bool AddBody(Physics* p, ObjectMap* objects, uint objectId, BodyType type, float x, float y)
 	{
 		b2Body* body = nullptr;
 		const uint mapId = static_cast<uint>(p->bodies.size());
@@ -262,15 +262,17 @@ namespace phy
 		switch (type)
 		{
 			case BodyType::PLAYER:
-				body = init::players::Player(&p->world);
+				body = init::players::Player(&p->world, x, y);
 			break;
 			case BodyType::HELPER:
-				body = init::players::Helper(&p->world);
+				body = init::players::Helper(&p->world, x, y);
 			break;
 			case BodyType::WORLD_BOUNDS:
+				assert(x == 0.0f && y == 0.0f);
 				body = init::static_world::WorldWalls(&p->world);
 			break;
 			case BodyType::STATIC_PLATFORMS:
+				assert(x == 0.0f && y == 0.0f);
 				body = init::static_world::Platforms(&p->world);
 			break;
 			case BodyType::SNOW_FLAKE:
@@ -295,7 +297,7 @@ namespace phy
 
 	bool AddSoftAnchor(Physics* p, ObjectMap* objects, uint objectId)
 	{
-		const uint bodyId = objects->map_index_for_object(objectId, ComponentType::PHY_SOFT_ANCHOR);
+		const uint bodyId = objects->map_index_for_object(objectId, ComponentType::PHY_BODY);
 
 		if (bodyId < p->bodies.size())
 		{
@@ -307,7 +309,7 @@ namespace phy
 			anchorDef.bodyA = p->nullBody;
 			anchorDef.bodyB = body;
 			anchorDef.target = body->GetPosition();
-			anchorDef.maxForce = 100.0f * body->GetMass();
+			anchorDef.maxForce = 1000.0f * body->GetMass();
 			anchorDef.dampingRatio = 1.0f;
 			
 			b2MouseJoint *anchor = (b2MouseJoint*)p->world.CreateJoint(&anchorDef);
@@ -318,6 +320,28 @@ namespace phy
 		}
 
 		return false;
+	}
+
+	void GatherTransforms(const Physics &p, const ObjectMap &objects, std::vector<uint>* outIds, std::vector<Transform>* outTransforms)
+	{
+		const uint maxBodyId = static_cast<uint>(p.bodies.size());
+
+		for (uint bodyId = 0; bodyId < maxBodyId; ++bodyId)
+		{
+			const b2Body& body = *p.bodies[bodyId];
+
+			if (body.GetType() != b2_staticBody)
+			{
+				const uint objId = objects.object_for_map_index(ComponentType::PHY_BODY, bodyId);
+				Transform* const outT = &outTransforms->emplace_back();
+
+				outT->x = body.GetPosition().x;
+				outT->y = body.GetPosition().y;
+				outT->rot = body.GetAngle();
+
+				outIds->emplace_back(objId);
+			}
+		}
 	}
 
 	void SetSoftAnchorTarget(Physics* p, ObjectMap* objects, uint objectId, float x, float y)

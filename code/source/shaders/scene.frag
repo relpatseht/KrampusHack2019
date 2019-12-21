@@ -6,9 +6,10 @@
 #include "/noise.glsl"
 #include "/static_scene.glsl"
 #include "/raymarch.glsl"
+#include "/scene_meshes.glsl"
 
-const float g_camNear = 0.1;
-const float g_camFar = 25.0;
+const float g_camNear = 1.0;
+const float g_camFar = 100.0;
 
 layout(location = 0) in vec3 in_worldPos;
 layout(location = 1) in vec3 in_ray;
@@ -20,7 +21,10 @@ layout(std140, binding=0) uniform SceneEntryBlock
 
 layout(location = 0) uniform vec3 in_camPos;
 layout(location = 1) uniform vec3 in_camTarget;
-layout(location = 2) uniform uint in_sceneEntryCount;
+layout(location = 2) uniform float in_camInvFov;
+layout(location = 3) uniform mat3 in_camView;
+layout(location = 6) uniform vec2 in_resolution;
+layout(location = 7) uniform uint in_sceneEntryCount;
 
 layout (location = 0) out vec4 out_color;
 
@@ -33,26 +37,27 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 	{
 		mat4 invTransform = in_entries[i];
 		float type = invTransform[3][3];
+		float typeFrac = fract(type);
 
 		invTransform[3][3] = 1.0;
 
-		vec3 objPos = (vec4(pos, 1.0)*invTransform).xyz;
+		vec3 objPos = (invTransform*vec4(pos, 1.0)).xyz;
 		vec2 objDist;
 
-		if(type < 1.0)
-			objDist = vec2(fSphere(objPos, 1.0), type);
-		else if(type < 2.0)
-			objDist = vec2(fBox(objPos, vec3(1.0, 1.0, 1.0)), type);
-		else if(type < 3.0)
+		if(type < MESH_TYPE_PLAYER + 1.0)
+			objDist = Mesh_Player(objPos, typeFrac);
+		else if(type < MESH_TYPE_HELPER + 1.0)
+			objDist = Mesh_Helper(objPos, typeFrac);
+		else if(type < MESH_TYPE_SNOW_FLAKE + 1.0)
 				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
-		else if(type < 4.0)
+		else if(type < MESH_TYPE_SNOW_BALL + 1.0)
 				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
-		else if(type < 5.0)
+		else if(type < MESH_TYPE_SNOW_MAN + 1.0)
 				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
-		else if(type < 6.0)
-				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
-		else if(type < 7.0)
-				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
+		else if(type < MESH_TYPE_STATIC_PLATFORMS + 1.0)
+				objDist = Mesh_StaticPlatforms(objPos, typeFrac);
+		else if(type < MESH_TYPE_WORLD_BOUNDS + 1.0)
+				objDist = Mesh_SceneBounds(objPos, typeFrac);;
 
 		if(objDist.x < dist.x)
 			dist = objDist;
@@ -67,10 +72,10 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 
 	{
 		const float noise = noise3(pos*32)*0.004 + 0.998;
-		const float bottom = fSphere(pos*noise - vec3(0.0, -5.0, 0.0), 1.6) / noise;
-		const float mid = fSphere(pos*noise - vec3(0.0, -2.25, 0.0), 1.25) / noise;
-		const float top = fSphere(pos*noise - vec3(0.0, -0.25, 0.0), 1.0) / noise;
-		const float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.45), 0.6);
+		const float bottom = fSphere(pos*noise - vec3(0.0, -6.25, 0.0), 2.0) / noise;
+		const float mid = fSphere(pos*noise - vec3(0.0, -3.5, 0.0), 1.5) / noise;
+		const float top = fSphere(pos*noise - vec3(0.0, -1.35, 0.0), 1.1) / noise;
+		const float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
 
 		if(snowman < dist.x)
 			dist = vec2(snowman, 1.0);
@@ -79,35 +84,13 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 	return dist;
 }
 
-void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal, out vec3 albedo, out float metalness, out float roughness)
-{
-	if(mtl < 1.0) // wood frame, [0, 1)
-	{
-		const vec3 bright = vec3(0.31, 0.09, 0.01)*.5;
-		const vec3 dark = vec3(0.23, 0.07, 0.00)*.24;
-		const float lerp = sin(pos.x*20)*noise2(pos.xy*20) + cos(pos.y*20)*noise2(pos.yx*35);
-		albedo = mix(dark, bright, lerp);
-		metalness = 0.01;
-		roughness = 0.01;
-	}
-	else if(mtl < 2.0) // snow terrain, [1, 2)
-	{
-		albedo = vec3(0.5, 0.5, 0.5 + (2.0 - mtl)*0.2);
-		metalness = 0.0;
-		roughness = 0.4;
-	}
-}
-
 vec3 RayDir(in const vec3 camDir)
 {
-	const vec2 res = vec2(1024, 768);
-	const vec3 up = vec3(0, 1, 0);
-	vec3 right = cross(camDir, up);
-	vec2 pixel = (2.0 * (vec2(gl_FragCoord.xy) / res)) - 1.0;
+	vec2 pixel = vec2(gl_FragCoord.xy) - in_resolution*0.5;
+	float z = in_resolution.y * in_camInvFov;
+	vec3 viewRayDir = normalize(vec3(pixel, -z));
 
-	pixel.x *= res.x/res.y;
-
-	return normalize(right*pixel.x + up*pixel.y + camDir);
+	return in_camView * viewRayDir;
 }
 
 void main()
@@ -149,18 +132,16 @@ void main()
 		float light1Shadow = RayMarch_Shadow(light1Dir, hitPos, 10.0, g_camFar);
 		vec3 light1Radiance = light1Color*light1Attn*light1BRDF*light1Shadow;
 
-		vec3 light2Color = vec3(700, 700, 1000);
-		vec3 light2Pos = vec3(-20, 20, 30);
-		vec3 light2Dir = normalize(light2Pos - hitPos);
-		float light2Dist = length(light2Pos - hitPos);
-		float light2Attn = 1.0 / (light2Dist * light2Dist);
-		vec3 light2BRDF = BRDF_CookTorrance(hitNormal, viewDir, light2Dir, albedo, metalness, roughness);
-		vec3 light2Radiance = light2Color*light2Attn*light2BRDF;
-		float light2Shadow = RayMarch_Shadow(light2Dir, hitPos, 10.0, g_camFar);
+		//vec3 light2Color = vec3(700, 700, 1000);
+		//vec3 light2Pos = vec3(-20, 20, 30);
+		//vec3 light2Dir = normalize(light2Pos - hitPos);
+		//float light2Dist = length(light2Pos - hitPos);
+		//float light2Attn = 1.0 / (light2Dist * light2Dist);
+		//vec3 light2BRDF = BRDF_CookTorrance(hitNormal, viewDir, light2Dir, albedo, metalness, roughness);
+		//vec3 light2Radiance = light2Color*light2Attn*light2BRDF;
+		//float light2Shadow = RayMarch_Shadow(light2Dir, hitPos, 10.0, g_camFar);
 
 		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
 		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
-
-	//out_color = vec4(raymarch(in_camPos, rayDir), 1.0);
 }

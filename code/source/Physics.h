@@ -21,12 +21,19 @@ namespace phy
 		SNOW_MAN
 	};
 
+	struct Transform
+	{
+		float x, y, rot;
+	};
+
 	Physics* Init();
 	void Shutdown(Physics* p);
 	void Update(Physics* p);
 
-	bool AddBody(Physics* p, ObjectMap* objects, uint objectId, BodyType type);
+	bool AddBody(Physics* p, ObjectMap* objects, uint objectId, BodyType type, float x = 0.0f, float y = 0.0f);
 	bool AddSoftAnchor(Physics* p, ObjectMap* objects, uint objectId);
+
+	void GatherTransforms(const Physics &p, const ObjectMap &objects, std::vector<uint>* outIds, std::vector<Transform>* outTransforms);
 
 	void SetSoftAnchorTarget(Physics* p, ObjectMap* objects, uint objectId, float x, float y);
 

@@ -18,20 +18,19 @@ namespace gfx
 		SNOW_FLAKE,
 		SNOW_BALL,
 		SNOW_MAN,
-		WORLD_BOUNDS,
 		STATIC_PLATFORMS,
+		WORLD_BOUNDS,
 	};
 
 	Graphics* Init();
 	void Shutdown(Graphics* g);
 	void Update(Graphics* g);
 
-	ALLEGRO_DISPLAY* GetDisplay( Graphics* g );
 	void ReloadShaders(Graphics* g);
-	void Resize(Graphics* g);
+	void Resize(Graphics* g, uint width, uint height);
 
 	bool AddModel( Graphics *g, ObjectMap *objects, uint objectId, MeshType type, const glm::mat4& transform );
-	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<glm::mat4>& transforms);
+	bool UpdateModels(Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds, const std::vector<glm::mat4>& transforms);
 
 	void DestroyObjects( Graphics* g, ObjectMap* objects, const std::vector<uint>& objectIds );
 }

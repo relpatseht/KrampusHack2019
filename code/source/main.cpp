@@ -250,6 +250,16 @@ namespace
 				const phy::Transform& phyT = objTransforms[objIndex];
 				glm::mat4* const outT = &gfxTransforms.emplace_back();
 				auto flakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, objId);
+				auto ballIt = std::find(state->activeSnowballIds.data(), state->activeSnowballIds.data() + state->snowballCount, objId);
+
+				if (ballIt < state->activeSnowballIds.data() + state->snowballCount)
+				{
+					if (phyT.y < -BOUNDS_HALF_HEIGHT + SNOWBALL_RADIUS + 0.01f)
+					{
+						game->dyingObjects.emplace_back(*ballIt);
+						*ballIt = state->activeSnowballIds[--state->snowballCount];
+					}
+				}
 
 				if (flakeIt < state->snowflakeIds.data() + state->snowflakeCount)
 				{

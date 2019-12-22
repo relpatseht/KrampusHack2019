@@ -171,9 +171,10 @@ namespace
 				};
 
 				bodyDef.type = b2_dynamicBody;
-				bodyDef.position.Set(x, y);
+				bodyDef.position.Set(x, y-2);
 				bodyDef.fixedRotation = true;
 				bodyDef.allowSleep = false;
+				bodyDef.linearDamping = 1.0f;
 
 				shape.Set(capsule, sizeof(capsule) / sizeof(capsule[0]));
 
@@ -460,6 +461,40 @@ namespace phy
 		{
 			b2MouseJoint* const joint = *jointPtr;
 			joint->SetTarget(b2Vec2(x, y));
+		}
+	}
+
+	void RequestWalk(Physics* p, uint objectId, float force)
+	{
+		b2Body** bodyPtr = p->bodies.for_object(objectId);
+
+		if (bodyPtr)
+		{
+			b2Body* body = *bodyPtr;
+
+			for (b2ContactEdge* c = body->GetContactList(); c; c = c->next)
+			{
+				if (c->other->GetType() != b2_dynamicBody)
+				{
+					b2Contact* contact = c->contact;
+					b2WorldManifold worldManifold;
+					float sign = 1.0f;
+
+					if (contact->GetFixtureA()->GetBody() == body)
+						sign = -1.0f;
+
+					contact->GetWorldManifold(&worldManifold);
+					if (sign*worldManifold.normal.y > 0.7f)
+					{
+						b2Vec2 dir = b2Vec2(sign * worldManifold.normal.y, -sign * worldManifold.normal.x);
+						dir.Normalize();
+						dir *= force;
+
+						body->ApplyForceToCenter(dir, true);
+						break;
+					}
+				}
+			}
 		}
 	}
 

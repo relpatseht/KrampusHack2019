@@ -64,7 +64,7 @@ namespace
 	// each frame is 1/60 seconds
 	static void AddPeriodics(GameState* state, uint frameCount)
 	{
-		if (frameCount % 30 == 0) // ever 0.5 seconds
+		if (frameCount % 15 == 0) // ever 0.25 seconds
 		{
 			if (state->snowflakeCount < state->snowflakeIds.size())
 			{
@@ -106,8 +106,6 @@ namespace
 	{
 		if (state->snowMeter >= SNOW_PER_BALL)
 		{
-			if (state->snowballCount < state->activeSnowballIds.size())
-			{
 				const uint ballId = game::CreateObject(state->game);
 				glm::vec2 gunDir = state->gunDir;
 				glm::vec2 ballPos = state->playerPos + glm::vec2(0.0f, PLAYER_HEIGHT*0.5f);
@@ -128,7 +126,16 @@ namespace
 
 				state->snowMeter -= SNOW_PER_BALL;
 
-				state->activeSnowballIds[state->snowballCount++] = ballId;
+				if (state->snowballCount < state->activeSnowballIds.size())
+				{
+					state->activeSnowballIds[state->snowballCount++] = ballId;
+				}
+				else
+				{
+					state->game->dyingObjects.emplace_back(state->activeSnowballIds[0]);
+					std::move(state->activeSnowballIds.begin() + 1, state->activeSnowballIds.end(), state->activeSnowballIds.begin());
+					state->activeSnowballIds.back() = ballId;
+				}
 			}
 		}
 	}
@@ -214,6 +221,14 @@ namespace
 				break;
 			}
 		}
+
+		ALLEGRO_KEYBOARD_STATE keyState;
+		al_get_keyboard_state(&keyState);
+		if(al_key_down(&keyState, ALLEGRO_KEY_D))
+			phy::RequestWalk(state->game->phy, state->playerId, 80.0f);
+
+		if (al_key_down(&keyState, ALLEGRO_KEY_A))
+			phy::RequestWalk(state->game->phy, state->playerId, -80.0f);
 	}
 
 	const phy::Transform* GetTransform(const std::vector<uint>& objIds, const std::vector<phy::Transform>& transforms, uint objectId)

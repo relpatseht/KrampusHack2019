@@ -36,6 +36,7 @@ namespace phy
 
 	void ApplyImpulse(Physics* p, uint objectId, float x, float y);
 	void SetSoftAnchorTarget(Physics* p, uint objectId, float x, float y);
+	void RequestWalk(Physics* p, uint objectId, float force);
 
 	void DestroyObjects(Physics* p, const std::vector<uint>& objectIds);
 }

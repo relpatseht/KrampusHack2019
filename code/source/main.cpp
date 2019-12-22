@@ -12,8 +12,8 @@
 
 namespace
 {
-	const float SNOW_PER_FLAKE = 1.0f;
-	const float SNOW_PER_BALL = 2.5f;
+	const float SNOW_PER_FLAKE = 1.2f;
+	const float SNOW_PER_BALL = 2.1f;
 	const float SNOWBALL_IMPULSE = 30.0f;
 
 	struct GameState
@@ -94,7 +94,7 @@ namespace
 		if (rayLen < 0.1f)
 		{
 			state->gunRay = glm::vec2(0.0f, 0.0f);
-			state->gunDir = glm::vec2(0.0f, 0.0f);
+			state->gunDir = glm::vec2(0.0f, -1.0f);
 		}
 		else
 		{
@@ -106,36 +106,35 @@ namespace
 	{
 		if (state->snowMeter >= SNOW_PER_BALL)
 		{
-				const uint ballId = game::CreateObject(state->game);
-				glm::vec2 gunDir = state->gunDir;
-				glm::vec2 ballPos = state->playerPos + glm::vec2(0.0f, PLAYER_HEIGHT*0.5f);
-				glm::vec2 impulseDir;
+			const uint ballId = game::CreateObject(state->game);
+			glm::vec2 gunDir = state->gunDir;
+			glm::vec2 ballPos = state->playerPos + glm::vec2(0.0f, PLAYER_HEIGHT*0.5f);
+			glm::vec2 impulseDir;
 
-				if (glm::length(gunDir) < 0.99f)
-					gunDir = glm::vec2(0.0f, -1.0f);
+			if (glm::length(gunDir) < 0.99f)
+				gunDir = glm::vec2(0.0f, -1.0f);
 
-				ballPos += gunDir * static_cast<float>(SNOWBALL_RADIUS);
+			ballPos += gunDir * static_cast<float>(SNOWBALL_RADIUS);
 
-				impulseDir = gunDir * SNOWBALL_IMPULSE;
+			impulseDir = gunDir * SNOWBALL_IMPULSE;
 
-				gfx::AddModel(state->game->gfx, ballId, gfx::MeshType::SNOW_BALL, glm::translate(glm::mat4(1.0f), glm::vec3(ballPos, 0.0f)));
-				phy::AddBody(state->game->phy, ballId, phy::BodyType::SNOW_BALL, ballPos.x, ballPos.y);
+			gfx::AddModel(state->game->gfx, ballId, gfx::MeshType::SNOW_BALL, glm::translate(glm::mat4(1.0f), glm::vec3(ballPos, 0.0f)));
+			phy::AddBody(state->game->phy, ballId, phy::BodyType::SNOW_BALL, ballPos.x, ballPos.y);
 
-				phy::ApplyImpulse(state->game->phy, ballId, impulseDir.x, impulseDir.y);
-				phy::ApplyImpulse(state->game->phy, state->playerId, -impulseDir.x, -impulseDir.y);
+			phy::ApplyImpulse(state->game->phy, ballId, impulseDir.x, impulseDir.y);
+			phy::ApplyImpulse(state->game->phy, state->playerId, -impulseDir.x, -impulseDir.y);
 
-				state->snowMeter -= SNOW_PER_BALL;
+			state->snowMeter -= SNOW_PER_BALL;
 
-				if (state->snowballCount < state->activeSnowballIds.size())
-				{
-					state->activeSnowballIds[state->snowballCount++] = ballId;
-				}
-				else
-				{
-					state->game->dyingObjects.emplace_back(state->activeSnowballIds[0]);
-					std::move(state->activeSnowballIds.begin() + 1, state->activeSnowballIds.end(), state->activeSnowballIds.begin());
-					state->activeSnowballIds.back() = ballId;
-				}
+			if (state->snowballCount < state->activeSnowballIds.size())
+			{
+				state->activeSnowballIds[state->snowballCount++] = ballId;
+			}
+			else
+			{
+				state->game->dyingObjects.emplace_back(state->activeSnowballIds[0]);
+				std::move(state->activeSnowballIds.begin() + 1, state->activeSnowballIds.end(), state->activeSnowballIds.begin());
+				state->activeSnowballIds.back() = ballId;
 			}
 		}
 	}
@@ -159,19 +158,19 @@ namespace
 				case ALLEGRO_EVENT_KEY_DOWN:
 					switch (evt.keyboard.keycode)
 					{
-						case ALLEGRO_KEY_W:
+						//case ALLEGRO_KEY_W:
 						case ALLEGRO_KEY_UP:
 							UpdateGun(state, glm::vec2(0.0f, 1.0f));
 						break;
-						case ALLEGRO_KEY_A:
+						//case ALLEGRO_KEY_A:
 						case ALLEGRO_KEY_LEFT:
 							UpdateGun(state, glm::vec2(-1.0f, 0.0f));
 						break;
-						case ALLEGRO_KEY_S:
+						//case ALLEGRO_KEY_S:
 						case ALLEGRO_KEY_DOWN:
 							UpdateGun(state, glm::vec2(0.0f, -1.0f));
 						break;
-						case ALLEGRO_KEY_D:
+						//case ALLEGRO_KEY_D:
 						case ALLEGRO_KEY_RIGHT:
 							UpdateGun(state, glm::vec2(1.0f, 0.0f));
 						break;
@@ -184,19 +183,19 @@ namespace
 				case ALLEGRO_EVENT_KEY_UP:
 					switch (evt.keyboard.keycode)
 					{
-						case ALLEGRO_KEY_W:
+						//case ALLEGRO_KEY_W:
 						case ALLEGRO_KEY_UP:
 							UpdateGun(state, -glm::vec2(0.0f, 1.0f));
 						break;
-						case ALLEGRO_KEY_A:
+						//case ALLEGRO_KEY_A:
 						case ALLEGRO_KEY_LEFT:
 							UpdateGun(state, -glm::vec2(-1.0f, 0.0f));
 						break;
-						case ALLEGRO_KEY_S:
+						//case ALLEGRO_KEY_S:
 						case ALLEGRO_KEY_DOWN:
 							UpdateGun(state, -glm::vec2(0.0f, -1.0f));
 						break;
-						case ALLEGRO_KEY_D:
+						//case ALLEGRO_KEY_D:
 						case ALLEGRO_KEY_RIGHT:
 							UpdateGun(state, -glm::vec2(1.0f, 0.0f));
 						break;

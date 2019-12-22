@@ -12,20 +12,20 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{5E370B26-81AB-4E7A-85B9-0B710E0CF481}</ProjectGuid>
-    <RootNamespace>KH19</RootNamespace>
+    <ProjectGuid>{B0C6C93F-CEA0-44FC-B207-43B35B4876DF}</ProjectGuid>
+    <RootNamespace>box2d</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(root.props))" Condition="$(RootImported) == ''" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -50,12 +50,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(Box2DIncludePath)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>shlwapi.lib;winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -66,45 +64,25 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ImGUIIncludePath)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>shlwapi.lib;winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\external\allegro\allegro.vcxproj">
-      <Project>{b0c6c93f-cea0-44fc-b207-43a35b4876de}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\external\box2d\box2d.vcxproj">
-      <Project>{b0c6c93f-cea0-44fc-b207-43a35b4876df}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\external\imgui\imgui.vcxproj">
-      <Project>{b0c6c93f-cea0-44fc-b207-43b35b4876df}</Project>
-    </ProjectReference>
+    <ClInclude Include="$(ImGUIFolder)imconfig.h" />
+    <ClInclude Include="$(ImGUIFolder)imgui.h" />
+    <ClInclude Include="$(ImGUIFolder)imgui_internal.h" />
+    <ClInclude Include="$(ImGUIFolder)imgui_rectpack.h" />
+    <ClInclude Include="$(ImGUIFolder)imgui_textedit.h" />
+    <ClInclude Include="$(ImGUIFolder)imgui_truetype.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="Graphics.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Physics.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Assert.h" />
-    <ClInclude Include="Bits.h" />
-    <ClInclude Include="Component.h" />
-    <ClInclude Include="ComponentTypes.h" />
-    <ClInclude Include="Graphics.h" />
-    <ClInclude Include="Game.h" />
-    <ClInclude Include="Physics.h" />
-    <ClInclude Include="Power2.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\scene_defines.glsl" />
+    <ClCompile Include="$(ImGUIFolder)imgui_widgets.cpp" />
+    <ClCompile Include="$(ImGUIFolder)imgui_draw.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

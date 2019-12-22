@@ -10,10 +10,12 @@
     <GLMFolder>$(CodeExternalFolder)glm\0.9.9.6\</GLMFolder>
     <Box2DFolder>$(CodeExternalFolder)box2d\2.3.1\</Box2DFolder>
     <AllegroFolder>$(CodeExternalFolder)allegro\5.2.4\</AllegroFolder>
+    <ImGUIFolder>$(CodeExternalFolder)imgui\1.7.4\</ImGUIFolder>
 
     <GLMIncludePath>$(GLMFolder)</GLMIncludePath>
     <AllegroIncludePath>$(AllegroFolder)include\;$(CodeExternalFolder)allegro\include</AllegroIncludePath>
     <Box2DIncludePath>$(Box2DFolder)</Box2DIncludePath>
+    <ImGUIIncludePath>$(ImGUIFolder)</ImGUIIncludePath>
 
     <IntDir>$(ProjectFolder)bin/obj/$(MSBuildProjectName)/$(Configuration)/</IntDir>
     <OutDir>$(ProjectFolder)bin/</OutDir>

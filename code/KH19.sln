@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "box2d", "external\box2d\box
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glm", "external\glm\glm.vcxproj", "{B0C6C93F-CEA0-44FC-B207-43A35B4876E0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "external\imgui\imgui.vcxproj", "{B0C6C93F-CEA0-44FC-B207-43B35B4876DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -35,6 +37,10 @@ Global
 		{B0C6C93F-CEA0-44FC-B207-43A35B4876E0}.Debug|x64.Build.0 = Debug|x64
 		{B0C6C93F-CEA0-44FC-B207-43A35B4876E0}.Release|x64.ActiveCfg = Release|x64
 		{B0C6C93F-CEA0-44FC-B207-43A35B4876E0}.Release|x64.Build.0 = Release|x64
+		{B0C6C93F-CEA0-44FC-B207-43B35B4876DF}.Debug|x64.ActiveCfg = Debug|x64
+		{B0C6C93F-CEA0-44FC-B207-43B35B4876DF}.Debug|x64.Build.0 = Debug|x64
+		{B0C6C93F-CEA0-44FC-B207-43B35B4876DF}.Release|x64.ActiveCfg = Release|x64
+		{B0C6C93F-CEA0-44FC-B207-43B35B4876DF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,6 +49,7 @@ Global
 		{B0C6C93F-CEA0-44FC-B207-43A35B4876DE} = {EE2241E7-4CFF-4C91-B3AE-3574551CE054}
 		{B0C6C93F-CEA0-44FC-B207-43A35B4876DF} = {EE2241E7-4CFF-4C91-B3AE-3574551CE054}
 		{B0C6C93F-CEA0-44FC-B207-43A35B4876E0} = {EE2241E7-4CFF-4C91-B3AE-3574551CE054}
+		{B0C6C93F-CEA0-44FC-B207-43B35B4876DF} = {EE2241E7-4CFF-4C91-B3AE-3574551CE054}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7A21C9C2-6B6E-425D-AC87-25360F024B11}

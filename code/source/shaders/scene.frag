@@ -57,7 +57,7 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 		else if(type < MESH_TYPE_STATIC_PLATFORMS + 1.0)
 				objDist = Mesh_StaticPlatforms(objPos, typeFrac);
 		else if(type < MESH_TYPE_WORLD_BOUNDS + 1.0)
-				objDist = Mesh_SceneBounds(objPos, typeFrac);;
+				objDist = Mesh_SceneBounds(objPos, typeFrac);
 
 		if(objDist.x < dist.x)
 			dist = objDist;
@@ -74,7 +74,8 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 		const float bottom = fSphere(pos*noise - vec3(0.0, -6.25, 0.0), 2.0) / noise;
 		const float mid = fSphere(pos*noise - vec3(0.0, -3.5, 0.0), 1.5) / noise;
 		const float top = fSphere(pos*noise - vec3(0.0, -1.35, 0.0), 1.1) / noise;
-		const float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
+		float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
+
 
 		if(snowman < dist.x)
 			dist = vec2(snowman, 1.0);

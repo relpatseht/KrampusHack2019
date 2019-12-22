@@ -179,7 +179,7 @@ namespace
 				shape.Set(capsule, sizeof(capsule) / sizeof(capsule[0]));
 
 				fixtureDef.shape = &shape;
-				fixtureDef.density = 5.0f;
+				fixtureDef.density = 3.0f;
 				fixtureDef.friction = 2.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::PLAYER;
 				fixtureDef.filter.maskBits = BodyGroup::WORLD_BOUNDS | BodyGroup::PLATFORM;
@@ -267,10 +267,10 @@ namespace
 				shape.m_radius = static_cast<float>(SNOWBALL_RADIUS);
 
 				fixtureDef.shape = &shape;
-				fixtureDef.density = 7.0f;
+				fixtureDef.density = 10.0f;
 				fixtureDef.friction = 1.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::SNOW_BALL;
-				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_MAN | BodyGroup::PLATFORM | BodyGroup::WORLD_BOUNDS;
+				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_MAN | BodyGroup::PLATFORM;
 
 				b2Body* flake = world->CreateBody(&bodyDef);
 				flake->CreateFixture(&fixtureDef);

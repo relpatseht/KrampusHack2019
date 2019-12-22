@@ -14,7 +14,7 @@ namespace
 {
 	const float SNOW_PER_FLAKE = 1.2f;
 	const float SNOW_PER_BALL = 2.1f;
-	const float SNOWBALL_IMPULSE = 30.0f;
+	const float SNOWBALL_IMPULSE = 20.0f;
 
 	struct GameState
 	{
@@ -286,6 +286,7 @@ namespace
 						if (helperFlakeDist <= (HELPER_RADIUS + SNOWFLAKE_RADIUS) * 0.7)
 						{
 							state->snowMeter = std::min(state->snowMeter + SNOW_PER_FLAKE, state->maxSnow);
+							*flakeIt = state->snowflakeIds[--state->snowflakeCount];
 							state->game->dyingObjects.emplace_back(objId);
 						}
 					}

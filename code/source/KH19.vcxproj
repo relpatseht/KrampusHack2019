@@ -88,22 +88,32 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="bvh\box_partitioner.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Physics.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="apply_permutation.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="Bits.h" />
+    <ClInclude Include="bvh\box_partitioner.h" />
+    <ClInclude Include="bvh\box_partitioner_internal.h" />
+    <ClInclude Include="bvh\box_partitioner_sse2.h" />
+    <ClInclude Include="bvh\spatial_tree.h" />
+    <ClInclude Include="bvh\spatial_tree_common.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentTypes.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="Power2.h" />
+    <ClInclude Include="tuple_for_each.h" />
+    <ClInclude Include="zip_iterator.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\bvh_node.glsl" />
     <None Include="shaders\scene_defines.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

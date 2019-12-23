@@ -7,6 +7,7 @@
 #include "/static_scene.glsl"
 #include "/raymarch.glsl"
 #include "/scene_meshes.glsl"
+#include "/bvh_node.glsl"
 
 const float g_camNear = 1.0;
 const float g_camFar = 100.0;
@@ -14,9 +15,14 @@ const float g_camFar = 100.0;
 layout(location = 0) in vec3 in_worldPos;
 layout(location = 1) in vec3 in_ray;
 
-layout(std140, binding=0) uniform SceneEntryBlock
+layout(std140, binding=0) buffer SceneEntryBuffer
 {
-	mat4 in_entries[MAX_SCENE_ENTRIES];
+	mat4 in_entries[];
+};
+
+layout(std140, binding=1) buffer SceneBVHBuffer
+{
+	Node in_bvh[];
 };
 
 layout(location = 0) uniform vec3 in_camPos;
@@ -28,14 +34,87 @@ layout(location = 7) uniform uint in_sceneEntryCount;
 
 layout (location = 0) out vec4 out_color;
 
+#define MAX_HIT_SCENE_ENTRIES 16
+uint g_rayHitSceneEntries[MAX_HIT_SCENE_ENTRIES];
+uint g_rayHitSceneEntryCount = 0;
+
+vec3 g_dbgColor = vec3(0);
+
+void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
+{
+	const uint MAX_STACK = 16;
+	const vec3 invDir = 1.0 / rayDir;
+	uint nodeStack[MAX_STACK];
+	uint stackSize = 0;
+
+	nodeStack[stackSize++] = 0;
+
+	while(stackSize != 0)
+	{
+		const uint nodeIndex = nodeStack[--stackSize];
+		vec4 tEnter, tExit;
+		vec4 tMin, tMax;
+		vec4 childMins, childMaxs;
+		bvec4 intersectsChild;
+
+		tEnter = (in_bvh[nodeIndex].childMinX - rayOrigin.xxxx) * invDir.xxxx;
+		tExit  = (in_bvh[nodeIndex].childMaxX - rayOrigin.xxxx) * invDir.xxxx;
+		tMin = min(tEnter, tExit);
+		tMax = max(tEnter, tExit);
+		childMins = max(tMin, vec4(0));
+		childMaxs = tMax;
+
+		tEnter = (in_bvh[nodeIndex].childMinY - rayOrigin.yyyy) * invDir.yyyy;
+		tExit  = (in_bvh[nodeIndex].childMaxY - rayOrigin.yyyy) * invDir.yyyy;
+		tMin = min(tEnter, tExit);
+		tMax = max(tEnter, tExit);
+		childMins = max(tMin, childMins);
+		childMaxs = min(tMax, childMaxs);
+
+		tEnter = (in_bvh[nodeIndex].childMinZ - rayOrigin.zzzz) * invDir.zzzz;
+		tExit  = (in_bvh[nodeIndex].childMaxZ - rayOrigin.zzzz) * invDir.zzzz;
+		tMin = min(tEnter, tExit);
+		tMax = max(tEnter, tExit);
+		childMins = max(tMin, childMins);
+		childMaxs = min(tMax, childMaxs);
+
+		intersectsChild = greaterThanEqual(childMaxs, childMins);
+
+		for(uint childIndex=0; childIndex<4; ++childIndex)
+		{
+			const uint childOffset = in_bvh[nodeIndex].childOffsets[childIndex];
+
+			if(childOffset != 0 && intersectsChild[childIndex])
+			{
+				if((childOffset & LEAF_NODE_MASK) == LEAF_NODE_MASK)
+				{
+					if(g_rayHitSceneEntryCount < MAX_HIT_SCENE_ENTRIES)
+					{
+						g_rayHitSceneEntries[g_rayHitSceneEntryCount++] = childOffset & (~LEAF_NODE_MASK);
+					}
+				}
+				else
+				{
+					if(stackSize < MAX_STACK)
+						nodeStack[stackSize++] = childOffset;
+				}
+			}
+		}
+	}
+
+
+	if(g_rayHitSceneEntryCount > 1)
+		g_dbgColor.y = 1.0;
+}
+
 vec2 RayMarch_SceneFunc(in vec3 pos)
 {
 	const float FLT_MAX = 3.402823466e+38;
 	vec2 dist = vec2(FLT_MAX, 0.0);
 
-	for(uint i=0; i<in_sceneEntryCount; ++i)
+	for(uint i=0; i<g_rayHitSceneEntryCount; ++i)
 	{
-		mat4 invTransform = in_entries[i];
+		mat4 invTransform = in_entries[g_rayHitSceneEntries[i]];
 		float type = invTransform[3][3];
 		float typeFrac = fract(type);
 
@@ -97,6 +176,9 @@ void main()
 {
 	vec3 camDir = normalize(in_camTarget - in_camPos);
 	vec3 rayDir = RayDir(camDir);
+
+	BVHRayGatherSceneEntries(rayDir, in_camPos);
+
 	vec2 objDist = RayMarch(rayDir, in_camPos, g_camFar);
 
 	if( objDist.x == RM_INFINITY)
@@ -144,4 +226,6 @@ void main()
 		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
 		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
+
+	out_color = vec4(g_dbgColor, 1.0);
 }

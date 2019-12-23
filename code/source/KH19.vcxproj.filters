@@ -9,6 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\bvh">
+      <UniqueIdentifier>{8a67ed6b-46c8-47e2-8114-194019ae242a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\bvh\partitioner_internal">
+      <UniqueIdentifier>{3601a784-afd6-45b7-916c-82888683e2a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -21,6 +27,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Physics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bvh\box_partitioner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -49,10 +58,37 @@
     <ClInclude Include="Component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bvh\box_partitioner_internal.h">
+      <Filter>Header Files\bvh\partitioner_internal</Filter>
+    </ClInclude>
+    <ClInclude Include="bvh\box_partitioner_sse2.h">
+      <Filter>Header Files\bvh\partitioner_internal</Filter>
+    </ClInclude>
+    <ClInclude Include="bvh\box_partitioner.h">
+      <Filter>Header Files\bvh</Filter>
+    </ClInclude>
+    <ClInclude Include="bvh\spatial_tree.h">
+      <Filter>Header Files\bvh</Filter>
+    </ClInclude>
+    <ClInclude Include="bvh\spatial_tree_common.h">
+      <Filter>Header Files\bvh</Filter>
+    </ClInclude>
+    <ClInclude Include="apply_permutation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="zip_iterator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tuple_for_each.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\scene_defines.glsl">
       <Filter>Header Files</Filter>
+    </None>
+    <None Include="shaders\bvh_node.glsl">
+      <Filter>Header Files\bvh</Filter>
     </None>
   </ItemGroup>
 </Project>

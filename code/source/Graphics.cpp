@@ -5,9 +5,11 @@
 #include <filesystem>
 #include <chrono>
 #include <unordered_map>
+#include <numeric>
 #include "ComponentTypes.h"
 #include "Component.h"
 #include "Game.h"
+#include "bvh/spatial_tree.h"
 #include "shaders/scene_defines.glsl"
 #include "glm/glm.hpp"
 #include "glm/gtx/euler_angles.hpp"
@@ -20,11 +22,20 @@
 
 typedef unsigned uint;
 
+namespace
+{
+	namespace tree
+	{
+		using namespace glm;
+#include "shaders/bvh_node.glsl"
+	}
+}
+
 struct Graphics
 {
-
 	static const uint MAX_ENTRIES = MAX_SCENE_ENTRIES;
 	component_list<glm::mat4> sceneEntries;
+	std::vector<tree::Node> sceneBVH;
 	glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 camTarget{ 0.0f, 0.0f, 0.0f };
 	glm::float1 camInvFov;
@@ -32,7 +43,8 @@ struct Graphics
 	glm::vec2 res{ 1024.0f, 768.0f };
 	
 	uint sceneVAO = 0;
-	uint sceneUBO = 0;
+	uint sceneEntrySSB = 0;
+	uint sceneBVHSSB = 0;
 	uint shader = 0;
 	std::vector<uint> meshTypeRemap;
 	std::unordered_map<uint, uint> objToMesh;
@@ -60,6 +72,231 @@ namespace
 			}
 
 			return ret;
+		}
+	}
+
+	namespace tree
+	{
+		namespace int_tree
+		{
+			struct CompNode
+			{
+				CompNode* children[4];
+				glm::vec4 childMinX;
+				glm::vec4 childMinY;
+				glm::vec4 childMinZ;
+				glm::vec4 childMaxX;
+				glm::vec4 childMaxY;
+				glm::vec4 childMaxZ;
+			};
+
+			static CompNode* ConvertToGPU_r(const spatial_tree<uint, 3, 4>& node, std::vector<CompNode>* outNodes)
+			{
+				const uint nodeIndex = static_cast<uint>(outNodes->size());
+				CompNode* const outNode = &outNodes->emplace_back();
+
+				glm::vec4* const outMins[] = { &outNode->childMinX, &outNode->childMinY, &outNode->childMinZ };
+				glm::vec4* const outMaxs[] = { &outNode->childMaxX, &outNode->childMaxY, &outNode->childMaxZ };
+
+				for (size_t d = 0; d < 3; ++d)
+				{
+					const float* const mins = node.child_mins(d);
+					const float* const maxs = node.child_maxs(d);
+
+					for (uint c = 0; c < node.child_count(); ++c)
+					{
+						(*outMins[d])[c] = mins[c];
+						(*outMaxs[d])[c] = maxs[c];
+					}
+
+					for (uint c = node.child_count(); c < 4; ++c)
+					{
+						(*outMins[d])[c] = FLT_MAX;
+						(*outMaxs[d])[c] = -FLT_MAX;
+					}
+				}
+
+				if (node.leaf_branch())
+				{
+					for (uint c = 0; c < node.child_count(); ++c)
+						outNode->children[c] = reinterpret_cast<CompNode*>(static_cast<uintptr_t>((node.leaf(c) << 1) | 1));
+				}
+				else
+				{
+					for (uint c = 0; c < node.child_count(); ++c)
+						(*outNodes)[nodeIndex].children[c] = ConvertToGPU_r(node.subtree(c), outNodes);
+				}
+
+				for (uint c = node.child_count(); c < 4; ++c)
+					(*outNodes)[nodeIndex].children[c] = nullptr;
+
+				return outNodes->data() + nodeIndex;
+			}
+
+			static uint CompressGPUTree_r(CompNode* node)
+			{
+				uint childChildren[4];
+				uint childCount;
+				uint leafCount = 0;
+
+				for (childCount = 0; childCount < 4; ++childCount)
+				{
+					CompNode* const childPtr = node->children[childCount];
+
+					if (!childPtr)
+						break;
+
+					if (!(reinterpret_cast<uintptr_t>(childPtr) & 1))
+						childChildren[childCount] = CompressGPUTree_r(childPtr);
+					else
+					{
+						childChildren[childCount] = 0;
+						++leafCount;
+					}
+				}
+
+				if (leafCount < childCount)
+				{
+					uint newChildCount = childCount;
+					for (uint c = 0; c < childCount; ++c)
+					{
+						if (childChildren[c])
+						{
+							uint emptySlots = 4 - newChildCount;
+							if (childChildren[c] <= emptySlots + 1)
+							{
+								CompNode* const child = node->children[c];
+
+								for (uint childC = 0; childC < childChildren[c]; ++childC)
+								{
+									const uint dest = !childC ? c : newChildCount++;
+
+									node->children[dest] = child->children[childC];
+									node->childMinX[dest] = child->childMinX[childC];
+									node->childMinY[dest] = child->childMinY[childC];
+									node->childMinZ[dest] = child->childMinZ[childC];
+									node->childMaxX[dest] = child->childMaxX[childC];
+									node->childMaxY[dest] = child->childMaxY[childC];
+									node->childMaxZ[dest] = child->childMaxZ[childC];
+								}
+							}
+						}
+					}
+
+					childCount = newChildCount;
+				}
+
+				return childCount;
+			}
+
+			static uint FinalizeGPUTree_r(CompNode* node, std::vector<Node>* outNodes)
+			{
+				const uint nodeIndex = static_cast<uint>(outNodes->size());
+				Node* outNode = &outNodes->emplace_back();
+
+				outNode->childMinX = node->childMinX;
+				outNode->childMinY = node->childMinY;
+				outNode->childMinZ = node->childMinZ;
+				outNode->childMaxX = node->childMaxX;
+				outNode->childMaxY = node->childMaxY;
+				outNode->childMaxZ = node->childMaxZ;
+
+				for (uint c = 0; c < 4; ++c)
+				{
+					CompNode* const childNode = node->children[c];
+
+					if (childNode)
+					{
+						const uintptr_t childNodeBits = reinterpret_cast<uintptr_t>(childNode);
+						const bool isLeaf = childNodeBits & 1;
+
+						if (isLeaf)
+						{
+							outNode->childOffsets[c] = static_cast<uint>((childNodeBits >> 1) | LEAF_NODE_MASK);
+						}
+						else
+						{
+							const uint childNodeOffset = FinalizeGPUTree_r(childNode, outNodes);
+
+							outNode = outNodes->data() + nodeIndex;
+							outNode->childOffsets[c] = childNodeOffset;
+						}
+					}
+				}
+
+				return nodeIndex;
+			}
+		}
+
+		static std::vector<Node> BuildSceneBVH(const Graphics& g)
+		{
+			using namespace int_tree;
+			const uint entryCount = static_cast<uint>(g.sceneEntries.size());
+			const glm::mat4* const entries = g.sceneEntries.data();
+			uint* const indices = (uint*)_malloca(sizeof(uint) * entryCount);
+			spatial_tree<uint, 2, 4> buildTree;
+
+			std::iota(indices, indices + entryCount, 0);
+			buildTree.insert(indices, indices + entryCount, [entries](uint entryIndex, float(&outMins)[2], float(&outMaxs)[2])
+			{
+				const glm::mat4& entry = entries[entryIndex];
+				const uint entryType = static_cast<uint>(entry[3][3]);
+				const glm::vec3 entryPos = -entry[3]; // inverse transform stored
+				glm::vec2& mins = reinterpret_cast<glm::vec2&>(outMins);
+				glm::vec2& maxs = reinterpret_cast<glm::vec2&>(outMaxs);
+
+				mins = entryPos;
+				maxs = entryPos;
+
+				switch (entryType)
+				{
+				case MESH_TYPE_PLAYER:
+					mins -= glm::vec2(PLAYER_WIDTH * 0.5f, 0.0f);
+					maxs += glm::vec2(PLAYER_WIDTH * 0.5f, PLAYER_HEIGHT);
+					break;
+				case MESH_TYPE_HELPER:
+					mins -= glm::vec2(HELPER_RADIUS);
+					maxs += glm::vec2(HELPER_RADIUS);
+					break;
+				case MESH_TYPE_SNOW_FLAKE:
+					mins -= glm::vec2(SNOWFLAKE_RADIUS);
+					maxs += glm::vec2(SNOWFLAKE_RADIUS);
+					break;
+				case MESH_TYPE_SNOW_BALL:
+					mins -= glm::vec2(SNOWBALL_RADIUS);
+					maxs += glm::vec2(SNOWBALL_RADIUS);
+					break;
+				case MESH_TYPE_SNOW_MAN:
+					break;
+				case MESH_TYPE_STATIC_PLATFORMS:
+				{
+					float xOffs = -BOTTOM_LEFT_PLATFORM_X + BOTTOM_PLATFORM_WIDTH;
+					float yMin = -BOTTOM_LEFT_PLATFORM_Y + PLATFORM_DIM;
+					float yMax = -yMin + (PLATFORM_VERTICAL_SPACE * PLATFORM_COUNT) + PLATFORM_DIM;
+
+					mins -= glm::vec2(xOffs, yMin);
+					maxs += glm::vec2(xOffs, yMax);
+				}
+				break;
+				case MESH_TYPE_WORLD_BOUNDS:
+					mins -= glm::vec2(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT);
+					maxs += glm::vec2(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT);
+					break;
+				}
+			});
+
+			std::vector<CompNode> intGPUNodes;
+			intGPUNodes.reserve(entryCount * 2);
+			CompNode* const headIntNode = ConvertToGPU_r(buildTree, &intGPUNodes);
+			CompressGPUTree_r(headIntNode);
+
+			std::vector<Node> gpuNodes;
+			gpuNodes.reserve(intGPUNodes.size());
+			FinalizeGPUTree_r(headIntNode, &gpuNodes);
+
+			_freea(indices);
+
+			return gpuNodes;
 		}
 	}
 
@@ -275,22 +512,22 @@ namespace
 			return true;
 		}
 
-		static bool GenUBO(uint* outUBO)
+		static bool GenSSB(uint* outSSB, size_t size)
 		{
-			uint ubo;
+			uint ssb;
 
-			glGenBuffers(1, &ubo);
-			glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-			glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*Graphics::MAX_ENTRIES, nullptr, GL_DYNAMIC_DRAW);
-			glBindBuffer(GL_UNIFORM_BUFFER, 0);
+			glGenBuffers(1, &ssb);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 			if (err::Error())
 			{
-				*outUBO = 0;
+				*outSSB = 0;
 				return false;
 			}
 			
-			*outUBO = ubo;
+			*outSSB = ssb;
 			return true;
 		}
 
@@ -302,7 +539,8 @@ namespace
 			static const uint camViewBinding = 3;
 			static const uint resolutionBinding = 6;
 			static const uint sceneEntryCountBinding = 7;
-			static const uint sceneBlockBinding = 0;
+			static const uint sceneEntryBufferBinding = 0;
+			static const uint sceneBVHBufferBinding = 1;
 			const uint sceneEntryCount = static_cast<uint>(g.sceneEntries.size());
 
 			glUniform3fv(camPosBinding, 1, glm::value_ptr(g.camPos));
@@ -312,11 +550,17 @@ namespace
 			glUniform2fv(resolutionBinding, 1, glm::value_ptr(g.res));
 			glUniform1ui(sceneEntryCountBinding, sceneEntryCount);
 			
-			glBindBufferBase( GL_UNIFORM_BUFFER, sceneBlockBinding, g.sceneUBO );
+			glBindBufferBase( GL_SHADER_STORAGE_BUFFER, sceneEntryBufferBinding, g.sceneEntrySSB );
 
-			glBindBuffer(GL_UNIFORM_BUFFER, g.sceneUBO);
-			glBufferSubData(GL_UNIFORM_BUFFER, 0, sceneEntryCount * sizeof(glm::mat4), g.sceneEntries.data());
-			glBindBuffer(GL_UNIFORM_BUFFER, 0);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g.sceneEntrySSB);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sceneEntryCount * sizeof(glm::mat4), g.sceneEntries.data());
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, sceneBVHBufferBinding, g.sceneBVHSSB);
+
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g.sceneBVHSSB);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, g.sceneBVH.size() * sizeof(tree::Node), g.sceneBVH.data());
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 			return err::Error();
 		}
@@ -346,36 +590,50 @@ namespace
 				}
 				else
 				{
-					uint sceneUBO;
+					uint sceneEntrySSB;
 
-					scene::GenUBO(&sceneUBO);
+					scene::GenSSB(&sceneEntrySSB, sizeof(glm::mat4) * Graphics::MAX_ENTRIES);
 
-					if (sceneUBO == 0)
+					if (sceneEntrySSB == 0)
 					{
-						printf("Failed to generate uniform buffer for scene.\n");
+						printf("Failed to generate shader storage buffer for scene.\n");
 					}
 					else
 					{
-						g->shader = sceneShader;
-						g->sceneUBO = sceneUBO;
-						g->sceneVAO = sceneVAO;
+						uint sceneBVHSSB;
 
-						const float fov = 45.0f;
-						g->camPos = glm::vec3(0.0f, 0.0f, 39.0f);
-						g->camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-						g->camInvFov = static_cast<float>(1.0 / std::tan((fov * 3.1415926535898) / 360.0));
-						g->camViewMtx = glm::lookAt(g->camPos, g->camTarget, glm::vec3(0.0f, 1.0f, 0.0f));
-						
-						g->meshTypeRemap.resize(MESH_TYPE_COUNT);
-						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::PLAYER)] = MESH_TYPE_PLAYER;
-						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::HELPER)] = MESH_TYPE_HELPER;
-						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_FLAKE)] = MESH_TYPE_SNOW_FLAKE;
-						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_BALL)] = MESH_TYPE_SNOW_BALL;
-						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_MAN)] = MESH_TYPE_SNOW_MAN;
-						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::STATIC_PLATFORMS)] = MESH_TYPE_STATIC_PLATFORMS;
-						g->meshTypeRemap[static_cast<uint>(gfx::MeshType::WORLD_BOUNDS)] = MESH_TYPE_WORLD_BOUNDS;
+						scene::GenSSB(&sceneBVHSSB, sizeof(tree::Node) * Graphics::MAX_ENTRIES * 2);
 
-						return true;
+						if (sceneBVHSSB == 0)
+						{
+							printf("Failed to generate shader storage buffer for bvh.\n");
+						}
+						else
+						{
+							g->shader = sceneShader;
+							g->sceneEntrySSB = sceneEntrySSB;
+							g->sceneBVHSSB = sceneBVHSSB;
+							g->sceneVAO = sceneVAO;
+
+							const float fov = 45.0f;
+							g->camPos = glm::vec3(0.0f, 0.0f, 39.0f);
+							g->camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+							g->camInvFov = static_cast<float>(1.0 / std::tan((fov * 3.1415926535898) / 360.0));
+							g->camViewMtx = glm::lookAt(g->camPos, g->camTarget, glm::vec3(0.0f, 1.0f, 0.0f));
+
+							g->meshTypeRemap.resize(MESH_TYPE_COUNT);
+							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::PLAYER)] = MESH_TYPE_PLAYER;
+							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::HELPER)] = MESH_TYPE_HELPER;
+							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_FLAKE)] = MESH_TYPE_SNOW_FLAKE;
+							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_BALL)] = MESH_TYPE_SNOW_BALL;
+							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_MAN)] = MESH_TYPE_SNOW_MAN;
+							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::STATIC_PLATFORMS)] = MESH_TYPE_STATIC_PLATFORMS;
+							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::WORLD_BOUNDS)] = MESH_TYPE_WORLD_BOUNDS;
+
+							return true;
+						}
+
+						glDeleteBuffers(1, &sceneEntrySSB);
 					}
 
 					glDeleteVertexArrays(1, &sceneVAO);
@@ -425,7 +683,8 @@ namespace gfx
 	void Shutdown(Graphics* g)
 	{
 		glDeleteProgram(g->shader);
-		glDeleteBuffers(1, &g->sceneUBO);
+		glDeleteBuffers(1, &g->sceneEntrySSB);
+		glDeleteBuffers(1, &g->sceneBVHSSB);
 		glDeleteVertexArrays(1, &g->sceneVAO);
 
 		delete g;
@@ -510,6 +769,8 @@ namespace gfx
 				(*outTrans)[3][3] = meshType;
 			}
 		}
+
+		g->sceneBVH = tree::BuildSceneBVH(*g);
 
 		return true;
 	}

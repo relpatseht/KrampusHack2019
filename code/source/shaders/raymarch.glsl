@@ -8,7 +8,7 @@
 #endif //#ifndef RM_STEP_MULT
 
 #ifndef RM_MAX_ITERATIONS
-#define RM_MAX_ITERATIONS 256
+#define RM_MAX_ITERATIONS 64
 #endif //#ifndef RM_MAX_ITERATIONS
 
 #ifndef RM_NORMAL_DERIVATIVE_EPSILON

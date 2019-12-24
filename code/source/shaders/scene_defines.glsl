@@ -21,6 +21,15 @@
 
 #define SNOWBALL_RADIUS 0.2
 
+#define SNOWMAN_BOT_RADIUS 2.0
+#define SNOWMAN_MID_RADIUS 1.5
+#define SNOWMAN_TOP_RADIUS 1.1
+#define SNOWMAN_X 0.0
+#define SNOWMAN_BOT_Y -7.4
+#define SNOWMAN_MID_Y -4.65
+#define SNOWMAN_TOP_Y -2.5
+#define SNOWMAN_Z -7.0
+
 #define MESH_TYPE_PLAYER 0
 #define MESH_TYPE_HELPER 1
 #define MESH_TYPE_SNOW_FLAKE 2

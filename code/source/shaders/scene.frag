@@ -128,20 +128,19 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 		if(objDist.x < dist.x)
 			dist = objDist;
 	}
-/*{
+	{
 		vec2 staticSceneDist = StaticScene(pos);
 
 		if(staticSceneDist.x < dist.x)
 			dist = staticSceneDist;
-	}*/
+	}
 
 	{
 		const float noise = noise(pos*32)*0.004 + 0.998;
-		const float bottom = fSphere(pos*noise - vec3(0.0, -6.25, 0.0), 2.0) / noise;
-		const float mid = fSphere(pos*noise - vec3(0.0, -3.5, 0.0), 1.5) / noise;
-		const float top = fSphere(pos*noise - vec3(0.0, -1.35, 0.0), 1.1) / noise;
+		const float bottom = fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_BOT_Y, SNOWMAN_Z), SNOWMAN_BOT_RADIUS) / noise;
+		const float mid =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_MID_Y, SNOWMAN_Z), SNOWMAN_MID_RADIUS) / noise;
+		const float top =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_TOP_Y, SNOWMAN_Z), SNOWMAN_TOP_RADIUS) / noise;
 		float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
-
 
 		if(snowman < dist.x)
 			dist = vec2(snowman, 1.0);
@@ -211,6 +210,7 @@ void main()
 		//vec3 light2Radiance = light2Color*light2Attn*light2BRDF;//*light2Shadow;
 
 		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
+		color = Tonemap_ACES(color);
 		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
 }

@@ -18,9 +18,14 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 	}
 	else if(mtl < 2.0) // snow terrain, [1, 2)
 	{
-		albedo = vec3(0.5, 0.5, 0.5 + (2.0 - mtl)*0.2);
+		const vec3 brightSnow = vec3(0.95, 0.8, 0.75);
+		const vec3 darkSnow = vec3(0.1, 0.2, 0.5);
+		float glint = noise(pos*35)+noise(vec3(mtl));
+		albedo = mix(darkSnow, brightSnow, 0.8);
+		if(glint > 1.3)
+		albedo += vec3(0.25, 0.15, 1.0);
 		metalness = 0.0;
-		roughness = 0.4;
+		roughness = 0.6;
 	}
 	else if(mtl < 3.0) // player [2, 3)
 	{
@@ -33,6 +38,14 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 		albedo = vec3(0.1, 1.0, 0.1);
 		metalness = 1.0;
 		roughness = 0.1;
+	}
+	else if(mtl < 5.0) // snow flake, [4, 5)
+	{
+		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
+		const vec3 darkSnow = vec3(0.1, 0.2, 0.5);
+		albedo = mix(darkSnow, brightSnow, 0.8);
+		metalness = 0.0;
+		roughness = 0.6;
 	}
 }
 
@@ -55,7 +68,7 @@ vec2 Mesh_Helper(in const vec3 pos, float typeFrac)
 
 vec2 Mesh_Snowflake(in vec3 pos, float typeFrac)
 {
-	const float snowMtl = 1.0;
+	const float snowMtl = 4.0;
 
 	pR(pos.yz, PI*0.5);
 	return vec2(fHexagonCircumcircle(pos, vec2(SNOWFLAKE_RADIUS, 0.1)), snowMtl);

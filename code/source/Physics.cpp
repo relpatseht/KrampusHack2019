@@ -73,7 +73,7 @@ namespace
 
 				// 1-driectional platforms. Can jump up through them
 				contact->GetWorldManifold(&worldManifold);
-				if (sign*worldManifold.normal.y < 0.5f)
+				if (sign*worldManifold.normal.y < 0.3f)
 					contact->SetEnabled(false);
 			}
 		}
@@ -174,7 +174,7 @@ namespace
 				bodyDef.position.Set(x, y-2);
 				bodyDef.fixedRotation = true;
 				bodyDef.allowSleep = false;
-				bodyDef.linearDamping = 1.0f;
+				bodyDef.linearDamping = 1.1f;
 
 				shape.Set(capsule, sizeof(capsule) / sizeof(capsule[0]));
 
@@ -327,6 +327,40 @@ namespace
 				}
 			}
 		}
+
+		static b2Body *OnGround(Physics* p, uint objectId, b2Vec2 *outNormal = nullptr)
+		{
+			b2Body** bodyPtr = p->bodies.for_object(objectId);
+
+			if (bodyPtr)
+			{
+				b2Body* body = *bodyPtr;
+
+				for (b2ContactEdge* c = body->GetContactList(); c; c = c->next)
+				{
+					if (c->other->GetType() != b2_dynamicBody)
+					{
+						b2Contact* contact = c->contact;
+						b2WorldManifold worldManifold;
+						float sign = 1.0f;
+
+						if (contact->GetFixtureA()->GetBody() == body)
+							sign = -1.0f;
+
+						contact->GetWorldManifold(&worldManifold);
+						if (sign * worldManifold.normal.y > 0.7f)
+						{
+							if (outNormal)
+								*outNormal = sign * worldManifold.normal;
+
+							return body;
+						}
+					}
+				}
+			}
+
+			return nullptr;
+		}
 	}
 }
 
@@ -466,36 +500,25 @@ namespace phy
 
 	void RequestWalk(Physics* p, uint objectId, float force)
 	{
-		b2Body** bodyPtr = p->bodies.for_object(objectId);
+		b2Vec2 normal;
+		b2Body* body = logic::OnGround(p, objectId, &normal);
 
-		if (bodyPtr)
+		if (body)
 		{
-			b2Body* body = *bodyPtr;
+			b2Vec2 dir = b2Vec2(normal.y, -normal.x);
+			dir.Normalize();
+			dir *= force;
 
-			for (b2ContactEdge* c = body->GetContactList(); c; c = c->next)
-			{
-				if (c->other->GetType() != b2_dynamicBody)
-				{
-					b2Contact* contact = c->contact;
-					b2WorldManifold worldManifold;
-					float sign = 1.0f;
-
-					if (contact->GetFixtureA()->GetBody() == body)
-						sign = -1.0f;
-
-					contact->GetWorldManifold(&worldManifold);
-					if (sign*worldManifold.normal.y > 0.7f)
-					{
-						b2Vec2 dir = b2Vec2(sign * worldManifold.normal.y, -sign * worldManifold.normal.x);
-						dir.Normalize();
-						dir *= force;
-
-						body->ApplyForceToCenter(dir, true);
-						break;
-					}
-				}
-			}
+			body->ApplyLinearImpulseToCenter(dir, true);
 		}
+	}
+
+	void RequestJump(Physics* p, uint objectId, float force)
+	{
+		b2Body* body = logic::OnGround(p, objectId);
+
+		if (body)      
+			body->ApplyLinearImpulseToCenter(b2Vec2(0.0f, force), true);
 	}
 
 	void DestroyObjects(Physics* p, const std::vector<uint>& objectIds)

@@ -94,7 +94,7 @@ namespace
 		if (rayLen < 0.1f)
 		{
 			state->gunRay = glm::vec2(0.0f, 0.0f);
-			state->gunDir = glm::vec2(0.0f, -1.0f);
+			state->gunDir = glm::vec2(0.0f, 0.0f);
 		}
 		else
 		{
@@ -176,7 +176,10 @@ namespace
 						break;
 
 						case ALLEGRO_KEY_SPACE:
-							FireGun(state);
+							if(glm::length(state->gunDir) > 0.5f)
+								FireGun(state);
+							else
+								phy::RequestJump(state->game->phy, state->playerId, SNOWBALL_IMPULSE);
 						break;
 					}
 				break;
@@ -224,10 +227,10 @@ namespace
 		ALLEGRO_KEYBOARD_STATE keyState;
 		al_get_keyboard_state(&keyState);
 		if(al_key_down(&keyState, ALLEGRO_KEY_D))
-			phy::RequestWalk(state->game->phy, state->playerId, 80.0f);
+			phy::RequestWalk(state->game->phy, state->playerId, 0.8f);
 
 		if (al_key_down(&keyState, ALLEGRO_KEY_A))
-			phy::RequestWalk(state->game->phy, state->playerId, -80.0f);
+			phy::RequestWalk(state->game->phy, state->playerId, -0.8f);
 	}
 
 	const phy::Transform* GetTransform(const std::vector<uint>& objIds, const std::vector<phy::Transform>& transforms, uint objectId)
@@ -347,7 +350,7 @@ int main(int argc, char* argv[])
 				phy::AddBody(state.game->phy, state.staticPlatformsId, phy::BodyType::STATIC_PLATFORMS);
 
 				state.worldBoundsId = game::CreateObject(state.game);
-				gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
+				//gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
 				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
 
 				const float playerStartX = -8.0f;

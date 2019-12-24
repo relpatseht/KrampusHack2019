@@ -266,8 +266,8 @@ namespace
 					maxs += glm::vec3(SNOWFLAKE_RADIUS);
 					break;
 				case MESH_TYPE_SNOW_BALL:
-					mins -= glm::vec3(SNOWBALL_RADIUS);
-					maxs += glm::vec3(SNOWBALL_RADIUS);
+					mins -= glm::vec3(SNOWBALL_RADIUS*1.3f);
+					maxs += glm::vec3(SNOWBALL_RADIUS*1.3f);
 					break;
 				case MESH_TYPE_SNOW_MAN:
 					break;
@@ -765,8 +765,18 @@ namespace gfx
 
 			if (outTrans)
 			{
-				const glm::mat4 &trans = transforms[objIndex];
+				glm::mat4 trans = transforms[objIndex];
 				const float meshType = (*outTrans)[3][3];
+
+				switch (static_cast<uint>(meshType))
+				{
+				case MESH_TYPE_SNOW_FLAKE:
+					trans[3][2] += 0.3;
+					break;
+				case MESH_TYPE_SNOW_MAN:
+					trans[3][2] += SNOWMAN_Z;
+					break;
+				}
 
 				*outTrans = glm::inverse(trans);
 				(*outTrans)[3][3] = meshType;

@@ -41,7 +41,8 @@ struct Graphics
 	glm::float1 camInvFov;
 	glm::mat3 camViewMtx;
 	glm::vec2 res{ 1024.0f, 768.0f };
-	
+	glm::uint frameCount = 0;
+
 	uint sceneVAO = 0;
 	uint sceneEntrySSB = 0;
 	uint sceneBVHSSB = 0;
@@ -543,7 +544,8 @@ namespace
 			static const uint camInvFovBinding = 2;
 			static const uint camViewBinding = 3;
 			static const uint resolutionBinding = 6;
-			static const uint sceneEntryCountBinding = 7;
+			static const uint frameCountBinding = 7;
+			static const uint sceneEntryCountBinding = 8;
 			static const uint sceneEntryBufferBinding = 0;
 			static const uint sceneBVHBufferBinding = 1;
 			const uint sceneEntryCount = static_cast<uint>(g.sceneEntries.size());
@@ -553,6 +555,7 @@ namespace
 			glUniform1f(camInvFovBinding, g.camInvFov);
 			glUniformMatrix3fv(camViewBinding, 1, true, glm::value_ptr(g.camViewMtx));
 			glUniform2fv(resolutionBinding, 1, glm::value_ptr(g.res));
+			glUniform1ui(frameCountBinding, g.frameCount);
 			glUniform1ui(sceneEntryCountBinding, sceneEntryCount);
 			
 			glBindBufferBase( GL_SHADER_STORAGE_BUFFER, sceneEntryBufferBinding, g.sceneEntrySSB );
@@ -698,6 +701,7 @@ namespace gfx
 
 	void Update(Graphics* g)
 	{
+		++g->frameCount;
 		render::Render(*g);
 	}
 	

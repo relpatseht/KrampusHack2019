@@ -30,7 +30,8 @@ layout(location = 1) uniform vec3 in_camTarget;
 layout(location = 2) uniform float in_camInvFov;
 layout(location = 3) uniform mat3 in_camView;
 layout(location = 6) uniform vec2 in_resolution;
-layout(location = 7) uniform uint in_sceneEntryCount;
+layout(location = 7) uniform uint in_frameCount;
+layout(location = 8) uniform uint in_sceneEntryCount;
 
 layout (location = 0) out vec4 out_color;
 
@@ -159,7 +160,10 @@ void main()
 
 	if( objDist.x == RM_INFINITY)
 	{
-		out_color = vec4(0.01, 0.01, 0.2, 1.0);
+		float timeSec = float(in_frameCount) / 60.0;
+		vec3 snow = Background_Snow(timeSec, gl_FragCoord.xy, in_resolution);
+		vec3 backdrop = Background_StarryGradient(timeSec, gl_FragCoord.xy, in_resolution);
+		out_color = vec4(snow + backdrop, 1.0);
 	}
 	else
 	{
@@ -190,7 +194,7 @@ void main()
 
 
 		BVHRayGatherSceneEntries(light1Dir, hitPos);
-		float light1Shadow = RayMarch_Shadow(light1Dir, hitPos, 25.0, g_camFar);
+		float light1Shadow = objDist.y < 4 ? RayMarch_Shadow(light1Dir, hitPos, 25.0, g_camFar) : 1.0;
 		vec3 light1Radiance = light1Color*light1Attn*light1BRDF*light1Shadow;
 
 		//vec3 light2Color = vec3(2, 10, 2);

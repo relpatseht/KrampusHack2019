@@ -35,8 +35,8 @@ namespace
 		glm::vec2 gunRay = glm::vec2(0.0f);
 		glm::vec2 gunDir = glm::vec2(0.0f);
 		
-		float maxSnow = 20.0f;
-		float snowMeter = 100000.0f;
+		float maxSnow = 100.0f;
+		float snowMeter = 0.0f;
 
 		bool isRunning;
 	};

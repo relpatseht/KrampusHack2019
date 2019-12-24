@@ -42,10 +42,10 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 	else if(mtl < 5.0) // snow flake, [4, 5)
 	{
 		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
-		const vec3 darkSnow = vec3(0.1, 0.2, 0.5);
-		albedo = mix(darkSnow, brightSnow, 0.8);
+		const vec3 darkSnow = vec3(0.2, 0.4, 0.6);
+		albedo = mix(darkSnow, brightSnow, noise(vec3(fract(mtl)*19 +94)) * 0.7 + 0.3);
 		metalness = 0.0;
-		roughness = 0.6;
+		roughness = 1.6;
 	}
 }
 
@@ -65,21 +65,88 @@ vec2 Mesh_Helper(in const vec3 pos, float typeFrac)
 	return vec2(fSphere(pos, HELPER_RADIUS), helperMtl);
 }
 
-
 vec2 Mesh_Snowflake(in vec3 pos, float typeFrac)
 {
-	const float snowMtl = 4.0;
+	const float hitFlake = fSphere(pos, SNOWFLAKE_RADIUS);
 
-	pR(pos.yz, PI*0.5);
-	return vec2(fHexagonCircumcircle(pos, vec2(SNOWFLAKE_RADIUS, 0.1)), snowMtl);
+	if(hitFlake <= 0.1)
+	{
+		const float flakeMtl = 4.0;
+		pos /= SNOWFLAKE_RADIUS;
+
+		float hexSubtraction;
+
+		{ // snowflake subtractions
+			float radialBar;
+			float leafBox;
+			float centerHex;
+
+			{ // bar
+				vec3 barPos = pos;
+				float barIter = floor(typeFrac * 3.0); // typeFrac is [0, 1), we want [0, 1, 2]
+				float barWidth = noise(vec3(typeFrac*30 + 12)) * 0.1 + 0.05;
+
+				pModPolar(barPos.yx, barIter*6.0);
+				barPos -= vec3(0, 0.8, 0);
+				radialBar = fBox(barPos, vec3(barWidth, 0.4, 0.3));
+			}
+
+			{ // box
+				vec3 boxPos = pos;
+				float boxHeight = noise(vec3(typeFrac*25 + 5)) * 0.13 + 0.1;
+				float boxWidth = noise(vec3(typeFrac*29 + 15)) * 0.1 + 0.06;
+
+				pR(boxPos.xy, PI*0.5);
+				pModPolar(boxPos.yx, 6.0);
+				boxPos -= vec3(0.0, 0.8, 0);
+				leafBox = fBox(boxPos, vec3(boxHeight, boxWidth, 0.3));
+			}
+
+			{ // hex
+				vec3 hexPos = pos;
+				float hexIter = floor(noise(vec3(typeFrac*13 + 76)) * 2.0) * 0.5; // typeFrac is [0, 1), we want [0, 0.5]
+				float hexRadius = noise(vec3(typeFrac*32 + 17)) * 0.3 + 0.1;
+
+				pR(hexPos.yz, PI*0.5);
+				pR(hexPos.xz, PI*hexIter);
+				centerHex = fHexagonCircumcircle(hexPos, vec2(hexRadius, 0.2));
+			}
+
+			hexSubtraction = min(centerHex, min(leafBox, radialBar));
+		}
+
+		float flake;
+		if(typeFrac > 0.4 && noise(vec3(typeFrac*67 -21)) > 0.5) // >0.3 since those have no radial bars and end up looking bad
+			flake = hexSubtraction;
+		else
+		{
+			vec3 baseHexPos = pos;
+			pR(baseHexPos.yz, PI*0.5);
+			const float baseHex = fHexagonCircumcircle(baseHexPos, vec2(1.0, 0.1));
+			const float chamferRadius = noise(vec3(typeFrac*3 + 7)) * 0.1 + 0.05;
+			flake = fOpDifferenceChamfer(baseHex, hexSubtraction, chamferRadius) * SNOWFLAKE_RADIUS;
+		}
+
+		flake *= SNOWFLAKE_RADIUS;
+		return vec2(flake, flakeMtl + typeFrac);
+	}
+
+	return vec2(hitFlake, 0.0);
 }
 
 vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
 {
-	const float snowMtl = 1.0;
-	float dist = fBlob(pos / SNOWBALL_RADIUS) * SNOWBALL_RADIUS;
+	const float hitBall = fSphere(pos, SNOWBALL_RADIUS);
 
-	return vec2(dist, snowMtl);
+	if(hitBall <= 0.5) // snowball isn't valid dist. need to overestimate
+	{
+		const float snowMtl = 1.0;
+		float dist = fBlob(pos / SNOWBALL_RADIUS) * SNOWBALL_RADIUS;
+
+		return vec2(dist, snowMtl);
+	}
+
+	return vec2(hitBall, 0.0);
 }
 
 vec2 Mesh_Snowman(in vec3 pos, float typeFrac)

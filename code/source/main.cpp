@@ -64,7 +64,7 @@ namespace
 	// each frame is 1/60 seconds
 	static void AddPeriodics(GameState* state, uint frameCount)
 	{
-		if (frameCount % 5 == 0) // ever 0.25 seconds
+		if (frameCount % 15 == 0) // every 0.25 seconds
 		{
 			if (state->snowflakeCount < state->snowflakeIds.size())
 			{

@@ -38,8 +38,6 @@ layout (location = 0) out vec4 out_color;
 uint g_rayHitSceneEntries[MAX_HIT_SCENE_ENTRIES];
 uint g_rayHitSceneEntryCount = 0;
 
-vec3 g_dbgColor = vec3(0);
-
 void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 {
 	const uint MAX_STACK = 16;
@@ -94,9 +92,6 @@ void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 			}
 		}
 	}
-
-	if(g_rayHitSceneEntryCount > 0)
-	g_dbgColor.x = 1.0;
 }
 
 vec2 RayMarch_SceneFunc(in vec3 pos)
@@ -192,6 +187,9 @@ void main()
 		float light1Dist = length(light1Pos - hitPos);
 		float light1Attn = 1.0 / (light1Dist * light1Dist);
 		vec3 light1BRDF = BRDF_CookTorrance(hitNormal, viewDir, light1Dir, albedo, metalness, roughness);
+
+
+		BVHRayGatherSceneEntries(light1Dir, hitPos);
 		float light1Shadow = RayMarch_Shadow(light1Dir, hitPos, 25.0, g_camFar);
 		vec3 light1Radiance = light1Color*light1Attn*light1BRDF*light1Shadow;
 
@@ -208,6 +206,4 @@ void main()
 		color = Tonemap_ACES(color);
 		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
-
-	//out_color = vec4(g_dbgColor, 1.0);
 }

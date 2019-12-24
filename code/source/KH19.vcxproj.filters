@@ -91,4 +91,7 @@
       <Filter>Header Files\bvh</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\external\glm\0.9.9.6\util\glm.natvis" />
+  </ItemGroup>
 </Project>

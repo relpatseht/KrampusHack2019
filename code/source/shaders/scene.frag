@@ -38,8 +38,6 @@ layout (location = 0) out vec4 out_color;
 uint g_rayHitSceneEntries[MAX_HIT_SCENE_ENTRIES];
 uint g_rayHitSceneEntryCount = 0;
 
-vec3 g_dbgColor = vec3(0);
-
 void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 {
 	const uint MAX_STACK = 16;
@@ -54,31 +52,24 @@ void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 		const uint nodeIndex = nodeStack[--stackSize];
 		vec4 tEnter, tExit;
 		vec4 tMin, tMax;
-		vec4 childMins, childMaxs;
 		bvec4 intersectsChild;
 
 		tEnter = (in_bvh[nodeIndex].childMinX - rayOrigin.xxxx) * invDir.xxxx;
 		tExit  = (in_bvh[nodeIndex].childMaxX - rayOrigin.xxxx) * invDir.xxxx;
-		tMin = min(tEnter, tExit);
+		tMin = max(min(tEnter, tExit), vec4(0));
 		tMax = max(tEnter, tExit);
-		childMins = max(tMin, vec4(0));
-		childMaxs = tMax;
 
 		tEnter = (in_bvh[nodeIndex].childMinY - rayOrigin.yyyy) * invDir.yyyy;
 		tExit  = (in_bvh[nodeIndex].childMaxY - rayOrigin.yyyy) * invDir.yyyy;
-		tMin = min(tEnter, tExit);
-		tMax = max(tEnter, tExit);
-		childMins = max(tMin, childMins);
-		childMaxs = min(tMax, childMaxs);
+		tMin = max(tMin, min(tEnter, tExit));
+		tMax = min(tMax, max(tEnter, tExit));
 
 		tEnter = (in_bvh[nodeIndex].childMinZ - rayOrigin.zzzz) * invDir.zzzz;
 		tExit  = (in_bvh[nodeIndex].childMaxZ - rayOrigin.zzzz) * invDir.zzzz;
-		tMin = min(tEnter, tExit);
-		tMax = max(tEnter, tExit);
-		childMins = max(tMin, childMins);
-		childMaxs = min(tMax, childMaxs);
+		tMin = max(tMin, min(tEnter, tExit));
+		tMax = min(tMax, max(tEnter, tExit));
 
-		intersectsChild = greaterThanEqual(childMaxs, childMins);
+		intersectsChild = greaterThanEqual(tMax, tMin);
 
 		for(uint childIndex=0; childIndex<4; ++childIndex)
 		{
@@ -101,10 +92,6 @@ void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 			}
 		}
 	}
-
-
-	if(g_rayHitSceneEntryCount > 1)
-		g_dbgColor.y = 1.0;
 }
 
 vec2 RayMarch_SceneFunc(in vec3 pos)
@@ -167,9 +154,9 @@ vec3 RayDir(in const vec3 camDir)
 {
 	vec2 pixel = vec2(gl_FragCoord.xy) - in_resolution*0.5;
 	float z = in_resolution.y * in_camInvFov;
-	vec3 viewRayDir = normalize(vec3(pixel, -z));
+	vec3 viewRayDir = vec3(pixel, -z);
 
-	return in_camView * viewRayDir;
+	return normalize(in_camView * viewRayDir);
 }
 
 void main()
@@ -226,6 +213,4 @@ void main()
 		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
 		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
-
-	out_color = vec4(g_dbgColor, 1.0);
 }

@@ -234,16 +234,19 @@ namespace
 			const uint entryCount = static_cast<uint>(g.sceneEntries.size());
 			const glm::mat4* const entries = g.sceneEntries.data();
 			uint* const indices = (uint*)_malloca(sizeof(uint) * entryCount);
-			spatial_tree<uint, 2, 4> buildTree;
+			spatial_tree<uint, 3, 4> buildTree;
 
 			std::iota(indices, indices + entryCount, 0);
-			buildTree.insert(indices, indices + entryCount, [entries](uint entryIndex, float(&outMins)[2], float(&outMaxs)[2])
+			buildTree.insert(indices, indices + entryCount, [entries](uint entryIndex, float(&outMins)[3], float(&outMaxs)[3])
 			{
-				const glm::mat4& entry = entries[entryIndex];
+				glm::mat4 entry = entries[entryIndex];
 				const uint entryType = static_cast<uint>(entry[3][3]);
-				const glm::vec3 entryPos = -entry[3]; // inverse transform stored
-				glm::vec2& mins = reinterpret_cast<glm::vec2&>(outMins);
-				glm::vec2& maxs = reinterpret_cast<glm::vec2&>(outMaxs);
+				entry[3][3] = 1.0f;
+				entry = glm::inverse(entry);
+
+				const glm::vec3 entryPos = entry[3]; // inverse transform stored
+				glm::vec3& mins = reinterpret_cast<glm::vec3&>(outMins);
+				glm::vec3& maxs = reinterpret_cast<glm::vec3&>(outMaxs);
 
 				mins = entryPos;
 				maxs = entryPos;
@@ -251,20 +254,20 @@ namespace
 				switch (entryType)
 				{
 				case MESH_TYPE_PLAYER:
-					mins -= glm::vec2(PLAYER_WIDTH * 0.5f, 0.0f);
-					maxs += glm::vec2(PLAYER_WIDTH * 0.5f, PLAYER_HEIGHT);
+					mins -= glm::vec3(PLAYER_WIDTH * 0.5f, 0.0f, PLAYER_WIDTH * 0.5f);
+					maxs += glm::vec3(PLAYER_WIDTH * 0.5f, PLAYER_HEIGHT, PLAYER_WIDTH * 0.5f);
 					break;
 				case MESH_TYPE_HELPER:
-					mins -= glm::vec2(HELPER_RADIUS);
-					maxs += glm::vec2(HELPER_RADIUS);
+					mins -= glm::vec3(HELPER_RADIUS);
+					maxs += glm::vec3(HELPER_RADIUS);
 					break;
 				case MESH_TYPE_SNOW_FLAKE:
-					mins -= glm::vec2(SNOWFLAKE_RADIUS);
-					maxs += glm::vec2(SNOWFLAKE_RADIUS);
+					mins -= glm::vec3(SNOWFLAKE_RADIUS);
+					maxs += glm::vec3(SNOWFLAKE_RADIUS);
 					break;
 				case MESH_TYPE_SNOW_BALL:
-					mins -= glm::vec2(SNOWBALL_RADIUS);
-					maxs += glm::vec2(SNOWBALL_RADIUS);
+					mins -= glm::vec3(SNOWBALL_RADIUS);
+					maxs += glm::vec3(SNOWBALL_RADIUS);
 					break;
 				case MESH_TYPE_SNOW_MAN:
 					break;
@@ -274,13 +277,13 @@ namespace
 					float yMin = -BOTTOM_LEFT_PLATFORM_Y + PLATFORM_DIM;
 					float yMax = -yMin + (PLATFORM_VERTICAL_SPACE * PLATFORM_COUNT) + PLATFORM_DIM;
 
-					mins -= glm::vec2(xOffs, yMin);
-					maxs += glm::vec2(xOffs, yMax);
+					mins -= glm::vec3(xOffs, yMin, PLATFORM_DIM);
+					maxs += glm::vec3(xOffs, yMax, PLATFORM_DIM);
 				}
 				break;
 				case MESH_TYPE_WORLD_BOUNDS:
-					mins -= glm::vec2(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT);
-					maxs += glm::vec2(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT);
+					mins -= glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
+					maxs += glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
 					break;
 				}
 			});

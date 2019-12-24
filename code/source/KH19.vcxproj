@@ -116,6 +116,9 @@
     <None Include="shaders\bvh_node.glsl" />
     <None Include="shaders\scene_defines.glsl" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\external\glm\0.9.9.6\util\glm.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

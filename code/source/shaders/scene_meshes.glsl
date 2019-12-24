@@ -82,6 +82,17 @@ vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
 	return vec2(dist, snowMtl);
 }
 
+vec2 Mesh_Snowman(in vec3 pos, float typeFrac)
+{
+	const float noise = noise(pos*32)*0.004 + 0.998;
+	const float bottom = fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_BOT_Y, SNOWMAN_Z), SNOWMAN_BOT_RADIUS) / noise;
+	const float mid =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_MID_Y, SNOWMAN_Z), SNOWMAN_MID_RADIUS) / noise;
+	const float top =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_TOP_Y, SNOWMAN_Z), SNOWMAN_TOP_RADIUS) / noise;
+	float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
+
+	return vec2(snowman, 1.0);
+}
+
 vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)
 {
 	const float woodMtl = 0.0;

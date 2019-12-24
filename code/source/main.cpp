@@ -36,7 +36,7 @@ namespace
 		glm::vec2 gunDir = glm::vec2(0.0f);
 		
 		float maxSnow = 20.0f;
-		float snowMeter = 0.0f;
+		float snowMeter = 100000.0f;
 
 		bool isRunning;
 	};
@@ -238,7 +238,7 @@ namespace
 		auto objIdIt = std::find(objIds.begin(), objIds.end(), objectId);
 
 		if (objIdIt != objIds.end())
-			return transforms.data() + *objIdIt;
+			return transforms.data() + (objIdIt - objIds.begin());
 
 		return nullptr;
 	}
@@ -352,6 +352,9 @@ int main(int argc, char* argv[])
 				state.worldBoundsId = game::CreateObject(state.game);
 				//gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
 				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
+
+				state.snowmanId = game::CreateObject(state.game);
+				gfx::AddModel(state.game->gfx, state.snowmanId, gfx::MeshType::SNOW_MAN, glm::mat4(1.0f));
 
 				const float playerStartX = -8.0f;
 				const float playerStartY = -6.0f;

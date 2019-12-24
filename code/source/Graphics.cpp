@@ -253,37 +253,39 @@ namespace
 
 				switch (entryType)
 				{
-				case MESH_TYPE_PLAYER:
-					mins -= glm::vec3(PLAYER_WIDTH * 0.5f, 0.0f, PLAYER_WIDTH * 0.5f);
-					maxs += glm::vec3(PLAYER_WIDTH * 0.5f, PLAYER_HEIGHT, PLAYER_WIDTH * 0.5f);
+					case MESH_TYPE_PLAYER:
+						mins -= glm::vec3(PLAYER_WIDTH * 0.5f, 0.0f, PLAYER_WIDTH * 0.5f);
+						maxs += glm::vec3(PLAYER_WIDTH * 0.5f, PLAYER_HEIGHT, PLAYER_WIDTH * 0.5f);
 					break;
-				case MESH_TYPE_HELPER:
-					mins -= glm::vec3(HELPER_RADIUS);
-					maxs += glm::vec3(HELPER_RADIUS);
+					case MESH_TYPE_HELPER:
+						mins -= glm::vec3(HELPER_RADIUS);
+						maxs += glm::vec3(HELPER_RADIUS);
 					break;
-				case MESH_TYPE_SNOW_FLAKE:
-					mins -= glm::vec3(SNOWFLAKE_RADIUS);
-					maxs += glm::vec3(SNOWFLAKE_RADIUS);
+					case MESH_TYPE_SNOW_FLAKE:
+						mins -= glm::vec3(SNOWFLAKE_RADIUS);
+						maxs += glm::vec3(SNOWFLAKE_RADIUS);
 					break;
-				case MESH_TYPE_SNOW_BALL:
-					mins -= glm::vec3(SNOWBALL_RADIUS*1.3f);
-					maxs += glm::vec3(SNOWBALL_RADIUS*1.3f);
+					case MESH_TYPE_SNOW_BALL:
+						mins -= glm::vec3(SNOWBALL_RADIUS*1.3f);
+						maxs += glm::vec3(SNOWBALL_RADIUS*1.3f);
 					break;
-				case MESH_TYPE_SNOW_MAN:
+					case MESH_TYPE_SNOW_MAN:
+						mins -= glm::vec3(-SNOWMAN_X + SNOWMAN_BOT_RADIUS,-SNOWMAN_BOT_Y + SNOWMAN_BOT_RADIUS, -SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
+						maxs += glm::vec3( SNOWMAN_X + SNOWMAN_BOT_RADIUS, SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS, SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
 					break;
-				case MESH_TYPE_STATIC_PLATFORMS:
-				{
-					float xOffs = -BOTTOM_LEFT_PLATFORM_X + BOTTOM_PLATFORM_WIDTH;
-					float yMin = -BOTTOM_LEFT_PLATFORM_Y + PLATFORM_DIM;
-					float yMax = -yMin + (PLATFORM_VERTICAL_SPACE * PLATFORM_COUNT) + PLATFORM_DIM;
+					case MESH_TYPE_STATIC_PLATFORMS:
+					{
+						float xOffs = -BOTTOM_LEFT_PLATFORM_X + BOTTOM_PLATFORM_WIDTH;
+						float yMin = -BOTTOM_LEFT_PLATFORM_Y + PLATFORM_DIM;
+						float yMax = -yMin + (PLATFORM_VERTICAL_SPACE * PLATFORM_COUNT) + PLATFORM_DIM;
 
-					mins -= glm::vec3(xOffs, yMin, PLATFORM_DIM);
-					maxs += glm::vec3(xOffs, yMax, PLATFORM_DIM);
-				}
-				break;
-				case MESH_TYPE_WORLD_BOUNDS:
-					mins -= glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
-					maxs += glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
+						mins -= glm::vec3(xOffs, yMin, PLATFORM_DIM);
+						maxs += glm::vec3(xOffs, yMax, PLATFORM_DIM);
+					}
+					break;
+					case MESH_TYPE_WORLD_BOUNDS:
+						mins -= glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
+						maxs += glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
 					break;
 				}
 			});

@@ -38,6 +38,8 @@ layout (location = 0) out vec4 out_color;
 uint g_rayHitSceneEntries[MAX_HIT_SCENE_ENTRIES];
 uint g_rayHitSceneEntryCount = 0;
 
+vec3 g_dbgColor = vec3(0);
+
 void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 {
 	const uint MAX_STACK = 16;
@@ -92,6 +94,9 @@ void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 			}
 		}
 	}
+
+	if(g_rayHitSceneEntryCount > 0)
+	g_dbgColor.x = 1.0;
 }
 
 vec2 RayMarch_SceneFunc(in vec3 pos)
@@ -119,7 +124,7 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 		else if(type < MESH_TYPE_SNOW_BALL + 1.0)
 				objDist = Mesh_Snowball(objPos, typeFrac);
 		else if(type < MESH_TYPE_SNOW_MAN + 1.0)
-				objDist = vec2(fCylinder(objPos, 1.0f, 1.0f), type);
+				objDist = Mesh_Snowman(objPos, typeFrac);
 		else if(type < MESH_TYPE_STATIC_PLATFORMS + 1.0)
 				objDist = Mesh_StaticPlatforms(objPos, typeFrac);
 		else if(type < MESH_TYPE_WORLD_BOUNDS + 1.0)
@@ -135,16 +140,6 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 			dist = staticSceneDist;
 	}
 
-	{
-		const float noise = noise(pos*32)*0.004 + 0.998;
-		const float bottom = fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_BOT_Y, SNOWMAN_Z), SNOWMAN_BOT_RADIUS) / noise;
-		const float mid =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_MID_Y, SNOWMAN_Z), SNOWMAN_MID_RADIUS) / noise;
-		const float top =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_TOP_Y, SNOWMAN_Z), SNOWMAN_TOP_RADIUS) / noise;
-		float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
-
-		if(snowman < dist.x)
-			dist = vec2(snowman, 1.0);
-	}
 
 	return dist;
 }
@@ -213,4 +208,6 @@ void main()
 		color = Tonemap_ACES(color);
 		out_color = vec4(GammaCorrectColor(color), 1.0);
 	}
+
+	//out_color = vec4(g_dbgColor, 1.0);
 }

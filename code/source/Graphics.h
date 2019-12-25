@@ -25,11 +25,12 @@ namespace gfx
 	void Update(Graphics* g);
 
 	void ReloadShaders(Graphics* g);
-	void Resize(Graphics* g, uint width, uint height);
+	bool Resize(Graphics* g, uint width, uint height);
 	void PixelToWolrd(const Graphics &g, float* inoutX, float* inoutY);
 
 	bool AddModel( Graphics *g, uint objectId, MeshType type, const glm::mat4& transform );
 	bool UpdateModels(Graphics* g, const std::vector<uint>& objectIds, const std::vector<glm::mat4>& transforms);
+	void UpdateModelSubType(Graphics* g, uint objectId, float subType);
 
 	void DestroyObjects( Graphics* g, const std::vector<uint>& objectIds );
 }

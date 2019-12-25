@@ -36,7 +36,7 @@ namespace
 		glm::vec2 gunDir = glm::vec2(0.0f);
 		
 		float maxSnow = 100.0f;
-		float snowMeter = 0.0f;
+		float snowMeter = 5.0f;
 
 		bool isRunning;
 	};
@@ -86,6 +86,14 @@ namespace
 		}
 	}
 
+	static void UpdateSnowmeter(GameState* state, float offset)
+	{
+		state->snowMeter = glm::clamp(state->snowMeter + offset, 0.0f, state->maxSnow);
+
+		const float subType = glm::clamp(state->snowMeter / state->maxSnow, 0.0f, 0.999999f);
+		gfx::UpdateModelSubType(state->game->gfx, state->snowmanId, subType);
+	}
+
 	static void UpdateGun(GameState* state, const glm::vec2& vec)
 	{
 		state->gunRay += vec;
@@ -123,8 +131,8 @@ namespace
 
 			phy::ApplyImpulse(state->game->phy, ballId, impulseDir.x, impulseDir.y);
 			phy::ApplyImpulse(state->game->phy, state->playerId, -impulseDir.x, -impulseDir.y);
-
-			state->snowMeter -= SNOW_PER_BALL;
+			
+			UpdateSnowmeter(state, -SNOW_PER_BALL);
 
 			if (state->snowballCount < state->activeSnowballIds.size())
 			{
@@ -288,7 +296,8 @@ namespace
 
 						if (helperFlakeDist <= (HELPER_RADIUS + SNOWFLAKE_RADIUS) * 0.7)
 						{
-							state->snowMeter = std::min(state->snowMeter + SNOW_PER_FLAKE, state->maxSnow);
+							UpdateSnowmeter(state, SNOW_PER_FLAKE);
+
 							*flakeIt = state->snowflakeIds[--state->snowflakeCount];
 							state->game->dyingObjects.emplace_back(objId);
 						}
@@ -355,6 +364,7 @@ int main(int argc, char* argv[])
 
 				state.snowmanId = game::CreateObject(state.game);
 				gfx::AddModel(state.game->gfx, state.snowmanId, gfx::MeshType::SNOW_MAN, glm::mat4(1.0f));
+				gfx::UpdateModelSubType(state.game->gfx, state.snowmanId, state.snowMeter / state.maxSnow);
 
 				const float playerStartX = -8.0f;
 				const float playerStartY = -6.0f;

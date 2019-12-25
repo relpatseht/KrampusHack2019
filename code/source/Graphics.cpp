@@ -19,6 +19,7 @@
 #include "allegro5/allegro_opengl.h"
 
 #include "Graphics.h"
+#include <iostream>
 
 typedef unsigned uint;
 
@@ -34,6 +35,8 @@ namespace
 struct Graphics
 {
 	static const uint MAX_ENTRIES = MAX_SCENE_ENTRIES;
+	static const uint BLUR_PASSES = BLOOM_BLUR_PASSES;
+
 	component_list<glm::mat4> sceneEntries;
 	std::vector<tree::Node> sceneBVH;
 	glm::vec3 camPos{ 0.0f, 0.0f, 0.0f };
@@ -43,10 +46,23 @@ struct Graphics
 	glm::vec2 res{ 1024.0f, 768.0f };
 	glm::uint frameCount = 0;
 
+	uint sceneFBO = 0;
 	uint sceneVAO = 0;
 	uint sceneEntrySSB = 0;
 	uint sceneBVHSSB = 0;
-	uint shader = 0;
+	uint sceneShader = 0;
+	uint sceneMainTex = 0;
+	uint sceneBrightTex[BLUR_PASSES] = {};
+
+	uint downsampleFBO[BLUR_PASSES] = {};
+	uint downsampleShader = 0;
+
+	uint blurShader = 0;
+	uint blurFBO[BLUR_PASSES] = {};
+	uint blurTex[BLUR_PASSES] = {};
+
+
+	uint outputShader = 0;
 	std::vector<uint> meshTypeRemap;
 	std::unordered_map<uint, uint> objToMesh;
 };
@@ -73,6 +89,53 @@ namespace
 			}
 
 			return ret;
+		}
+
+		void APIENTRY DebugOutput(GLenum source,
+			GLenum type,
+			GLuint id,
+			GLenum severity,
+			GLsizei length,
+			const GLchar* message,
+			void* userParam)
+		{
+			// ignore non-significant error/warning codes
+			//if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
+			std::cout << "---------------" << std::endl;
+			std::cout << "Debug message (" << id << "): " << message << std::endl;
+
+			switch (source)
+			{
+			case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
+			case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
+			case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
+			case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
+			case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
+			case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+			} std::cout << std::endl;
+
+			switch (type)
+			{
+			case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
+			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
+			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
+			case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
+			case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
+			case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
+			case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
+			case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
+			case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+			} std::cout << std::endl;
+
+			switch (severity)
+			{
+			case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
+			case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
+			case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
+			case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+			} std::cout << std::endl;
+			std::cout << std::endl;
 		}
 	}
 
@@ -316,7 +379,10 @@ namespace
 		struct ShaderFiles
 		{
 			SourcePair sceneSource;
+			SourcePair blurSource;
 			SourcePair uiSource;
+			SourcePair downSource;
+			SourcePair outSource;
 			std::vector<std::string> includeNames;
 		};
 
@@ -347,7 +413,25 @@ namespace
 						{
 							std::string fileData;
 							const char extType = tolower(ext[1]);
-							SourcePair* const outPair = (tolower(curPath.filename().c_str()[0]) == 'u') ? &outFiles->uiSource : &outFiles->sceneSource;
+							SourcePair* outPair;
+							
+							switch (tolower(curPath.filename().c_str()[0]))
+							{
+							case 'b':
+								outPair = &outFiles->blurSource;
+								break;
+							case 'u':
+								outPair = &outFiles->uiSource;
+								break;
+							case 'd':
+								outPair = &outFiles->downSource;
+								break;
+							case 'o':
+								outPair = &outFiles->outSource;
+								break;
+							default:
+								outPair = &outFiles->sceneSource;
+							}
 
 							std::fseek(curFile, 0, SEEK_END);
 							const size_t fileSize = std::ftell(curFile);
@@ -470,7 +554,7 @@ namespace
 			return false;
 		}
 
-		static bool LoadShaders(const char* dir, uint* outScene, uint* outUI)
+		static bool LoadShaders(const char* dir, uint* outScene, uint *outBlur, uint* outUI, uint *outDown, uint *outOutShader)
 		{
 			ShaderFiles files;
 
@@ -478,17 +562,32 @@ namespace
 
 			if (LoadFiles(dir, &files))
 			{
-				uint sceneShader, uiShader;
+				uint sceneShader, blurShader, uiShader, downShader, outShader;
 
 				if (BuildShader(files.sceneSource, &sceneShader))
 					*outScene = sceneShader;
 				else
 					*outScene = 0;
 
+				if (BuildShader(files.blurSource, &blurShader))
+					*outBlur = blurShader;
+				else
+					*outBlur = 0;
+
 				if (BuildShader(files.uiSource, &uiShader))
 					*outUI = uiShader;
 				else
 					*outUI = 0;
+
+				if (BuildShader(files.downSource, &downShader))
+					*outDown = downShader;
+				else
+					*outDown = 0;
+
+				if (BuildShader(files.outSource, &outShader))
+					*outOutShader = outShader;
+				else
+					*outOutShader = 0;
 			}
 
 			for (const std::string& inc : files.includeNames)
@@ -502,41 +601,6 @@ namespace
 
 	namespace scene
 	{
-		static bool GenVAO(uint* outVAO)
-		{
-			uint vao;
-
-			glGenVertexArrays(1, &vao);
-
-			if (err::Error())
-			{
-				*outVAO = 0;
-				return false;
-			}
-
-			*outVAO = vao;
-			return true;
-		}
-
-		static bool GenSSB(uint* outSSB, size_t size)
-		{
-			uint ssb;
-
-			glGenBuffers(1, &ssb);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-			if (err::Error())
-			{
-				*outSSB = 0;
-				return false;
-			}
-			
-			*outSSB = ssb;
-			return true;
-		}
-
 		static bool UpdateUniforms(const Graphics &g)
 		{
 			static const uint camPosBinding = 0;
@@ -576,98 +640,319 @@ namespace
 
 	namespace render
 	{
-		static bool Init(Graphics* g)
+		namespace init
 		{
-			uint sceneShader, uiShader;
-
-			shader::LoadShaders("shaders", &sceneShader, &uiShader);
-
-			if (sceneShader == 0)
+			static bool GenFBO(uint* outFBO)
 			{
-				printf("Failed to find shaders in 'shaders' directory.\n");
-			}
-			else
-			{
-				uint sceneVAO;
+				uint fbo;
 
-				scene::GenVAO(&sceneVAO);
+				glGenFramebuffers(1, &fbo);
 
-				if (sceneVAO == 0)
+				if (err::Error())
 				{
-					printf("Failed to generate verts for scene.\n");
+					*outFBO = 0;
+					return false;
+				}
+
+				*outFBO = fbo;
+				return true;
+			}
+
+			static bool GenFrameBufferTexture(uint width, uint height, uint *outFBO, uint *outTex)
+			{
+				uint fbo = 0;
+				uint tex = 0;
+
+				GenFBO(&fbo);
+				glGenTextures(1, &tex);
+
+				if (!err::Error())
+				{
+					glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+					glBindTexture(GL_TEXTURE_2D, tex);
+
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+
+					glBindFramebuffer(GL_FRAMEBUFFER, 0);
+					glBindTexture(GL_TEXTURE_2D, 0);
+				}				
+
+				*outTex = tex;
+				*outFBO = fbo;
+				return tex != 0;
+			}
+
+			static bool GenVAO(uint* outVAO)
+			{
+				uint vao;
+
+				glGenVertexArrays(1, &vao);
+
+				if (err::Error())
+				{
+					*outVAO = 0;
+					return false;
+				}
+
+				*outVAO = vao;
+				return true;
+			}
+
+			static bool GenSSB(uint* outSSB, size_t size)
+			{
+				uint ssb;
+
+				glGenBuffers(1, &ssb);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+				if (err::Error())
+				{
+					*outSSB = 0;
+					return false;
+				}
+
+				*outSSB = ssb;
+				return true;
+			}
+
+			static bool GenerateFrameBuffers(Graphics* g)
+			{
+				uint w = static_cast<uint>(g->res.x);
+				uint h = static_cast<uint>(g->res.y);
+
+				GenFrameBufferTexture(w, h, &g->sceneFBO, &g->sceneMainTex);
+				if (!g->sceneMainTex)
+				{
+					std::printf("Failed to make scene framebuffer");
+					glDeleteTextures(1, &g->sceneMainTex);
+					return false;
+				}
+
+				for (uint p = 0; p < Graphics::BLUR_PASSES; ++p)
+				{
+					GenFrameBufferTexture(w, h, &g->downsampleFBO[p], &g->sceneBrightTex[p]);
+
+					if (!g->sceneBrightTex[p])
+					{
+						std::printf("Failed to make brighness texture pass %u\n", p);
+						glDeleteTextures(1, &g->sceneMainTex);
+						glDeleteTextures(p, g->sceneBrightTex);
+						return false;
+					}
+
+					GenFrameBufferTexture(w, h, &g->blurFBO[p], &g->blurTex[p]);
+
+					if (!g->blurTex[p])
+					{
+						std::printf("Failed to make blur texture pass %u\n", p);
+						glDeleteTextures(1, &g->sceneMainTex);
+						glDeleteTextures(p + 1, g->sceneBrightTex);
+						glDeleteTextures(p, g->blurTex);
+						return false;
+					}
+
+					w >>= 1;
+					h >>= 1;
+				}
+
+				glBindFramebuffer(GL_FRAMEBUFFER, g->sceneFBO);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, g->sceneBrightTex[0], 0);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+				return true;
+			}
+
+			static void DestroyFrameBuffers(Graphics* g)
+			{
+				glDeleteTextures(1, &g->sceneMainTex);
+				glDeleteTextures(Graphics::BLUR_PASSES, g->sceneBrightTex);
+				glDeleteTextures(Graphics::BLUR_PASSES, g->blurTex);
+
+				g->sceneMainTex = 0;
+				std::memset(g->sceneBrightTex, 0, sizeof(g->sceneBrightTex));
+				std::memset(g->blurTex, 0, sizeof(g->blurTex));
+			}
+
+			static bool Init(Graphics* g)
+			{
+				uint sceneShader, blurShader, uiShader, downShader, outShader;
+
+				shader::LoadShaders("shaders", &sceneShader, &blurShader, &uiShader, &downShader, &outShader);
+
+				if (sceneShader == 0 || blurShader == 0 || outShader == 0)
+				{
+					printf("Failed to find shaders in 'shaders' directory.\n");
 				}
 				else
 				{
+					uint sceneVAO;
 					uint sceneEntrySSB;
+					uint sceneBVHSSB;
 
-					scene::GenSSB(&sceneEntrySSB, sizeof(glm::mat4) * Graphics::MAX_ENTRIES);
+					GenVAO(&sceneVAO);
+					GenSSB(&sceneEntrySSB, sizeof(glm::mat4) * Graphics::MAX_ENTRIES);
+					GenSSB(&sceneBVHSSB, sizeof(tree::Node) * Graphics::MAX_ENTRIES * 2);
+					
+					GenerateFrameBuffers(g);
 
-					if (sceneEntrySSB == 0)
-					{
-						printf("Failed to generate shader storage buffer for scene.\n");
-					}
-					else
-					{
-						uint sceneBVHSSB;
+					g->downsampleShader = downShader;
+					g->blurShader = blurShader;
+					g->sceneShader = sceneShader;
+					g->sceneEntrySSB = sceneEntrySSB;
+					g->sceneBVHSSB = sceneBVHSSB;
+					g->sceneVAO = sceneVAO;
+					g->outputShader = outShader;
 
-						scene::GenSSB(&sceneBVHSSB, sizeof(tree::Node) * Graphics::MAX_ENTRIES * 2);
+					const float fov = 45.0f;
+					g->camPos = glm::vec3(0.0f, 0.0f, 39.0f);
+					g->camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+					g->camInvFov = static_cast<float>(1.0 / std::tan((fov * 3.1415926535898) / 360.0));
+					g->camViewMtx = glm::lookAt(g->camPos, g->camTarget, glm::vec3(0.0f, 1.0f, 0.0f));
 
-						if (sceneBVHSSB == 0)
-						{
-							printf("Failed to generate shader storage buffer for bvh.\n");
-						}
-						else
-						{
-							g->shader = sceneShader;
-							g->sceneEntrySSB = sceneEntrySSB;
-							g->sceneBVHSSB = sceneBVHSSB;
-							g->sceneVAO = sceneVAO;
+					g->meshTypeRemap.resize(MESH_TYPE_COUNT);
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::PLAYER)] = MESH_TYPE_PLAYER;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::HELPER)] = MESH_TYPE_HELPER;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_FLAKE)] = MESH_TYPE_SNOW_FLAKE;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_BALL)] = MESH_TYPE_SNOW_BALL;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_MAN)] = MESH_TYPE_SNOW_MAN;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::STATIC_PLATFORMS)] = MESH_TYPE_STATIC_PLATFORMS;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::WORLD_BOUNDS)] = MESH_TYPE_WORLD_BOUNDS;
 
-							const float fov = 45.0f;
-							g->camPos = glm::vec3(0.0f, 0.0f, 39.0f);
-							g->camTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-							g->camInvFov = static_cast<float>(1.0 / std::tan((fov * 3.1415926535898) / 360.0));
-							g->camViewMtx = glm::lookAt(g->camPos, g->camTarget, glm::vec3(0.0f, 1.0f, 0.0f));
-
-							g->meshTypeRemap.resize(MESH_TYPE_COUNT);
-							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::PLAYER)] = MESH_TYPE_PLAYER;
-							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::HELPER)] = MESH_TYPE_HELPER;
-							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_FLAKE)] = MESH_TYPE_SNOW_FLAKE;
-							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_BALL)] = MESH_TYPE_SNOW_BALL;
-							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_MAN)] = MESH_TYPE_SNOW_MAN;
-							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::STATIC_PLATFORMS)] = MESH_TYPE_STATIC_PLATFORMS;
-							g->meshTypeRemap[static_cast<uint>(gfx::MeshType::WORLD_BOUNDS)] = MESH_TYPE_WORLD_BOUNDS;
-
-							return true;
-						}
-
-						glDeleteBuffers(1, &sceneEntrySSB);
-					}
-
-					glDeleteVertexArrays(1, &sceneVAO);
+					return true;
 				}
 
-				glDeleteProgram(sceneShader);
-				glDeleteProgram(uiShader);
+				return false;
+			}
+		}
+
+		static void Render_Scene(const Graphics& g)
+		{
+			const GLenum sceneAttachemnts[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+
+			glUseProgram(g.sceneShader);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, g.sceneFBO);
+	
+			scene::UpdateUniforms(g);
+
+			glDrawBuffers(2, sceneAttachemnts);
+
+			glBindVertexArray(g.sceneVAO);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		}
+
+		static void Render_Downsample(const Graphics& g)
+		{
+			const GLenum downsampleAttachemnts[] = { GL_COLOR_ATTACHMENT0 };
+			uint w = static_cast<uint>(g.res.x);
+			uint h = static_cast<uint>(g.res.y);
+
+			for (uint p = 1; p < BLOOM_BLUR_PASSES; ++p)
+			{
+				static const uint resolutionBinding = 1;
+
+				w >>= 1;
+				h >>= 1;
+
+				glm::vec2 res(static_cast<float>(w), static_cast<float>(h));
+
+				glViewport(0, 0, w, h);
+				glUseProgram(g.downsampleShader);
+				glBindFramebuffer(GL_FRAMEBUFFER, g.downsampleFBO[p]);
+				glBindTexture(GL_TEXTURE_2D, g.sceneBrightTex[p - 1]);
+				glUniform1i(0, 0);
+				glUniform2fv(resolutionBinding, 1, glm::value_ptr(res));
+
+				glDrawBuffers(1, downsampleAttachemnts);
+
+				glBindVertexArray(g.sceneVAO);
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			}
+		}
+
+		static void Render_Blur(const Graphics& g)
+		{
+			GLenum blurAttachemnts[Graphics::BLUR_PASSES] = { GL_COLOR_ATTACHMENT0 };
+
+			glUseProgram(g.blurShader);
+
+			for (uint pass = 0; pass < 2; ++pass)
+			{
+				uint w = static_cast<uint>(g.res.x);
+				uint h = static_cast<uint>(g.res.y);
+
+				for (uint p = 0; p < Graphics::BLUR_PASSES; ++p)
+				{
+					glViewport(0, 0, w, h);
+					glBindFramebuffer(GL_FRAMEBUFFER, pass ? g.downsampleFBO[p] : g.blurFBO[p]);
+					glBindTexture(GL_TEXTURE_2D, pass ? g.blurTex[p] : g.sceneBrightTex[p]);
+					glUniform1i(0, 0);
+
+					glm::vec2 res(static_cast<float>(w), static_cast<float>(h));
+					static const uint horizBinding = 10;
+					static const uint resolutionBinding = 11;
+
+					glUniform1i(horizBinding, pass);
+					glUniform2fv(resolutionBinding, 1, glm::value_ptr(res));
+
+					glDrawBuffers(Graphics::BLUR_PASSES, blurAttachemnts);
+
+					glBindVertexArray(g.sceneVAO);
+					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+					w >>= 1;
+					h >>= 1;
+				}
+			}
+		}
+
+		static void Render_Output(const Graphics& g)
+		{
+
+			glViewport(0, 0, static_cast<uint>(g.res.x), static_cast<uint>(g.res.y));
+			glUseProgram(g.outputShader);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, g.sceneMainTex);
+			glUniform1i(0, 0);
+
+			for (uint p = 0; p < Graphics::BLUR_PASSES; ++p)
+			{
+				const uint texIndex = p + 1;
+
+				glActiveTexture(GL_TEXTURE0 + texIndex);
+				glBindTexture(GL_TEXTURE_2D, g.sceneBrightTex[p]);
+				glUniform1i(texIndex, texIndex);
 			}
 
-			return false;
+			static const uint resolutionBinding = 11;
+			glUniform2fv(resolutionBinding, 1, glm::value_ptr(g.res));
+
+			glBindVertexArray(g.sceneVAO);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		}
 
 		static void Render(const Graphics &g)
 		{
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			glUseProgram(g.shader);
-			scene::UpdateUniforms(g);
-
-			glBindVertexArray(g.sceneVAO);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			Render_Scene(g);
+			Render_Downsample(g);
+			Render_Blur(g);
+			Render_Output(g);
 
 			glBindVertexArray(0);
 			glUseProgram(0);
 
 			al_flip_display();
+			err::Error();
 		}
 	}
 }
@@ -678,7 +963,12 @@ namespace gfx
 	{
 		Graphics* g = new Graphics;
 
-		if (!render::Init(g))
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback((GLDEBUGPROC )&err::DebugOutput, nullptr);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+		if (!render::init::Init(g))
 		{
 			printf("Graphics failed to initialize.\n");
 			delete g;
@@ -690,9 +980,19 @@ namespace gfx
 
 	void Shutdown(Graphics* g)
 	{
-		glDeleteProgram(g->shader);
+		render::init::DestroyFrameBuffers(g);
+
+		glDeleteProgram(g->sceneShader);
+		glDeleteProgram(g->blurShader);
+		glDeleteProgram(g->outputShader);
+		glDeleteBuffers(1, &g->sceneFBO);
+		glDeleteBuffers(Graphics::BLUR_PASSES, g->blurFBO);
+		glDeleteBuffers(Graphics::BLUR_PASSES, g->downsampleFBO);
 		glDeleteBuffers(1, &g->sceneEntrySSB);
 		glDeleteBuffers(1, &g->sceneBVHSSB);
+		glDeleteTextures(1, &g->sceneMainTex);
+		glDeleteTextures(Graphics::BLUR_PASSES, g->sceneBrightTex);
+		glDeleteTextures(Graphics::BLUR_PASSES, g->blurTex);
 		glDeleteVertexArrays(1, &g->sceneVAO);
 
 		delete g;
@@ -707,24 +1007,56 @@ namespace gfx
 	
 	void ReloadShaders(Graphics* g)
 	{
-		uint sceneShader, uiShader;
+		uint sceneShader, blurShader, uiShader, downShader, outShader;
 
-		shader::LoadShaders("shaders", &sceneShader, &uiShader);
+		shader::LoadShaders("shaders", &sceneShader, &blurShader, &uiShader, &downShader, &outShader);
 
 		if (sceneShader != 0)
 		{
-			glDeleteProgram(g->shader);
-			g->shader = sceneShader;
+			glDeleteProgram(g->sceneShader);
+			g->sceneShader = sceneShader;
 		}
 		else
 		{
-			printf("Shaders failed to compile. Not reloading.\n");
+			printf("Scene shader failed to compile. Not reloading.\n");
+		}
+
+		if (blurShader != 0)
+		{
+			glDeleteProgram(g->blurShader);
+			g->blurShader = blurShader;
+		}
+		else
+		{
+			printf("Blur shader failed to compile. Not reloading.\n");
+		}
+
+		if (downShader != 0)
+		{
+			glDeleteProgram(g->downsampleShader);
+			g->downsampleShader = downShader;
+		}
+		else
+		{
+			printf("Downsample shader failed to compile. Not reloading.\n");
+		}
+
+		if (outShader != 0)
+		{
+			glDeleteProgram(g->outputShader);
+			g->outputShader = outShader;
+		}
+		else
+		{
+			printf("Output shader failed to compile. Not reloading.\n");
 		}
 	}
 
-	void Resize(Graphics* g, uint x, uint y)
+	bool Resize(Graphics* g, uint x, uint y)
 	{
 		g->res = glm::vec2(static_cast<float>(x), static_cast<float>(y));
+		render::init::DestroyFrameBuffers(g);
+		return render::init::GenerateFrameBuffers(g);
 	}
 
 
@@ -779,9 +1111,6 @@ namespace gfx
 				case MESH_TYPE_SNOW_FLAKE:
 					trans[3][2] += 0.3;
 					break;
-				case MESH_TYPE_SNOW_MAN:
-					trans[3][2] += SNOWMAN_Z;
-					break;
 				}
 
 				*outTrans = glm::inverse(trans);
@@ -792,6 +1121,18 @@ namespace gfx
 		g->sceneBVH = tree::BuildSceneBVH(*g);
 
 		return true;
+	}
+
+	void UpdateModelSubType(Graphics* g, uint objectId, float subType)
+	{
+		glm::mat4* const outTrans = g->sceneEntries.for_object(objectId);
+
+		if (outTrans)
+		{
+			assert(subType >= 0.0f && subType < 1.0f);
+
+			(*outTrans)[3][3] = std::floor((*outTrans)[3][3]) + subType;
+		}
 	}
 
 	void DestroyObjects( Graphics* g, const std::vector<uint>& objectIds )

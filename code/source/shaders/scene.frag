@@ -34,6 +34,7 @@ layout(location = 7) uniform uint in_frameCount;
 layout(location = 8) uniform uint in_sceneEntryCount;
 
 layout (location = 0) out vec4 out_color;
+layout(location = 1) out vec4 out_brightColor;
 
 #define MAX_HIT_SCENE_ENTRIES 16
 uint g_rayHitSceneEntries[MAX_HIT_SCENE_ENTRIES];
@@ -207,7 +208,10 @@ void main()
 		//vec3 light2Radiance = light2Color*light2Attn*light2BRDF;//*light2Shadow;
 
 		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
-		color = Tonemap_ACES(color);
-		out_color = vec4(GammaCorrectColor(color), 1.0);
+		out_color = vec4(color, 1.0);
 	}
+
+	const float brightness = dot(out_color.rgb, vec3(0.2126, 0.7152, 0.0722));
+	const vec3 brightColor = brightness > 1.0 ? out_color.rgb : vec3(0.0);
+	out_brightColor = vec4(brightColor, 0.0);
 }

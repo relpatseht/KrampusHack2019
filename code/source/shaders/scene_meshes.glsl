@@ -151,13 +151,17 @@ vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
 
 vec2 Mesh_Snowman(in vec3 pos, float typeFrac)
 {
-	const float noise = noise(pos*32)*0.004 + 0.998;
+	const float noise = noise(pos*32)*0.001 + 0.999;
 	const float bottom = fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_BOT_Y, SNOWMAN_Z), SNOWMAN_BOT_RADIUS) / noise;
 	const float mid =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_MID_Y, SNOWMAN_Z), SNOWMAN_MID_RADIUS) / noise;
 	const float top =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_TOP_Y, SNOWMAN_Z), SNOWMAN_TOP_RADIUS) / noise;
-	float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
+	const float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
 
-	return vec2(snowman, 1.0);
+	const float snowmanHeight = (SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS) - (SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS);
+	const float visibleBox = fBoxCheap(pos - vec3(SNOWMAN_X, SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS, SNOWMAN_Z), vec3(SNOWMAN_BOT_RADIUS*1.2, snowmanHeight*typeFrac, SNOWMAN_BOT_RADIUS*1.2));
+
+	const float dist = max(snowman, visibleBox);
+	return vec2(dist, 1.0);
 }
 
 vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)
@@ -170,6 +174,13 @@ vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)
 	float b = fBox(pos - vec3( 0.0,-(BOUNDS_HALF_HEIGHT + boundDim), 0), vec3(BOUNDS_HALF_WIDTH + boundDim*2, boundDim, boundDim));
 
 	return vec2(min(l, min(r, min(t, b))), woodMtl);
+}
+
+vec2 Mesh_Fireball(in vec3 pos, float typeFrac)
+{
+	const float fireMtl = 5.0;
+	
+	return vec2(fSphere(pos, FIREBALL_RADIUS), fireMtl);
 }
 
 vec2 Mesh_StaticPlatforms(in vec3 pos, float typeFrac)

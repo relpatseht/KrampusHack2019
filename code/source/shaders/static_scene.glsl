@@ -8,9 +8,9 @@
 
 vec2 StaticScene_Ground(in vec3 pos)
 {
-	pos.y += 8;
+	pos.y += 7.9;
 	const float hNoise = noise(pos.xzx*20);
-    const float height = cos(pos.x*0.25)*sin(pos.z*0.25) + 0.006*hNoise; // very regular patern + a little bit of noise
+    const float height = cos(pos.x*0.25 + 0.3)*sin(pos.z*0.25) + 0.02*hNoise; // very regular patern + a little bit of noise
 
     return vec2(pos.y - height, 1.0 + hNoise*0.99);
 }
@@ -44,7 +44,7 @@ vec3 Background_StarryGradient(in const float time, in const vec2 fragCoord, in 
 		const float starBrightness = noise(vec3(fragCoord, 0.0));
 
 		if(starBrightness > 0.92)
-			color = starBrightness*starColor;
+			color = 2.0*starColor;
 	}
 
 	const float vertGrad = (1.0 - fragCoord.y / resolution.y) * 0.25;

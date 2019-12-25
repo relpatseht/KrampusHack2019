@@ -835,7 +835,7 @@ namespace
 
 		static void Render_Scene(const Graphics& g)
 		{
-			const GLenum sceneAttachemnts[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+			const GLenum sceneAttachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 
 			glUseProgram(g.sceneShader);
 
@@ -843,10 +843,15 @@ namespace
 	
 			scene::UpdateUniforms(g);
 
-			glDrawBuffers(2, sceneAttachemnts);
+			glDrawBuffers(2, sceneAttachments);
 
 			glBindVertexArray(g.sceneVAO);
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+			glBindVertexArray(0);
+			glDrawBuffers(1, sceneAttachments);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glUseProgram(0);
 		}
 
 		static void Render_Downsample(const Graphics& g)
@@ -875,6 +880,11 @@ namespace
 
 				glBindVertexArray(g.sceneVAO);
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+				glBindVertexArray(0);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glUseProgram(0);
 			}
 		}
 
@@ -908,6 +918,11 @@ namespace
 					glBindVertexArray(g.sceneVAO);
 					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+
+					glBindVertexArray(0);
+					glBindTexture(GL_TEXTURE_2D, 0);
+					glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 					w >>= 1;
 					h >>= 1;
 				}
@@ -916,7 +931,6 @@ namespace
 
 		static void Render_Output(const Graphics& g)
 		{
-
 			glViewport(0, 0, static_cast<uint>(g.res.x), static_cast<uint>(g.res.y));
 			glUseProgram(g.outputShader);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -939,6 +953,17 @@ namespace
 
 			glBindVertexArray(g.sceneVAO);
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+			glBindVertexArray(0); 
+			for (uint p = Graphics::BLUR_PASSES; p; --p)
+			{
+				glActiveTexture(GL_TEXTURE0 + p);
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glUseProgram(0);
 		}
 
 		static void Render(const Graphics &g)

@@ -152,6 +152,7 @@ vec3 RayDir(in const vec3 camDir)
 
 void main()
 {
+	const float timeSec = float(in_frameCount) / 60.0;
 	vec3 camDir = normalize(in_camTarget - in_camPos);
 	vec3 rayDir = RayDir(camDir);
 
@@ -161,7 +162,6 @@ void main()
 
 	if( objDist.x == RM_INFINITY)
 	{
-		float timeSec = float(in_frameCount) / 60.0;
 		vec3 snow = Background_Snow(timeSec, gl_FragCoord.xy, in_resolution);
 		vec3 backdrop = Background_StarryGradient(timeSec, gl_FragCoord.xy, in_resolution);
 		out_color = vec4(snow + backdrop, 1.0);
@@ -181,7 +181,7 @@ void main()
 		vec3 albedo = vec3(0.5, 0.0, 0.0);
 		float metalness = 0.95;
 		float roughness = 0.05;
-		MaterialProperties(hitPos, objDist.y, hitNormal, albedo, metalness, roughness);
+		MaterialProperties(hitPos, timeSec, objDist.y, hitNormal, albedo, metalness, roughness);
 
 		// compute lighting
 		const vec3 ambientLight = vec3(0.3);
@@ -212,6 +212,6 @@ void main()
 	}
 
 	const float brightness = dot(out_color.rgb, vec3(0.2126, 0.7152, 0.0722));
-	const vec3 brightColor = brightness > 1.0 ? out_color.rgb : vec3(0.0);
+	const vec3 brightColor = out_color.rgb*min(brightness*brightness*brightness, 1.0);//brightness > 1.0 ? out_color.rgb : out_color.rgb*brightness*0.2;
 	out_brightColor = vec4(brightColor, 0.0);
 }

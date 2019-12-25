@@ -18,5 +18,5 @@ void main()
 		color += texture2D(in_textures[p], texCoord).xyz;
 
 	color = Tonemap_ACES(color);
-	out_color = vec4(GammaCorrectColor(color), 1.0);
+	out_color = vec4(color, 1.0);//vec4(GammaCorrectColor(color), 1.0);
 }

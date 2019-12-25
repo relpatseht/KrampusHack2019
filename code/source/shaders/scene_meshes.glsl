@@ -5,14 +5,22 @@
 #include "/scene_defines.glsl"
 #include "/noise.glsl"
 
-void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal, out vec3 albedo, out float metalness, out float roughness)
+void MaterialProperties(in const vec3 pos, in const float time, in const float mtl, inout vec3 normal, out vec3 albedo, out float metalness, out float roughness)
 {
-	if(mtl < 1.0) // wood frame, [0, 1)
+	if(mtl < 0.0) // snow man, [-1, 0)
+	{
+		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
+		albedo = brightSnow;
+		metalness = 0.0;
+		roughness = 1.6;
+		//albedo *= sin(time*2.0) + 2.0;
+	}
+	else if(mtl < 1.0) // wood frame, [0, 1)
 	{
 		const vec3 bright = vec3(0.31, 0.09, 0.01)*.5;
 		const vec3 dark = vec3(0.23, 0.07, 0.00)*.24;
 		const float lerp = noise(pos.xyx*20);
-		albedo = mix(dark, bright, lerp);
+		albedo = mix(dark, bright, lerp)*2.6;
 		metalness = 0.01;
 		roughness = 0.01;
 	}
@@ -22,8 +30,8 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 		const vec3 darkSnow = vec3(0.1, 0.2, 0.5);
 		float glint = noise(pos*35)+noise(vec3(mtl));
 		albedo = mix(darkSnow, brightSnow, 0.8);
-		if(glint > 1.3)
-		albedo += vec3(0.25, 0.15, 1.0);
+		if(glint > 1.5)
+			albedo += darkSnow;
 		metalness = 0.0;
 		roughness = 0.6;
 	}
@@ -46,6 +54,7 @@ void MaterialProperties(in const vec3 pos, in const float mtl, inout vec3 normal
 		albedo = mix(darkSnow, brightSnow, noise(vec3(fract(mtl)*19 +94)) * 0.7 + 0.3);
 		metalness = 0.0;
 		roughness = 1.6;
+		albedo *= 1.4;
 	}
 }
 
@@ -140,7 +149,7 @@ vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
 
 	if(hitBall <= 0.5) // snowball isn't valid dist. need to overestimate
 	{
-		const float snowMtl = 1.0;
+		const float snowMtl = -1.0;
 		float dist = fBlob(pos / SNOWBALL_RADIUS) * SNOWBALL_RADIUS;
 
 		return vec2(dist, snowMtl);
@@ -151,6 +160,7 @@ vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
 
 vec2 Mesh_Snowman(in vec3 pos, float typeFrac)
 {
+	const float snowmanMtl = -1.0;
 	const float noise = noise(pos*32)*0.001 + 0.999;
 	const float bottom = fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_BOT_Y, SNOWMAN_Z), SNOWMAN_BOT_RADIUS) / noise;
 	const float mid =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_MID_Y, SNOWMAN_Z), SNOWMAN_MID_RADIUS) / noise;
@@ -161,7 +171,7 @@ vec2 Mesh_Snowman(in vec3 pos, float typeFrac)
 	const float visibleBox = fBoxCheap(pos - vec3(SNOWMAN_X, SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS, SNOWMAN_Z), vec3(SNOWMAN_BOT_RADIUS*1.2, snowmanHeight*typeFrac, SNOWMAN_BOT_RADIUS*1.2));
 
 	const float dist = max(snowman, visibleBox);
-	return vec2(dist, 1.0);
+	return vec2(dist, snowmanMtl + typeFrac);
 }
 
 vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)
@@ -179,7 +189,7 @@ vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)
 vec2 Mesh_Fireball(in vec3 pos, float typeFrac)
 {
 	const float fireMtl = 5.0;
-	
+
 	return vec2(fSphere(pos, FIREBALL_RADIUS), fireMtl);
 }
 

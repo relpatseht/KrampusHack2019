@@ -33,6 +33,7 @@ namespace
 		uint fireballCount;
 
 		uint frameCount;
+		uint runFrameCount;
 
 		glm::vec2 playerPos;
 
@@ -43,6 +44,7 @@ namespace
 		float snowMeter = 5.0f;
 
 		bool isRunning;
+		bool isPaused = false;
 	};
 
 	bool InitAllegro()
@@ -211,11 +213,18 @@ namespace
 							UpdateGun(state, glm::vec2(1.0f, 0.0f));
 						break;
 
+						case ALLEGRO_KEY_ESCAPE:
+							state->isPaused = !state->isPaused;
+						break;
+
 						case ALLEGRO_KEY_SPACE:
-							if(glm::length(state->gunDir) > 0.5f)
-								FireGun(state);
-							else
-								phy::RequestJump(state->game->phy, state->playerId, SNOWBALL_IMPULSE);
+							if (!state->isPaused)
+							{
+								if (glm::length(state->gunDir) > 0.5f)
+									FireGun(state);
+								else
+									phy::RequestJump(state->game->phy, state->playerId, SNOWBALL_IMPULSE);
+							}
 						break;
 					}
 				break;
@@ -239,9 +248,6 @@ namespace
 							UpdateGun(state, -glm::vec2(1.0f, 0.0f));
 						break;
 
-						case ALLEGRO_KEY_ESCAPE:
-							state->isRunning = false;
-						break;
 						case ALLEGRO_KEY_F3:
 							printf("Reloading shaders\n");
 							gfx::ReloadShaders(state->game->gfx);
@@ -264,13 +270,16 @@ namespace
 			}
 		}
 
-		ALLEGRO_KEYBOARD_STATE keyState;
-		al_get_keyboard_state(&keyState);
-		if(al_key_down(&keyState, ALLEGRO_KEY_D))
-			phy::RequestWalk(state->game->phy, state->playerId, 0.8f);
+		if (!state->isPaused)
+		{
+			ALLEGRO_KEYBOARD_STATE keyState;
+			al_get_keyboard_state(&keyState);
+			if (al_key_down(&keyState, ALLEGRO_KEY_D))
+				phy::RequestWalk(state->game->phy, state->playerId, 0.8f);
 
-		if (al_key_down(&keyState, ALLEGRO_KEY_A))
-			phy::RequestWalk(state->game->phy, state->playerId, -0.8f);
+			if (al_key_down(&keyState, ALLEGRO_KEY_A))
+				phy::RequestWalk(state->game->phy, state->playerId, -0.8f);
+		}
 	}
 
 	const phy::Transform* GetTransform(const std::vector<uint>& objIds, const std::vector<phy::Transform>& transforms, uint objectId)
@@ -479,13 +488,17 @@ int main(int argc, char* argv[])
 
 					ProcessEvents(eventQueue, &state);
 
-					phy::Update(state.game->phy);
-					HandleCollisions(&state);
-					UpdatePositions(&state);
+					if (!state.isPaused)
+					{
+						phy::Update(state.game->phy);
+						HandleCollisions(&state);
+						UpdatePositions(&state);
+						++state.frameCount;
+					}
+
 					gfx::Update(state.game->gfx);
 
 					game::CleanDeadObjects(state.game);
-					++state.frameCount;
 				}
 
 				game::Shutdown(state.game);

@@ -29,6 +29,10 @@ namespace
 		uint snowflakeCount;
 		std::array<uint, 8> activeSnowballIds;
 		uint snowballCount;
+		std::array<uint, 8> fireballIds;
+		uint fireballCount;
+
+		uint frameCount;
 
 		glm::vec2 playerPos;
 
@@ -62,9 +66,9 @@ namespace
 	}
 
 	// each frame is 1/60 seconds
-	static void AddPeriodics(GameState* state, uint frameCount)
+	static void AddPeriodics(GameState* state)
 	{
-		if (frameCount % 15 == 0) // every 0.25 seconds
+		if (state->frameCount % 15 == 0) // every 0.25 seconds
 		{
 			if (state->snowflakeCount < state->snowflakeIds.size())
 			{
@@ -83,6 +87,30 @@ namespace
 					state->game->dyingObjects.emplace_back(objId);
 				}
 			}
+		}
+
+		if (state->frameCount % 300 == 0) // every 5 seconds
+		{
+			if (state->fireballCount < state->fireballIds.size())
+			{
+				const uint ySwitch = rand() % 100;
+				const float yOffs = ySwitch <= 60 ? 0 : (ySwitch <= 90 ? 1 : 2);
+				const float x = (((rand() % 2) * 2) - 1)* (BOUNDS_HALF_WIDTH + 4.0 + FIREBALL_RADIUS);
+				const float y = yOffs*1.5f - (BOUNDS_HALF_HEIGHT - (1.5 + FIREBALL_RADIUS));
+				uint objId = game::CreateObject(state->game);
+
+				if (gfx::AddModel(state->game->gfx, objId, gfx::MeshType::FIRE_BALL, glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f))))
+				{
+					phy::AddBody(state->game->phy, objId, phy::BodyType::FIRE_BALL, x, y);
+					phy::ApplyImpulse(state->game->phy, objId, (std::signbit(x) ? 1.0 : -1.0) * 5.0f, 0.25f);
+
+					state->fireballIds[state->fireballCount++] = objId;
+				}
+				else
+				{
+					state->game->dyingObjects.emplace_back(objId);
+				}
+ 			}
 		}
 	}
 
@@ -218,6 +246,10 @@ namespace
 							printf("Reloading shaders\n");
 							gfx::ReloadShaders(state->game->gfx);
 						break;
+						case ALLEGRO_KEY_F4:
+							printf("Spawning enemy\n");
+							state->frameCount = 595;
+							break;
 					}
 				break;
 				case ALLEGRO_EVENT_MOUSE_AXES:
@@ -276,6 +308,29 @@ namespace
 				glm::mat4* const outT = &gfxTransforms.emplace_back();
 				auto flakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, objId);
 				auto ballIt = std::find(state->activeSnowballIds.data(), state->activeSnowballIds.data() + state->snowballCount, objId);
+				auto fireIt = std::find(state->fireballIds.data(), state->fireballIds.data() + state->fireballCount, objId);
+
+				if (fireIt < state->fireballIds.data() + state->fireballCount)
+				{
+					if (fabs(phyT.x) <= FIREBALL_RADIUS)
+					{
+						const float snowBottom = SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS;
+						const float snowTop = SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS;
+						const float snowCur = (snowTop - snowBottom) * (state->snowMeter / state->maxSnow) + snowBottom;
+
+						if (phyT.y <= snowCur + FIREBALL_RADIUS)
+						{
+							UpdateSnowmeter(state, -state->maxSnow / 3.0f);
+							game->dyingObjects.emplace_back(*fireIt);
+							*fireIt = state->fireballIds[--state->fireballCount];
+						}
+					}
+					else if (phyT.y < -BOUNDS_HALF_HEIGHT + FIREBALL_RADIUS)
+					{
+						game->dyingObjects.emplace_back(*fireIt);
+						*fireIt = state->fireballIds[--state->fireballCount];
+					}
+				}
 
 				if (ballIt < state->activeSnowballIds.data() + state->snowballCount)
 				{
@@ -288,22 +343,7 @@ namespace
 
 				if (flakeIt < state->snowflakeIds.data() + state->snowflakeCount)
 				{
-					if (helperT)
-					{
-						const float xDist = (helperT->x - phyT.x);
-						const float yDist = (helperT->y - phyT.y);
-						const float helperFlakeDist = std::sqrt(xDist * xDist + yDist * yDist);
-
-						if (helperFlakeDist <= (HELPER_RADIUS + SNOWFLAKE_RADIUS) * 0.7)
-						{
-							UpdateSnowmeter(state, SNOW_PER_FLAKE);
-
-							*flakeIt = state->snowflakeIds[--state->snowflakeCount];
-							state->game->dyingObjects.emplace_back(objId);
-						}
-					}
-
-					if (phyT.y < -BOUNDS_HALF_HEIGHT)
+					if (phyT.y < -BOUNDS_HALF_HEIGHT + SNOWFLAKE_RADIUS)
 					{
 						game->dyingObjects.emplace_back(*flakeIt);
 						*flakeIt = state->snowflakeIds[--state->snowflakeCount];
@@ -314,6 +354,59 @@ namespace
 			}
 
 			gfx::UpdateModels(game->gfx, updatedObjs, gfxTransforms);
+		}
+	}
+
+	static void HandleCollisions(GameState* state)
+	{
+		std::vector<uint> helperContacts;
+
+		phy::GatherContacts(*state->game->phy, state->helperId, &helperContacts);
+		if (!helperContacts.empty())
+		{
+			for (uint hitObj : helperContacts)
+			{
+				auto isFlakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, hitObj);
+
+				if (isFlakeIt - state->snowflakeIds.data() < state->snowflakeCount)
+				{
+					UpdateSnowmeter(state, SNOW_PER_FLAKE);
+					*isFlakeIt = state->snowflakeIds[--state->snowflakeCount];
+					state->game->dyingObjects.emplace_back(hitObj);
+				}
+			}
+		}
+
+		for (uint fireballIndex = 0; fireballIndex < state->fireballCount; ++fireballIndex)
+		{
+			const uint fireballId = state->fireballIds[fireballIndex];
+			std::vector<uint> fireContacts;
+
+			phy::GatherContacts(*state->game->phy, fireballId, &fireContacts);
+
+			for (uint hitObj : fireContacts)
+			{
+				auto ballIt = std::find(state->activeSnowballIds.data(), state->activeSnowballIds.data() + state->snowballCount, hitObj);
+
+				if (ballIt < state->activeSnowballIds.data() + state->snowballCount)
+				{
+					state->game->dyingObjects.emplace_back(*ballIt);
+					state->game->dyingObjects.emplace_back(fireballId);
+
+					state->fireballIds[fireballIndex] = state->fireballIds[--state->fireballCount];
+					*ballIt = state->activeSnowballIds[--state->snowballCount];
+				}
+				else
+				{
+					auto flakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, hitObj);
+
+					if (flakeIt < state->snowflakeIds.data() + state->snowflakeCount)
+					{
+						state->game->dyingObjects.emplace_back(*flakeIt);
+						*flakeIt = state->snowflakeIds[--state->snowflakeCount];
+					}
+				}
+			}
 		}
 	}
 }
@@ -379,19 +472,20 @@ int main(int argc, char* argv[])
 				phy::AddBody(state.game->phy, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
 				phy::AddSoftAnchor(state.game->phy, state.helperId);
 
-				uint frameCount = 0;
+				state.frameCount = 1; // start at 1 to not fire all periodics immediately
 				while (state.isRunning)
 				{
-					AddPeriodics(&state, frameCount);
+					AddPeriodics(&state);
 
 					ProcessEvents(eventQueue, &state);
 
 					phy::Update(state.game->phy);
+					HandleCollisions(&state);
 					UpdatePositions(&state);
 					gfx::Update(state.game->gfx);
 
 					game::CleanDeadObjects(state.game);
-					++frameCount;
+					++state.frameCount;
 				}
 
 				game::Shutdown(state.game);

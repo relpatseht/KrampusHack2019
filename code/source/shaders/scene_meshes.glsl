@@ -47,7 +47,7 @@ void MaterialProperties(in const vec3 pos, in const float time, in const float m
 		metalness = 1.0;
 		roughness = 0.1;
 	}
-	else if(mtl < 5.0) // snow flake, [4, 5)
+	else if(mtl < 11.0) // snow flake, [10, 11)
 	{
 		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
 		const vec3 darkSnow = vec3(0.2, 0.4, 0.6);
@@ -55,6 +55,23 @@ void MaterialProperties(in const vec3 pos, in const float time, in const float m
 		metalness = 0.0;
 		roughness = 1.6;
 		albedo *= 1.4;
+	}
+	else if(mtl < 12.0) // fireball [11, 12)
+	{
+		const vec3 Color1 = vec3(4.0, 1.0, 1.0)*2.0;
+		const vec3 Color2 = vec3(1.5, 0.8, 0.2)*1.5;
+		const vec3 Color3 = vec3(1.25, 0.03, 0.0)*1.5;
+		const vec3 Color4 = vec3(0.05, 0.02, 0.02);
+		float noise = fract(mtl);
+		float c1 = saturate(noise*5.0 + 0.5);
+		float c2 = saturate(noise*5.0);
+		float c3 = saturate(noise*3.4 - 0.5);
+		vec3 a = mix(Color1,Color2, c1);
+		vec3 b = mix(a,     Color3, c2);
+
+		albedo = mix(b,     Color4, c3) * 1.2;
+		metalness = 1.0;
+		roughness = 0.04;
 	}
 }
 
@@ -80,7 +97,7 @@ vec2 Mesh_Snowflake(in vec3 pos, float typeFrac)
 
 	if(hitFlake <= 0.1)
 	{
-		const float flakeMtl = 4.0;
+		const float flakeMtl = 10.0;
 		pos /= SNOWFLAKE_RADIUS;
 
 		float hexSubtraction;
@@ -186,11 +203,25 @@ vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)
 	return vec2(min(l, min(r, min(t, b))), woodMtl);
 }
 
-vec2 Mesh_Fireball(in vec3 pos, float typeFrac)
+// fireball from https://www.shadertoy.com/view/MtXSzS
+vec2 Mesh_Fireball(in vec3 pos, float typeFrac, float time)
 {
-	const float fireMtl = 5.0;
+	const float fireMtl = 11.0;
+	float hitBall = fSphere(pos, FIREBALL_RADIUS);
 
-	return vec2(fSphere(pos, FIREBALL_RADIUS), fireMtl);
+	if(hitBall <= 1.0)
+	{
+		const float NoiseAmplitude = 0.06;
+		const float NoiseFrequency = 4.0;
+		const vec3 Animation = vec3(0.0, -3.0, 0.5);
+
+		float noise = Turbulence(pos * NoiseFrequency + Animation*time, 0.1, 1.5, 0.03) * NoiseAmplitude;
+		noise = saturate(abs(noise));
+
+		return vec2(hitBall - noise, fireMtl + noise - 0.0001);
+	}
+
+	return vec2(hitBall, fireMtl);
 }
 
 vec2 Mesh_StaticPlatforms(in vec3 pos, float typeFrac)

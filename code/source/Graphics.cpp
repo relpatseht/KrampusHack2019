@@ -337,6 +337,10 @@ namespace
 						mins -= glm::vec3(-SNOWMAN_X + SNOWMAN_BOT_RADIUS,-SNOWMAN_BOT_Y + SNOWMAN_BOT_RADIUS, -SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
 						maxs += glm::vec3( SNOWMAN_X + SNOWMAN_BOT_RADIUS, SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS, SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
 					break;
+					case MESH_TYPE_FIRE_BALL:
+						mins -= glm::vec3(FIREBALL_RADIUS * 2.0f);
+						maxs += glm::vec3(FIREBALL_RADIUS * 2.0f);
+					break;
 					case MESH_TYPE_STATIC_PLATFORMS:
 					{
 						float xOffs = -BOTTOM_LEFT_PLATFORM_X + BOTTOM_PLATFORM_WIDTH;
@@ -823,6 +827,7 @@ namespace
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_FLAKE)] = MESH_TYPE_SNOW_FLAKE;
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_BALL)] = MESH_TYPE_SNOW_BALL;
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::SNOW_MAN)] = MESH_TYPE_SNOW_MAN;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::FIRE_BALL)] = MESH_TYPE_FIRE_BALL;
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::STATIC_PLATFORMS)] = MESH_TYPE_STATIC_PLATFORMS;
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::WORLD_BOUNDS)] = MESH_TYPE_WORLD_BOUNDS;
 
@@ -988,10 +993,10 @@ namespace gfx
 	{
 		Graphics* g = new Graphics;
 
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		glDebugMessageCallback((GLDEBUGPROC )&err::DebugOutput, nullptr);
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+		//glEnable(GL_DEBUG_OUTPUT);
+		//glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		//glDebugMessageCallback((GLDEBUGPROC )&err::DebugOutput, nullptr);
+		//glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
 		if (!render::init::Init(g))
 		{

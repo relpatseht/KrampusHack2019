@@ -12,9 +12,6 @@
 const float g_camNear = 1.0;
 const float g_camFar = 100.0;
 
-layout(location = 0) in vec3 in_worldPos;
-layout(location = 1) in vec3 in_ray;
-
 layout(std140, binding=0) buffer SceneEntryBuffer
 {
 	mat4 in_entries[];
@@ -117,19 +114,22 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 		else if(type < MESH_TYPE_HELPER + 1.0)
 			objDist = Mesh_Helper(objPos, typeFrac);
 		else if(type < MESH_TYPE_SNOW_FLAKE + 1.0)
-				objDist = Mesh_Snowflake(objPos, typeFrac);
+			objDist = Mesh_Snowflake(objPos, typeFrac);
 		else if(type < MESH_TYPE_SNOW_BALL + 1.0)
-				objDist = Mesh_Snowball(objPos, typeFrac);
+			objDist = Mesh_Snowball(objPos, typeFrac);
 		else if(type < MESH_TYPE_SNOW_MAN + 1.0)
-				objDist = Mesh_Snowman(objPos, typeFrac);
+			objDist = Mesh_Snowman(objPos, typeFrac);
 		else if(type < MESH_TYPE_STATIC_PLATFORMS + 1.0)
-				objDist = Mesh_StaticPlatforms(objPos, typeFrac);
+			objDist = Mesh_StaticPlatforms(objPos, typeFrac);
 		else if(type < MESH_TYPE_WORLD_BOUNDS + 1.0)
-				objDist = Mesh_SceneBounds(objPos, typeFrac);
+			objDist = Mesh_SceneBounds(objPos, typeFrac);
+		else if(type < MESH_TYPE_FIRE_BALL + 1.0)
+			objDist = Mesh_Fireball(objPos, typeFrac, float(in_frameCount) / 60.0);
 
 		if(objDist.x < dist.x)
 			dist = objDist;
 	}
+	
 	{
 		vec2 staticSceneDist = StaticScene(pos);
 
@@ -195,19 +195,10 @@ void main()
 
 
 		BVHRayGatherSceneEntries(light1Dir, hitPos);
-		float light1Shadow = objDist.y < 4 ? RayMarch_Shadow(light1Dir, hitPos, 25.0, g_camFar) : 1.0;
+		float light1Shadow = objDist.y < 10 ? RayMarch_Shadow(light1Dir, hitPos, 25.0, g_camFar) : 1.0;
 		vec3 light1Radiance = light1Color*light1Attn*light1BRDF*light1Shadow;
 
-		//vec3 light2Color = vec3(2, 10, 2);
-		//vec3 light2Pos = -(in_entries[1])[3].xyz;//vec3(-20, 20, 30); // Hack, helper light
-		//vec3 light2Dir = normalize(light2Pos - hitPos);
-		//float light2Dist = length(light2Pos - hitPos);
-		//float light2Attn = 1.0 / (light2Dist * light2Dist);
-		//vec3 light2BRDF = BRDF_CookTorrance(hitNormal, viewDir, light2Dir, albedo, metalness, roughness);
-		//float light2Shadow = RayMarch_Shadow(light2Dir, hitPos, 10.0, g_camFar);
-		//vec3 light2Radiance = light2Color*light2Attn*light2BRDF;//*light2Shadow;
-
-		vec3 color = (ambientLight * albedo) + light1Radiance;// + light2Radiance;
+		vec3 color = (ambientLight * albedo) + light1Radiance;
 		out_color = vec4(color, 1.0);
 	}
 

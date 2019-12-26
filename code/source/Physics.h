@@ -17,7 +17,8 @@ namespace phy
 		HELPER,
 		SNOW_FLAKE,
 		SNOW_BALL,
-		SNOW_MAN
+		SNOW_MAN,
+		FIRE_BALL
 	};
 
 	struct Transform
@@ -33,6 +34,7 @@ namespace phy
 	bool AddSoftAnchor(Physics* p, uint objectId);
 
 	void GatherTransforms(const Physics &p, std::vector<uint>* outIds, std::vector<Transform>* outTransforms);
+	void GatherContacts(const Physics& p, uint objectId, std::vector<uint>* outIds);
 
 	void ApplyImpulse(Physics* p, uint objectId, float x, float y);
 	void SetSoftAnchorTarget(Physics* p, uint objectId, float x, float y);

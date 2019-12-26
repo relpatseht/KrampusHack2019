@@ -16,6 +16,7 @@ namespace gfx
 		SNOW_FLAKE,
 		SNOW_BALL,
 		SNOW_MAN,
+		FIRE_BALL,
 		STATIC_PLATFORMS,
 		WORLD_BOUNDS,
 	};

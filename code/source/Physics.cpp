@@ -18,7 +18,8 @@ namespace
 		HELPER       = 1<<3,
 		SNOW_FLAKE   = 1<<4,
 		SNOW_BALL    = 1<<5,
-		SNOW_MAN     = 1<<6
+		SNOW_MAN     = 1<<6,
+		FIRE_BALL	 = 1<<7
 	};
 
 	class ContactListener;
@@ -204,14 +205,14 @@ namespace
 				bodyDef.fixedRotation = true;
 				bodyDef.allowSleep = false;
 
-				helperShape.m_radius = static_cast<float>(HELPER_RADIUS);
+				helperShape.m_radius = static_cast<float>(HELPER_RADIUS) * 0.1f;
 				suctionShape.m_radius = static_cast<float>(HELPER_RADIUS) + 1.0f;
 
 				helperFixtureDef.shape = &helperShape;
 				helperFixtureDef.density = 0.3f;
 				helperFixtureDef.friction = 1.0f;
 				helperFixtureDef.filter.categoryBits = BodyGroup::HELPER;
-				helperFixtureDef.filter.maskBits = BodyGroup::WORLD_BOUNDS | BodyGroup::SNOW_BALL;
+				helperFixtureDef.filter.maskBits = BodyGroup::WORLD_BOUNDS | BodyGroup::SNOW_FLAKE | BodyGroup::SNOW_BALL | BodyGroup::FIRE_BALL;
 
 				scutionFixtureDef.shape = &suctionShape;
 				scutionFixtureDef.isSensor = true;
@@ -239,7 +240,7 @@ namespace
 				bodyDef.angularVelocity = 6.0f * ((rand() / static_cast<float>(RAND_MAX)) - 0.5f);
 				bodyDef.allowSleep = false;
 
-				shape.m_radius = static_cast<float>(SNOWFLAKE_RADIUS);
+				shape.m_radius = static_cast<float>(SNOWFLAKE_RADIUS) * 0.8f;
 
 				fixtureDef.shape = &shape;
 				fixtureDef.density = 0.3f;
@@ -261,7 +262,7 @@ namespace
 
 				bodyDef.type = b2_dynamicBody;
 				bodyDef.position.Set(x, y);
-				bodyDef.angularVelocity = 6.0f * ((rand() / static_cast<float>(RAND_MAX)) - 0.5f);
+				bodyDef.angularVelocity = 12.0f * ((rand() / static_cast<float>(RAND_MAX)) - 0.5f);
 				bodyDef.allowSleep = false;
 
 				shape.m_radius = static_cast<float>(SNOWBALL_RADIUS);
@@ -270,12 +271,39 @@ namespace
 				fixtureDef.density = 10.0f;
 				fixtureDef.friction = 1.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::SNOW_BALL;
-				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_MAN | BodyGroup::PLATFORM;
+				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_MAN | BodyGroup::FIRE_BALL | BodyGroup::PLATFORM;
 
 				b2Body* flake = world->CreateBody(&bodyDef);
 				flake->CreateFixture(&fixtureDef);
 
 				return flake;
+			}
+
+			static b2Body* Fireball(b2World* world, float x, float y)
+			{
+				b2BodyDef bodyDef;
+				b2CircleShape shape;
+				b2FixtureDef fixtureDef;
+
+				bodyDef.type = b2_dynamicBody;
+				bodyDef.position.Set(x, y);
+				bodyDef.angularVelocity = 4.0f * ((rand() / static_cast<float>(RAND_MAX))) + 3.0f;
+				bodyDef.allowSleep = false;
+				bodyDef.gravityScale = 0.01f;
+
+				shape.m_radius = static_cast<float>(FIREBALL_RADIUS) * 0.75;
+
+				fixtureDef.shape = &shape;
+				fixtureDef.density = 1.0f;
+				fixtureDef.friction = 1.0f;
+				fixtureDef.restitution = 5.0f;
+				fixtureDef.filter.categoryBits = BodyGroup::FIRE_BALL;
+				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_MAN | BodyGroup::SNOW_BALL | BodyGroup::SNOW_FLAKE;
+
+				b2Body* ball = world->CreateBody(&bodyDef);
+				ball->CreateFixture(&fixtureDef);
+
+				return ball;
 			}
 		}
 	}
@@ -424,6 +452,9 @@ namespace phy
 			case BodyType::SNOW_MAN:
 
 			break;
+			case BodyType::FIRE_BALL:
+				body = init::dynamics::Fireball(&p->world, x, y);
+			break;
 		}
 
 		if (body)
@@ -472,6 +503,27 @@ namespace phy
 			outT->x = body.GetPosition().x;
 			outT->y = body.GetPosition().y;
 			outT->rot = body.GetAngle();
+		}
+	}
+
+	void GatherContacts(const Physics& p, uint objectId, std::vector<uint>* outIds)
+	{
+		const b2Body* const * const bodyPtr = p.bodies.for_object(objectId);
+
+		if (bodyPtr)
+		{
+			const b2Body* const body = *bodyPtr;
+
+			for (const b2ContactEdge* c = body->GetContactList(); c; c = c->next)
+			{
+				if (!(c->contact->GetFixtureA()->IsSensor() || c->contact->GetFixtureB()->IsSensor()))
+				{
+					const b2Body* const hitBody = c->other;
+					const uint hitObjId = static_cast<uint>(reinterpret_cast<uintptr_t>(hitBody->GetUserData()));
+
+					outIds->emplace_back(hitObjId);
+				}
+			}
 		}
 	}
 

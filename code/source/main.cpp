@@ -16,6 +16,15 @@ namespace
 	const float SNOW_PER_BALL = 2.1f;
 	const float SNOWBALL_IMPULSE = 20.0f;
 
+	enum class State
+	{
+		MAIN_MENU,
+		RUNNING,
+		PAUSE_MENU,
+		WIN_SCREEN,
+		SHUTDOWN
+	};
+
 	struct GameState
 	{
 		Game *game;
@@ -33,7 +42,6 @@ namespace
 		uint fireballCount;
 
 		uint frameCount;
-		uint runFrameCount;
 
 		glm::vec2 playerPos;
 
@@ -43,8 +51,7 @@ namespace
 		float maxSnow = 100.0f;
 		float snowMeter = 5.0f;
 
-		bool isRunning;
-		bool isPaused = false;
+		State state = State::RUNNING;
 	};
 
 	bool InitAllegro()
@@ -187,7 +194,7 @@ namespace
 			switch (evt.type)
 			{
 				case ALLEGRO_EVENT_DISPLAY_CLOSE:
-					state->isRunning = false;
+					state->state = State::SHUTDOWN;
 				break;
 				case ALLEGRO_EVENT_DISPLAY_RESIZE:
 					al_acknowledge_resize(evt.display.source);
@@ -214,11 +221,23 @@ namespace
 						break;
 
 						case ALLEGRO_KEY_ESCAPE:
-							state->isPaused = !state->isPaused;
+							switch (state->state)
+							{
+								case State::MAIN_MENU:
+								case State::WIN_SCREEN:
+									state->state = State::SHUTDOWN;
+								break;
+								case State::RUNNING:
+									state->state = State::PAUSE_MENU;
+								break;
+								case State::PAUSE_MENU:
+									state->state = State::RUNNING;
+								break;
+							}
 						break;
 
 						case ALLEGRO_KEY_SPACE:
-							if (!state->isPaused)
+							if (state->state == State::RUNNING)
 							{
 								if (glm::length(state->gunDir) > 0.5f)
 									FireGun(state);
@@ -270,7 +289,7 @@ namespace
 			}
 		}
 
-		if (!state->isPaused)
+		if (state->state == State::RUNNING)
 		{
 			ALLEGRO_KEYBOARD_STATE keyState;
 			al_get_keyboard_state(&keyState);
@@ -441,8 +460,7 @@ int main(int argc, char* argv[])
 		else
 		{
 			GameState state = {};
-
-			state.isRunning = true;
+			
 			state.game = new Game;
 			if (!game::Init(state.game))
 			{
@@ -482,14 +500,13 @@ int main(int argc, char* argv[])
 				phy::AddSoftAnchor(state.game->phy, state.helperId);
 
 				state.frameCount = 1; // start at 1 to not fire all periodics immediately
-				while (state.isRunning)
+				while (state.state != State::SHUTDOWN)
 				{
-					AddPeriodics(&state);
-
 					ProcessEvents(eventQueue, &state);
 
-					if (!state.isPaused)
+					if (state.state == State::RUNNING)
 					{
+						AddPeriodics(&state);
 						phy::Update(state.game->phy);
 						HandleCollisions(&state);
 						UpdatePositions(&state);

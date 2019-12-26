@@ -36,6 +36,15 @@
     <Filter Include="Header Files\generated">
       <UniqueIdentifier>{6727dc53-54cb-45c7-ba6d-71235fc2c9ee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\audio">
+      <UniqueIdentifier>{4cd981c8-0548-4f3a-981f-40769f5076cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\audio">
+      <UniqueIdentifier>{d7c5eefd-8ea5-4a0a-8ed6-b2f64b46692f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\acodec">
+      <UniqueIdentifier>{76e0415d-73d3-4c42-8889-5d0f7001067c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\allegro5\platform\alplatf.h">
@@ -398,6 +407,9 @@
     <ClInclude Include="$(AllegroFolder)src\win\wgl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="5.2.4\addons\audio\allegro5\internal\aintern_audio.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(AllegroFolder)include\allegro5\inline\fmaths.inl">
@@ -668,6 +680,48 @@
     </ClCompile>
     <ClCompile Include="$(AllegroFolder)src\win\wxthread.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\audio.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\audio_io.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\dsound.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\kcm_dtor.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\kcm_instance.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\kcm_mixer.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\kcm_sample.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\kcm_stream.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\kcm_voice.c">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\acodec\acodec.c">
+      <Filter>Source Files\acodec</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\acodec\helper.c">
+      <Filter>Source Files\acodec</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\acodec\wav.c">
+      <Filter>Source Files\acodec</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\acodec\voc.c">
+      <Filter>Source Files\acodec</Filter>
+    </ClCompile>
+    <ClCompile Include="5.2.4\addons\audio\recorder.c">
+      <Filter>Source Files\audio</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

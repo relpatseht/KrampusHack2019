@@ -13,7 +13,7 @@
     <ImGUIFolder>$(CodeExternalFolder)imgui\1.7.4\</ImGUIFolder>
 
     <GLMIncludePath>$(GLMFolder)</GLMIncludePath>
-    <AllegroIncludePath>$(AllegroFolder)include\;$(CodeExternalFolder)allegro\include</AllegroIncludePath>
+    <AllegroIncludePath>$(AllegroFolder)include\;$(CodeExternalFolder)allegro\include\;$(AllegroFolder)addons\acodec\;$(AllegroFolder)addons\audio\;</AllegroIncludePath>
     <Box2DIncludePath>$(Box2DFolder)</Box2DIncludePath>
     <ImGUIIncludePath>$(ImGUIFolder)</ImGUIIncludePath>
 

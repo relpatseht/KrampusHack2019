@@ -1,6 +1,8 @@
 #include <cstdio>
 #include <thread>
 #include "allegro5/allegro.h"
+#include "allegro5/allegro_audio.h"
+#include "allegro5/allegro_acodec.h"
 #include "Game.h"
 #include "Graphics.h"
 #include "Physics.h"
@@ -62,7 +64,17 @@ namespace
 			{
 				if (al_install_keyboard())
 				{
-					return true;
+					if (al_install_audio())
+					{
+						if (al_init_acodec_addon())
+						{
+							return true;
+						}
+
+						al_uninstall_audio();
+					}
+
+					al_uninstall_keyboard();
 				}
 
 				al_uninstall_mouse();

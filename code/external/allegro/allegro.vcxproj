@@ -51,7 +51,8 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(AllegroIncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;ALLEGRO_SRC;ALLEGRO_LIB_BUILD;allegro_EXPORTS;UNICODE;_UNICODE;WIN32;WINDOWS;_MBCS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ALLEGRO_INTERNAL_UNSTABLE;ALLEGRO_STATICLINK;ALLEGRO_SRC;ALLEGRO_LIB_BUILD;allegro_EXPORTS;UNICODE;_UNICODE;WIN32;WINDOWS;_MBCS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -66,7 +67,8 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(AllegroIncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;ALLEGRO_SRC;ALLEGRO_LIB_BUILD;allegro_EXPORTS;UNICODE;_UNICODE;WIN32;WINDOWS;_MBCS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ALLEGRO_INTERNAL_UNSTABLE;ALLEGRO_STATICLINK;ALLEGRO_SRC;ALLEGRO_LIB_BUILD;allegro_EXPORTS;UNICODE;_UNICODE;WIN32;WINDOWS;_MBCS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -190,6 +192,7 @@
     <ClInclude Include="$(AllegroFolder)include\allegro5\utf8.h" />
     <ClInclude Include="$(AllegroFolder)src\opengl\ogl_helpers.h" />
     <ClInclude Include="$(AllegroFolder)src\win\wgl.h" />
+    <ClInclude Include="5.2.4\addons\audio\allegro5\internal\aintern_audio.h" />
     <ClInclude Include="include\allegro5\internal\aintern_acodec_cfg.h" />
     <ClInclude Include="include\allegro5\internal\aintern_audio_cfg.h" />
     <ClInclude Include="include\allegro5\internal\aintern_image_cfg.h" />
@@ -288,6 +291,20 @@
     <ClCompile Include="$(AllegroFolder)src\win\wunicode.c" />
     <ClCompile Include="$(AllegroFolder)src\win\wwindow.c" />
     <ClCompile Include="$(AllegroFolder)src\win\wxthread.c" />
+    <ClCompile Include="5.2.4\addons\acodec\acodec.c" />
+    <ClCompile Include="5.2.4\addons\acodec\helper.c" />
+    <ClCompile Include="5.2.4\addons\acodec\voc.c" />
+    <ClCompile Include="5.2.4\addons\acodec\wav.c" />
+    <ClCompile Include="5.2.4\addons\audio\audio.c" />
+    <ClCompile Include="5.2.4\addons\audio\audio_io.c" />
+    <ClCompile Include="5.2.4\addons\audio\dsound.cpp" />
+    <ClCompile Include="5.2.4\addons\audio\kcm_dtor.c" />
+    <ClCompile Include="5.2.4\addons\audio\kcm_instance.c" />
+    <ClCompile Include="5.2.4\addons\audio\kcm_mixer.c" />
+    <ClCompile Include="5.2.4\addons\audio\kcm_sample.c" />
+    <ClCompile Include="5.2.4\addons\audio\kcm_stream.c" />
+    <ClCompile Include="5.2.4\addons\audio\kcm_voice.c" />
+    <ClCompile Include="5.2.4\addons\audio\recorder.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

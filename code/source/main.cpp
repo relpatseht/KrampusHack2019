@@ -27,9 +27,9 @@ namespace
 		uint snowmanId;
 		std::array<uint, 256> snowflakeIds;
 		uint snowflakeCount;
-		std::array<uint, 8> activeSnowballIds;
+		std::array<uint, 16> activeSnowballIds;
 		uint snowballCount;
-		std::array<uint, 8> fireballIds;
+		std::array<uint, 16> fireballIds;
 		uint fireballCount;
 
 		uint frameCount;
@@ -89,9 +89,9 @@ namespace
 			}
 		}
 
-		if (state->frameCount % 300 == 0) // every 5 seconds
+		if (state->frameCount % 150 == 0) // every 2.5 seconds
 		{
-			if (state->fireballCount < state->fireballIds.size())
+			if (rand() % 2 == 0 && state->fireballCount < state->fireballIds.size())
 			{
 				const uint ySwitch = rand() % 100;
 				const float yOffs = ySwitch <= 60 ? 0 : (ySwitch <= 90 ? 1 : 2);
@@ -318,7 +318,7 @@ namespace
 						const float snowTop = SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS;
 						const float snowCur = (snowTop - snowBottom) * (state->snowMeter / state->maxSnow) + snowBottom;
 
-						if (phyT.y <= snowCur + FIREBALL_RADIUS)
+						if (phyT.y <= snowCur + 1.0 + FIREBALL_RADIUS)
 						{
 							UpdateSnowmeter(state, -state->maxSnow / 3.0f);
 							game->dyingObjects.emplace_back(*fireIt);

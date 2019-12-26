@@ -246,7 +246,7 @@ namespace
 				fixtureDef.density = 0.3f;
 				fixtureDef.friction = 1.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::SNOW_FLAKE;
-				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_BALL;
+				fixtureDef.filter.maskBits = BodyGroup::HELPER | BodyGroup::SNOW_BALL | BodyGroup::FIRE_BALL;
 
 				b2Body* flake = world->CreateBody(&bodyDef);
 				flake->CreateFixture(&fixtureDef);
@@ -287,7 +287,7 @@ namespace
 
 				bodyDef.type = b2_dynamicBody;
 				bodyDef.position.Set(x, y);
-				bodyDef.angularVelocity = 4.0f * ((rand() / static_cast<float>(RAND_MAX))) + 3.0f;
+				bodyDef.angularVelocity = 2.0f * ((rand() / static_cast<float>(RAND_MAX))) + 1.0f;
 				bodyDef.allowSleep = false;
 				bodyDef.gravityScale = 0.01f;
 

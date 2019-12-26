@@ -215,7 +215,7 @@ vec2 Mesh_Fireball(in vec3 pos, float typeFrac, float time)
 		const float NoiseFrequency = 4.0;
 		const vec3 Animation = vec3(0.0, -3.0, 0.5);
 
-		float noise = Turbulence(pos * NoiseFrequency + Animation*time, 0.1, 1.5, 0.03) * NoiseAmplitude;
+		float noise = Turbulence(pos * NoiseFrequency + Animation*time*1.8, 0.1, 1.5, 0.03) * NoiseAmplitude;
 		noise = saturate(abs(noise));
 
 		return vec2(hitBall - noise, fireMtl + noise - 0.0001);

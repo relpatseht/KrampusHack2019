@@ -373,18 +373,13 @@ namespace
 
 	namespace shader
 	{
-		struct SourcePair
-		{
-			std::string vert, frag;
-		};
-
 		struct ShaderFiles
 		{
-			SourcePair sceneSource;
-			SourcePair blurSource;
-			SourcePair uiSource;
-			SourcePair downSource;
-			SourcePair outSource;
+			std::string vertSource;
+			std::string sceneSource;
+			std::string blurSource;
+			std::string downSource;
+			std::string outSource;
 			std::vector<std::string> includeNames;
 		};
 
@@ -415,24 +410,24 @@ namespace
 						{
 							std::string fileData;
 							const char extType = tolower(ext[1]);
-							SourcePair* outPair;
+							std::string* outSource;
 							
 							switch (tolower(curPath.filename().c_str()[0]))
 							{
-							case 'b':
-								outPair = &outFiles->blurSource;
+							case 'f':
+								outSource = &outFiles->vertSource;
 								break;
-							case 'u':
-								outPair = &outFiles->uiSource;
+							case 'b':
+								outSource = &outFiles->blurSource;
 								break;
 							case 'd':
-								outPair = &outFiles->downSource;
+								outSource = &outFiles->downSource;
 								break;
 							case 'o':
-								outPair = &outFiles->outSource;
+								outSource = &outFiles->outSource;
 								break;
 							default:
-								outPair = &outFiles->sceneSource;
+								outSource = &outFiles->sceneSource;
 							}
 
 							std::fseek(curFile, 0, SEEK_END);
@@ -444,10 +439,8 @@ namespace
 
 							fclose(curFile);
 
-							if (extType == 'f')
-								outPair->frag = std::move(fileData);
-							else if (extType == 'v')
-								outPair->vert = std::move(fileData);
+							if (extType == 'f' || extType == 'v')
+								*outSource = std::move(fileData);
 							else
 							{
 								curPathStr = std::string("/") + curPathStr;
@@ -502,61 +495,57 @@ namespace
 			return true;
 		}
 
-		static bool BuildShader(const SourcePair& source, uint* outShader)
+		static bool BuildShader(uint vertShader, const std::string& fragSource, uint* outShader)
 		{
-			uint fragShader, vertShader;
+			uint fragShader;
 
-			if (!source.frag.empty() && CompileShader(source.frag, GL_FRAGMENT_SHADER, &fragShader))
+			if (!fragSource.empty() && CompileShader(fragSource, GL_FRAGMENT_SHADER, &fragShader))
 			{
-				if (!source.vert.empty() && CompileShader(source.vert, GL_VERTEX_SHADER, &vertShader))
+				uint prog = glCreateProgram();
+
+				glAttachShader(prog, fragShader);
+				glAttachShader(prog, vertShader);
+
+				glLinkProgram(prog);
+
+				GLint isLinked = 0;
+				glGetProgramiv(prog, GL_LINK_STATUS, &isLinked);
+
+				if (isLinked == GL_FALSE)
 				{
-					uint prog = glCreateProgram();
+					GLint infoLen = 0;
+					std::vector<GLchar> errLog;
 
-					glAttachShader(prog, fragShader);
-					glAttachShader(prog, vertShader);
+					glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &infoLen);
 
-					glLinkProgram(prog);
+					errLog.resize(infoLen);
+					glGetProgramInfoLog(prog, infoLen, &infoLen, errLog.data());
 
-					GLint isLinked = 0;
-					glGetProgramiv(prog, GL_LINK_STATUS, &isLinked);
-
-					if (isLinked == GL_FALSE)
+					printf("Failed to link shader with '%s'\n", errLog.data());
+				}
+				else
+				{
+					if (!err::Error())
 					{
-						GLint infoLen = 0;
-						std::vector<GLchar> errLog;
+						glDetachShader(prog, vertShader);
+						glDetachShader(prog, fragShader);
 
-						glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &infoLen);
-
-						errLog.resize(infoLen);
-						glGetProgramInfoLog(prog, infoLen, &infoLen, errLog.data());
-
-						printf("Failed to link shader with '%s'\n", errLog.data());
+						*outShader = prog;
+						return true;
 					}
-					else
-					{
-						if (!err::Error())
-						{
-							glDetachShader(prog, vertShader);
-							glDetachShader(prog, fragShader);
-
-							*outShader = prog;
-							return true;
-						}
-					}
-
-					glDeleteShader(vertShader);
-					glDeleteProgram(prog);
 				}
 
-				glDeleteShader(fragShader);
+				glDeleteProgram(prog);
 			}
+
+			glDeleteShader(fragShader);
 
 			*outShader = 0;
 			err::Error();
 			return false;
 		}
 
-		static bool LoadShaders(const char* dir, uint* outScene, uint *outBlur, uint* outUI, uint *outDown, uint *outOutShader)
+		static bool LoadShaders(const char* dir, uint* outScene, uint *outBlur, uint *outDown, uint *outOutShader)
 		{
 			ShaderFiles files;
 
@@ -564,32 +553,31 @@ namespace
 
 			if (LoadFiles(dir, &files))
 			{
-				uint sceneShader, blurShader, uiShader, downShader, outShader;
+				uint vertShader;
+				if (!files.vertSource.empty() && CompileShader(files.vertSource, GL_VERTEX_SHADER, &vertShader))
+				{
+					uint sceneShader, blurShader, downShader, outShader;
 
-				if (BuildShader(files.sceneSource, &sceneShader))
-					*outScene = sceneShader;
-				else
-					*outScene = 0;
+					if (BuildShader(vertShader, files.sceneSource, &sceneShader))
+						*outScene = sceneShader;
+					else
+						*outScene = 0;
 
-				if (BuildShader(files.blurSource, &blurShader))
-					*outBlur = blurShader;
-				else
-					*outBlur = 0;
+					if (BuildShader(vertShader, files.blurSource, &blurShader))
+						*outBlur = blurShader;
+					else
+						*outBlur = 0;
 
-				if (BuildShader(files.uiSource, &uiShader))
-					*outUI = uiShader;
-				else
-					*outUI = 0;
+					if (BuildShader(vertShader, files.downSource, &downShader))
+						*outDown = downShader;
+					else
+						*outDown = 0;
 
-				if (BuildShader(files.downSource, &downShader))
-					*outDown = downShader;
-				else
-					*outDown = 0;
-
-				if (BuildShader(files.outSource, &outShader))
-					*outOutShader = outShader;
-				else
-					*outOutShader = 0;
+					if (BuildShader(vertShader, files.outSource, &outShader))
+						*outOutShader = outShader;
+					else
+						*outOutShader = 0;
+				}
 			}
 
 			for (const std::string& inc : files.includeNames)
@@ -785,9 +773,9 @@ namespace
 
 			static bool Init(Graphics* g)
 			{
-				uint sceneShader, blurShader, uiShader, downShader, outShader;
+				uint sceneShader, blurShader, downShader, outShader;
 
-				shader::LoadShaders("shaders", &sceneShader, &blurShader, &uiShader, &downShader, &outShader);
+				shader::LoadShaders("shaders", &sceneShader, &blurShader, &downShader, &outShader);
 
 				if (sceneShader == 0 || blurShader == 0 || outShader == 0)
 				{
@@ -1033,9 +1021,9 @@ namespace gfx
 	
 	void ReloadShaders(Graphics* g)
 	{
-		uint sceneShader, blurShader, uiShader, downShader, outShader;
+		uint sceneShader, blurShader, downShader, outShader;
 
-		shader::LoadShaders("shaders", &sceneShader, &blurShader, &uiShader, &downShader, &outShader);
+		shader::LoadShaders("shaders", &sceneShader, &blurShader, &downShader, &outShader);
 
 		if (sceneShader != 0)
 		{

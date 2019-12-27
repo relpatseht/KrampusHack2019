@@ -18,6 +18,12 @@
     <Filter Include="Source Files\external">
       <UniqueIdentifier>{5176341d-1102-4489-a68a-a227d8f1a47b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\generated">
+      <UniqueIdentifier>{481e173e-2318-4fd6-83c4-186c20b8b2fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\generated\shaders">
+      <UniqueIdentifier>{b0d223ca-3116-4610-862b-bbf3c335f5d7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -39,7 +45,22 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(ImGUIFolder)examples\imgui_impl_opengl3.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\external</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_shaders\blur.frag.cpp">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_shaders\downsample.frag.cpp">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_shaders\fullscreen_quad.vert.cpp">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_shaders\output.frag.cpp">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_shaders\scene.frag.cpp">
+      <Filter>Source Files\generated\shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +118,24 @@
     <ClInclude Include="$(ImGUIFolder)examples\imgui_impl_opengl3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="generated_shaders\blur.frag.h">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_shaders\downsample.frag.h">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_shaders\fullscreen_quad.vert.h">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_shaders\output.frag.h">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_shaders\scene.frag.h">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_shaders\ShaderReflection.h">
+      <Filter>Source Files\generated\shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\scene_defines.glsl">
@@ -107,6 +146,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\external\glm\0.9.9.6\util\glm.natvis" />
+    <Natvis Include="$(GLMFolder)\util\glm.natvis" />
   </ItemGroup>
 </Project>

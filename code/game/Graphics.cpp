@@ -16,6 +16,12 @@
 #include "allegro5/allegro.h"
 #include "allegro5/allegro_opengl.h"
 
+#include "generated_shaders/blur.frag.h"
+#include "generated_shaders/downsample.frag.h"
+#include "generated_shaders/output.frag.h"
+#include "generated_shaders/scene.frag.h"
+#include "generated_shaders/fullscreen_quad.vert.h"
+
 #include "Graphics.h"
 #include <iostream>
 
@@ -315,43 +321,43 @@ namespace
 
 				switch (entryType)
 				{
-					case MESH_TYPE_PLAYER:
-						mins -= glm::vec3(PLAYER_WIDTH * 0.5f, 0.0f, PLAYER_WIDTH * 0.5f);
-						maxs += glm::vec3(PLAYER_WIDTH * 0.5f, PLAYER_HEIGHT, PLAYER_WIDTH * 0.5f);
+				case MESH_TYPE_PLAYER:
+					mins -= glm::vec3(PLAYER_WIDTH * 0.5f, 0.0f, PLAYER_WIDTH * 0.5f);
+					maxs += glm::vec3(PLAYER_WIDTH * 0.5f, PLAYER_HEIGHT, PLAYER_WIDTH * 0.5f);
 					break;
-					case MESH_TYPE_HELPER:
-						mins -= glm::vec3(HELPER_RADIUS);
-						maxs += glm::vec3(HELPER_RADIUS);
+				case MESH_TYPE_HELPER:
+					mins -= glm::vec3(HELPER_RADIUS);
+					maxs += glm::vec3(HELPER_RADIUS);
 					break;
-					case MESH_TYPE_SNOW_FLAKE:
-						mins -= glm::vec3(SNOWFLAKE_RADIUS);
-						maxs += glm::vec3(SNOWFLAKE_RADIUS);
+				case MESH_TYPE_SNOW_FLAKE:
+					mins -= glm::vec3(SNOWFLAKE_RADIUS);
+					maxs += glm::vec3(SNOWFLAKE_RADIUS);
 					break;
-					case MESH_TYPE_SNOW_BALL:
-						mins -= glm::vec3(SNOWBALL_RADIUS*1.3f);
-						maxs += glm::vec3(SNOWBALL_RADIUS*1.3f);
+				case MESH_TYPE_SNOW_BALL:
+					mins -= glm::vec3(SNOWBALL_RADIUS * 1.3f);
+					maxs += glm::vec3(SNOWBALL_RADIUS * 1.3f);
 					break;
-					case MESH_TYPE_SNOW_MAN:
-						mins -= glm::vec3(-SNOWMAN_X + SNOWMAN_BOT_RADIUS,-SNOWMAN_BOT_Y + SNOWMAN_BOT_RADIUS, -SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
-						maxs += glm::vec3( SNOWMAN_X + SNOWMAN_BOT_RADIUS, SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS, SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
+				case MESH_TYPE_SNOW_MAN:
+					mins -= glm::vec3(-SNOWMAN_X + SNOWMAN_BOT_RADIUS, -SNOWMAN_BOT_Y + SNOWMAN_BOT_RADIUS, -SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
+					maxs += glm::vec3(SNOWMAN_X + SNOWMAN_BOT_RADIUS, SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS, SNOWMAN_Z + SNOWMAN_BOT_RADIUS);
 					break;
-					case MESH_TYPE_FIRE_BALL:
-						mins -= glm::vec3(FIREBALL_RADIUS * 2.0f);
-						maxs += glm::vec3(FIREBALL_RADIUS * 2.0f);
+				case MESH_TYPE_FIRE_BALL:
+					mins -= glm::vec3(FIREBALL_RADIUS * 2.0f);
+					maxs += glm::vec3(FIREBALL_RADIUS * 2.0f);
 					break;
-					case MESH_TYPE_STATIC_PLATFORMS:
-					{
-						float xOffs = -BOTTOM_LEFT_PLATFORM_X + BOTTOM_PLATFORM_WIDTH;
-						float yMin = -BOTTOM_LEFT_PLATFORM_Y + PLATFORM_DIM;
-						float yMax = -yMin + (PLATFORM_VERTICAL_SPACE * PLATFORM_COUNT) + PLATFORM_DIM;
+				case MESH_TYPE_STATIC_PLATFORMS:
+				{
+					float xOffs = -BOTTOM_LEFT_PLATFORM_X + BOTTOM_PLATFORM_WIDTH;
+					float yMin = -BOTTOM_LEFT_PLATFORM_Y + PLATFORM_DIM;
+					float yMax = -yMin + (PLATFORM_VERTICAL_SPACE * PLATFORM_COUNT) + PLATFORM_DIM;
 
-						mins -= glm::vec3(xOffs, yMin, PLATFORM_DIM);
-						maxs += glm::vec3(xOffs, yMax, PLATFORM_DIM);
-					}
-					break;
-					case MESH_TYPE_WORLD_BOUNDS:
-						mins -= glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
-						maxs += glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
+					mins -= glm::vec3(xOffs, yMin, PLATFORM_DIM);
+					maxs += glm::vec3(xOffs, yMax, PLATFORM_DIM);
+				}
+				break;
+				case MESH_TYPE_WORLD_BOUNDS:
+					mins -= glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
+					maxs += glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
 					break;
 				}
 			});
@@ -373,97 +379,20 @@ namespace
 
 	namespace shader
 	{
-		struct ShaderFiles
+		static bool CompileShader(const ShaderModule &input, uint* outShader)
 		{
-			std::string vertSource;
-			std::string sceneSource;
-			std::string blurSource;
-			std::string downSource;
-			std::string outSource;
-			std::vector<std::string> includeNames;
-		};
+			static const uint GL_SHADER_BINARY_FORMAT_SPIR_V = 0x9551;
+			static const uint GL_SPIR_V_BINARY = 0x9552;
+			typedef void (*PFNGLSHADERBINARYPROC) (GLsizei count, const GLuint* shaders, GLenum binaryformat, const void* binary, GLsizei length);
+			typedef void (*PFNGLSPECIALIZESHADERPROC) (GLuint shader, const GLchar* pEntryPoint, GLuint numSpecializationConstants, const GLuint* pConstantIndex, const GLuint* pConstantValue);
+			static PFNGLSHADERBINARYPROC glShaderBinary = (PFNGLSHADERBINARYPROC)al_get_opengl_proc_address("glShaderBinary");
+			static PFNGLSPECIALIZESHADERPROC glSpecializeShader = (PFNGLSPECIALIZESHADERPROC)al_get_opengl_proc_address("glSpecializeShader");
 
-		static bool LoadFiles(const char* dir, ShaderFiles* outFiles)
-		{
-			namespace fs = std::filesystem;
-
-			fs::path root = fs::path(dir).lexically_normal();
-
-			for (const auto& p : fs::recursive_directory_iterator(root.c_str()))
-			{
-				if (p.is_regular_file())
-				{
-					fs::path curPath = p.path().lexically_relative(root);
-
-					std::string ext = curPath.extension().string();
-
-					if (ext.size() >= 2)
-					{
-						std::string curPathStr = curPath.string();
-						FILE* const curFile = std::fopen(p.path().string().c_str(), "rb");
-
-						if (!curFile)
-						{
-							printf("Failed to load '%s'\n", curPathStr.c_str());
-						}
-						else
-						{
-							std::string fileData;
-							const char extType = tolower(ext[1]);
-							std::string* outSource;
-							
-							switch (tolower(curPath.filename().c_str()[0]))
-							{
-							case 'f':
-								outSource = &outFiles->vertSource;
-								break;
-							case 'b':
-								outSource = &outFiles->blurSource;
-								break;
-							case 'd':
-								outSource = &outFiles->downSource;
-								break;
-							case 'o':
-								outSource = &outFiles->outSource;
-								break;
-							default:
-								outSource = &outFiles->sceneSource;
-							}
-
-							std::fseek(curFile, 0, SEEK_END);
-							const size_t fileSize = std::ftell(curFile);
-							std::fseek(curFile, 0, SEEK_SET);
-
-							fileData.resize(fileSize);
-							std::fread(fileData.data(), 1, fileSize, curFile);
-
-							fclose(curFile);
-
-							if (extType == 'f' || extType == 'v')
-								*outSource = std::move(fileData);
-							else
-							{
-								curPathStr = std::string("/") + curPathStr;
-								glNamedStringARB(GL_SHADER_INCLUDE_ARB, static_cast<uint>(curPathStr.size()), curPathStr.c_str(), 
-									             static_cast<uint>(fileData.size()), fileData.c_str());
-								outFiles->includeNames.emplace_back(std::move(curPathStr));
-							}
-						}
-					}
-				}
-			}
-
-			return !err::Error();
-		}
-
-		static bool CompileShader(const std::string& source, GLenum type, uint* outShader)
-		{
-			const uint shader = glCreateShader(type);
-			const char* sourceStr = source.c_str();
+			const uint shader = glCreateShader(input.type == ShaderStageType::VERTEX ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
 			bool ret = true;
 
-			glShaderSource(shader, 1, &sourceStr, 0);
-			glCompileShader(shader);
+			glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, input.progam, input.programSizeDWords * sizeof(unsigned));
+			glSpecializeShader(shader, input.entryPoint, 0, nullptr, nullptr);
 
 			GLint isCompiled = 0;
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
@@ -495,11 +424,11 @@ namespace
 			return true;
 		}
 
-		static bool BuildShader(uint vertShader, const std::string& fragSource, uint* outShader)
+		static bool BuildShader(uint vertShader, const ShaderModule& fragSource, uint* outShader)
 		{
 			uint fragShader;
 
-			if (!fragSource.empty() && CompileShader(fragSource, GL_FRAGMENT_SHADER, &fragShader))
+			if (CompileShader(fragSource, &fragShader))
 			{
 				uint prog = glCreateProgram();
 
@@ -546,47 +475,34 @@ namespace
 			return false;
 		}
 
-		static bool LoadShaders(const char* dir, uint* outScene, uint *outBlur, uint *outDown, uint *outOutShader)
+		static bool LoadShaders(uint* outScene, uint* outBlur, uint* outDown, uint* outOutShader)
 		{
-			ShaderFiles files;
-
-			err::ClearErrors();
-
-			if (LoadFiles(dir, &files))
+			uint vertShader;
+			if (CompileShader(fullscreen_quad_vert_shader, &vertShader))
 			{
-				uint vertShader;
-				if (!files.vertSource.empty() && CompileShader(files.vertSource, GL_VERTEX_SHADER, &vertShader))
-				{
-					uint sceneShader, blurShader, downShader, outShader;
+				uint sceneShader, blurShader, downShader, outShader;
 
-					if (BuildShader(vertShader, files.sceneSource, &sceneShader))
-						*outScene = sceneShader;
-					else
-						*outScene = 0;
+				if (BuildShader(vertShader, scene_frag_shader, &sceneShader))
+					*outScene = sceneShader;
+				else
+					*outScene = 0;
 
-					if (BuildShader(vertShader, files.blurSource, &blurShader))
-						*outBlur = blurShader;
-					else
-						*outBlur = 0;
+				if (BuildShader(vertShader, blur_frag_shader, &blurShader))
+					*outBlur = blurShader;
+				else
+					*outBlur = 0;
 
-					if (BuildShader(vertShader, files.downSource, &downShader))
-						*outDown = downShader;
-					else
-						*outDown = 0;
+				if (BuildShader(vertShader, downsample_frag_shader, &downShader))
+					*outDown = downShader;
+				else
+					*outDown = 0;
 
-					if (BuildShader(vertShader, files.outSource, &outShader))
-						*outOutShader = outShader;
-					else
-						*outOutShader = 0;
+				if (BuildShader(vertShader, output_frag_shader, &outShader))
+					*outOutShader = outShader;
+				else
+					*outOutShader = 0;
 
-					glDeleteShader(vertShader);
-				}
-
-			}
-
-			for (const std::string& inc : files.includeNames)
-			{
-				glDeleteNamedStringARB(static_cast<uint>(inc.size()), inc.c_str());
+				glDeleteShader(vertShader);
 			}
 
 			return err::Error();
@@ -779,7 +695,7 @@ namespace
 			{
 				uint sceneShader, blurShader, downShader, outShader;
 
-				shader::LoadShaders("shaders", &sceneShader, &blurShader, &downShader, &outShader);
+				shader::LoadShaders(&sceneShader, &blurShader, &downShader, &outShader);
 
 				if (sceneShader == 0 || blurShader == 0 || outShader == 0)
 				{
@@ -1021,53 +937,6 @@ namespace gfx
 	{
 		++g->frameCount;
 		render::Render(*g);
-	}
-	
-	void ReloadShaders(Graphics* g)
-	{
-		uint sceneShader, blurShader, downShader, outShader;
-
-		shader::LoadShaders("shaders", &sceneShader, &blurShader, &downShader, &outShader);
-
-		if (sceneShader != 0)
-		{
-			glDeleteProgram(g->sceneShader);
-			g->sceneShader = sceneShader;
-		}
-		else
-		{
-			printf("Scene shader failed to compile. Not reloading.\n");
-		}
-
-		if (blurShader != 0)
-		{
-			glDeleteProgram(g->blurShader);
-			g->blurShader = blurShader;
-		}
-		else
-		{
-			printf("Blur shader failed to compile. Not reloading.\n");
-		}
-
-		if (downShader != 0)
-		{
-			glDeleteProgram(g->downsampleShader);
-			g->downsampleShader = downShader;
-		}
-		else
-		{
-			printf("Downsample shader failed to compile. Not reloading.\n");
-		}
-
-		if (outShader != 0)
-		{
-			glDeleteProgram(g->outputShader);
-			g->outputShader = outShader;
-		}
-		else
-		{
-			printf("Output shader failed to compile. Not reloading.\n");
-		}
 	}
 
 	bool Resize(Graphics* g, uint x, uint y)

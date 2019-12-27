@@ -535,15 +535,6 @@ namespace
 						case ALLEGRO_KEY_RIGHT:
 							UpdateGun(state, -glm::vec2(1.0f, 0.0f));
 						break;
-
-						case ALLEGRO_KEY_F3:
-							printf("Reloading shaders\n");
-							gfx::ReloadShaders(state->game->gfx);
-						break;
-						case ALLEGRO_KEY_F4:
-							printf("Spawning enemy\n");
-							state->frameCount = 595;
-							break;
 					}
 				break;
 				case ALLEGRO_EVENT_MOUSE_AXES:
@@ -745,6 +736,8 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
+		al_set_new_display_option(ALLEGRO_OPENGL_MAJOR_VERSION, 4, ALLEGRO_REQUIRE);
+		al_set_new_display_option(ALLEGRO_OPENGL_MINOR_VERSION, 6, ALLEGRO_REQUIRE);
 		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE | ALLEGRO_OPENGL | ALLEGRO_OPENGL_3_0 | ALLEGRO_OPENGL_FORWARD_COMPATIBLE);
 
 		ALLEGRO_DISPLAY* const display = al_create_display(1024, 768);

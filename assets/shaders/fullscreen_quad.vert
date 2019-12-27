@@ -1,5 +1,7 @@
-#version 430
-#extension GL_ARB_shading_language_include : enable
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+#extension GL_GOOGLE_include_directive : enable
 
 // Use with a triangle strip of 4 vertices
 void main()

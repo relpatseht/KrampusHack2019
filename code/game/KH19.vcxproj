@@ -43,7 +43,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -58,6 +63,18 @@
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>dsound.lib;shlwapi.lib;winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>$(OutDir)GLSLToC_d -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders</Command>
+      <Message>Generating Assets</Message>
+    </PreBuildEvent>
+    <PreBuildEvent />
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Message>Generating Assets</Message>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -77,6 +94,19 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>dsound.lib;shlwapi.lib;winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>$(OutDir)GLSLToC -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders</Command>
+      <Message>Generating Assets</Message>
+    </PreBuildEvent>
+    <PreBuildEvent />
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectReference Include="$(AllegroFolder)..\allegro.vcxproj">
@@ -94,6 +124,11 @@
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="bvh\box_partitioner.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="generated_shaders\blur.frag.cpp" />
+    <ClCompile Include="generated_shaders\downsample.frag.cpp" />
+    <ClCompile Include="generated_shaders\fullscreen_quad.vert.cpp" />
+    <ClCompile Include="generated_shaders\output.frag.cpp" />
+    <ClCompile Include="generated_shaders\scene.frag.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Physics.cpp" />
@@ -111,6 +146,12 @@
     <ClInclude Include="bvh\spatial_tree_common.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentTypes.h" />
+    <ClInclude Include="generated_shaders\blur.frag.h" />
+    <ClInclude Include="generated_shaders\downsample.frag.h" />
+    <ClInclude Include="generated_shaders\fullscreen_quad.vert.h" />
+    <ClInclude Include="generated_shaders\output.frag.h" />
+    <ClInclude Include="generated_shaders\scene.frag.h" />
+    <ClInclude Include="generated_shaders\ShaderReflection.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Physics.h" />

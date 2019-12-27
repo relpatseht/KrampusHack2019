@@ -313,14 +313,14 @@ static bool ParseSettings(int argc, char *argv[], Settings *outSettings)
 static void PrintHelp()
 {
 	std::cout << "GLSLToC: " << std::endl;
-	std::cout << "    Converts GLSL files into a C headers suitable for Vulkan consumption." << std::endl;
+	std::cout << "    Converts GLSL files into a C headers suitable for SPIR-V consumption." << std::endl;
 	std::cout << std::endl;
 	std::cout << "Usage: " << std::endl;
 	std::cout << "    glsltoc [options] <file1> <file2> ... <fileN>" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Description:" << std::endl;
 	std::cout << "    Will compile one or more GLSL files into SPIRV and output them to" << std::endl;
-	std::cout << "    binary files suitable for Vulkan consumption. The type of the shader" << std::endl;
+	std::cout << "    binary files suitable for SPIR-V consumption. The type of the shader" << std::endl;
 	std::cout << "    is inferred from the extension.  Supported extensions are as follows:" << std::endl;
 	std::cout << "        .f[^i]* : Fragment Shader" << std::endl;
 	std::cout << "        .v[^c]* : Vertex Shader" << std::endl;
@@ -360,13 +360,18 @@ static uint64_t GetLastModifiedTime(const std::string &file, FileModifiedMap *in
 	}
 	else
 	{
-		const auto lastWrite = std::filesystem::last_write_time(file);
-		const size_t lastWriteTime = lastWrite.time_since_epoch().count();
+		if (std::filesystem::exists(file))
+		{
+			const auto lastWrite = std::filesystem::last_write_time(file);
+			const size_t lastWriteTime = lastWrite.time_since_epoch().count();
 
-		inoutMap->insert(std::make_pair(file, lastWriteTime));
+			inoutMap->insert(std::make_pair(file, lastWriteTime));
 
-		return lastWriteTime;
+			return lastWriteTime;
+		}
 	}
+
+	return 0;
 }
 
 static void UpdateLastModifiedTime(const std::string *files, unsigned count, FileModifiedMap *outMap)
@@ -708,7 +713,7 @@ static bool IsUpToDate(const SourceFile &source, const std::string &outputFile, 
 static bool CompileSourceFile(const SourceFile *optForceInclude, SourceFile *inoutSource, const TBuiltInResource &resources, const FileCache &headers, glslang::TProgram *outProgram, std::vector<unsigned> *outProgramDWords)
 {
 	glslang::TShader shader(inoutSource->stage);
-	const EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
+	const EShMessages messages = (EShMessages)(EShMsgSpvRules);
 	ShaderIncluder includer(headers);
 	std::vector<const char *> fileNames;
 	std::vector<const char *> fileContents;
@@ -728,6 +733,8 @@ static bool CompileSourceFile(const SourceFile *optForceInclude, SourceFile *ino
 	fileContents.push_back(inoutSource->contents.c_str());
 	fileContentLengths.push_back(static_cast<int>(inoutSource->contents.length()));
 
+	shader.setEnvClient(glslang::EShClientOpenGL, glslang::EShTargetOpenGL_450);
+	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
 	shader.setStringsWithLengthsAndNames(fileContents.data(), fileContentLengths.data(), fileNames.data(), static_cast<int>(fileNames.size()));
 
 	if (!shader.parse(&resources, 100, ECoreProfile, false, false, messages, includer))
@@ -747,13 +754,8 @@ static bool CompileSourceFile(const SourceFile *optForceInclude, SourceFile *ino
 	}
 
 	glslang::SpvOptions buildOptions;
-#ifdef NDEBUG
-	buildOptions.generateDebugInfo = true; 
-	buildOptions.disableOptimizer = true;
-#else //#ifdef NDEBUG
 	buildOptions.generateDebugInfo = false;
 	buildOptions.disableOptimizer = false;
-#endif //#else //#ifdef NDEBUG
 	buildOptions.optimizeSize = false;
 	buildOptions.disassemble = false;
 	buildOptions.validate = true;

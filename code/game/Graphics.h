@@ -25,7 +25,6 @@ namespace gfx
 	void Shutdown(Graphics* g);
 	void Update(Graphics* g);
 
-	void ReloadShaders(Graphics* g);
 	bool Resize(Graphics* g, uint width, uint height);
 	void PixelToWolrd(const Graphics &g, float* inoutX, float* inoutY);
 

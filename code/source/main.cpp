@@ -20,6 +20,7 @@ namespace
 	const float SNOW_PER_FLAKE = 1.2f;
 	const float SNOW_PER_BALL = 2.1f;
 	const float SNOWBALL_IMPULSE = 20.0f;
+	const float SNOW_METER_START = 5.0f;
 
 	enum class State
 	{
@@ -37,7 +38,8 @@ namespace
 		SIZZLE,
 		THROW,
 		TING,
-		FIRE
+		FIRE,
+		HOORAY
 	};
 
 	struct GameState
@@ -65,7 +67,7 @@ namespace
 		glm::vec2 gunDir = glm::vec2(0.0f);
 		
 		float maxSnow = 100.0f;
-		float snowMeter = 5.0f;
+		float snowMeter = SNOW_METER_START;
 
 		State state = State::MAIN_MENU;
 	};
@@ -173,6 +175,12 @@ namespace
 
 		const float subType = glm::clamp(state->snowMeter / state->maxSnow, 0.0f, 0.999999f);
 		gfx::UpdateModelSubType(state->game->gfx, state->snowmanId, subType);
+
+		if (subType >= 0.99f)
+		{
+			state->state = State::WIN_SCREEN;
+			aud::PlayTrackDetached(state->game->aud, AudioTrack::HOORAY, false, 1.0f, 0.0f);
+		}
 	}
 
 	static void UpdateGun(GameState* state, const glm::vec2& vec)
@@ -280,71 +288,94 @@ namespace
 			al_set_system_mouse_cursor(display, cursor_id);
 		}
 
-			int w = al_get_display_width(display);
-			int h = al_get_display_height(display);
-			io.DisplaySize = ImVec2((float)w, (float)h);
+		int w = al_get_display_width(display);
+		int h = al_get_display_height(display);
+		io.DisplaySize = ImVec2((float)w, (float)h);
 
-			// Setup time step
-			io.DeltaTime = 1 / 60.0f;
+		// Setup time step
+		io.DeltaTime = 1 / 60.0f;
 
-			// Setup inputs
-			ALLEGRO_KEYBOARD_STATE keys;
-			al_get_keyboard_state(&keys);
-			io.KeyCtrl = al_key_down(&keys, ALLEGRO_KEY_LCTRL) || al_key_down(&keys, ALLEGRO_KEY_RCTRL);
-			io.KeyShift = al_key_down(&keys, ALLEGRO_KEY_LSHIFT) || al_key_down(&keys, ALLEGRO_KEY_RSHIFT);
-			io.KeyAlt = al_key_down(&keys, ALLEGRO_KEY_ALT) || al_key_down(&keys, ALLEGRO_KEY_ALTGR);
-			io.KeySuper = al_key_down(&keys, ALLEGRO_KEY_LWIN) || al_key_down(&keys, ALLEGRO_KEY_RWIN);
+		// Setup inputs
+		ALLEGRO_KEYBOARD_STATE keys;
+		al_get_keyboard_state(&keys);
+		io.KeyCtrl = al_key_down(&keys, ALLEGRO_KEY_LCTRL) || al_key_down(&keys, ALLEGRO_KEY_RCTRL);
+		io.KeyShift = al_key_down(&keys, ALLEGRO_KEY_LSHIFT) || al_key_down(&keys, ALLEGRO_KEY_RSHIFT);
+		io.KeyAlt = al_key_down(&keys, ALLEGRO_KEY_ALT) || al_key_down(&keys, ALLEGRO_KEY_ALTGR);
+		io.KeySuper = al_key_down(&keys, ALLEGRO_KEY_LWIN) || al_key_down(&keys, ALLEGRO_KEY_RWIN);
+
+		const uint frames = state->frameCount;
+		const uint totalMilliseconds = (frames * 1000) / 60;
+		const uint minutes = totalMilliseconds / (1000 * 60);
+		const uint seconds = (totalMilliseconds / 1000) - (minutes * 60);
+		const uint milliseconds = totalMilliseconds - (seconds * 60) - (minutes * 360);
 
 		switch (state->state)
 		{
 			case State::MAIN_MENU:
-				ImGui::SetNextWindowSize(ImVec2(400.0f, 300.0f));
-				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 200.0f, h * 0.5 - 150.0f));
+				ImGui::SetNextWindowSize(ImVec2(300.0f, 200.0f));
+				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 150.0f, h * 0.5 - 150.0f));
 
 				ImGui::Begin("Main Menu", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
 
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.8f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
-				if (ImGui::Button("Play!", ImVec2(400.0f, 125.0f)))
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.5f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 0.7f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 0.7f));
+				if (ImGui::Button("Play!", ImVec2(300.0f, 90.0f)))
 					state->state = State::RUNNING;
 
-				if (ImGui::Button("Exit", ImVec2(400.0f, 125.0f)))
+				if (ImGui::Button("Exit", ImVec2(300.0f, 90.0f)))
 					state->state = State::SHUTDOWN;
 				ImGui::PopStyleColor(3);
 
 				ImGui::End();
 			break;
 			case State::PAUSE_MENU:
-				ImGui::SetNextWindowSize(ImVec2(400.0f, 300.0f));
-				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 200.0f, h * 0.5 - 150.0f));
+				ImGui::SetNextWindowSize(ImVec2(300.0f, 200.0f));
+				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 150.0f, h * 0.5 - 150.0f));
 
-				ImGui::Begin("Main Menu", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
+				ImGui::Begin("Pause Menu", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
 
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.8f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
-				if (ImGui::Button("Resume", ImVec2(400.0f, 125.0f)))
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.5f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 0.7f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 0.7f));
+				if (ImGui::Button("Resume", ImVec2(300.0f, 90.0f)))
 					state->state = State::RUNNING;
 
-				if (ImGui::Button("Exit", ImVec2(400.0f, 125.0f)))
+				if (ImGui::Button("Exit", ImVec2(300.0f, 90.0f)))
 					state->state = State::SHUTDOWN;
 				ImGui::PopStyleColor(3);
 
 				ImGui::End();
 			break;
 			case State::WIN_SCREEN:
-				ImGui::SetNextWindowSize(ImVec2(400.0f, 300.0f));
-				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 200.0f, h * 0.5 - 150.0f));
+			{
+				const char* const winText = "You built the snowman in only";
+				const char* const dummyTimeText = "00:00.000!";
+				const ImVec2 winSize = ImGui::CalcTextSize(winText);
+				const ImVec2 timeSize = ImGui::CalcTextSize(dummyTimeText);
 
-				ImGui::Begin("Main Menu", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
+				ImGui::SetNextWindowSize(ImVec2(700.0f, 200.0f));
+				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 350.0f, h * 0.5 - 250.0f));
+				ImGui::Begin("Win Time", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
 
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.8f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
-				if (ImGui::Button("Play Again?", ImVec2(400.0f, 125.0f)))
+				ImGui::SetCursorPosX((700 - winSize.x) * 0.5);
+				ImGui::Text("%s", winText);
+
+				ImGui::SetCursorPosX((700 - timeSize.x) * 0.5);
+				ImGui::Text("%02u:%02u.%03u!", minutes, seconds, milliseconds);
+
+				ImGui::End();
+			}
+				ImGui::SetNextWindowSize(ImVec2(300.0f, 200.0f));
+				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 150.0f, h * 0.5 - 150.0f));
+				ImGui::Begin("Win Menu", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
+
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.5f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 0.7f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 0.7f));
+				if (ImGui::Button("Play Again?", ImVec2(300.0f, 90.0f)))
 				{
-					state->snowMeter = 5.0f;
+					state->snowMeter = SNOW_METER_START;
 					for (uint flakeIndex = 0; flakeIndex < state->snowflakeCount; ++flakeIndex)
 						state->game->dyingObjects.emplace_back(state->snowflakeIds[flakeIndex]);
 					state->snowflakeCount = 0;
@@ -360,7 +391,7 @@ namespace
 					state->state = State::RUNNING;
 				}
 
-				if (ImGui::Button("Exit", ImVec2(400.0f, 125.0f)))
+				if (ImGui::Button("Exit", ImVec2(300.0f, 90.0f)))
 					state->state = State::SHUTDOWN;
 
 				ImGui::PopStyleColor(3);
@@ -372,15 +403,7 @@ namespace
 				ImGui::SetNextWindowPos(ImVec2(w - 300.0f, 0.0f));
 
 				ImGui::Begin("Timer", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
-				{
-					const uint frames = state->frameCount;
-					const uint totalMilliseconds = (frames * 1000) / 60;
-					const uint minutes = totalMilliseconds / (1000 * 60);
-					const uint seconds = (totalMilliseconds / 1000) - (minutes * 60);
-					const uint milliseconds = totalMilliseconds - (seconds * 60) - (minutes * 360);
-
 					ImGui::Text("%02u:%02u.%03u", minutes, seconds, milliseconds);
-				}
 				ImGui::End();
 			break;
 		}
@@ -709,6 +732,7 @@ int main(int argc, char* argv[])
 					const uint thow = aud::AddTrack(state.game->aud, "audio/throw.wav");
 					const uint ting = aud::AddTrack(state.game->aud, "audio/ting.wav");
 					const uint fire = aud::AddTrack(state.game->aud, "audio/fire.wav");
+					const uint hooray = aud::AddTrack(state.game->aud, "audio/hooray.wav");
 
 					assert(theme == AudioTrack::THEME);
 					assert(footsteps == AudioTrack::FOOTSTEPS);
@@ -716,6 +740,7 @@ int main(int argc, char* argv[])
 					assert(thow == AudioTrack::THROW);
 					assert(ting == AudioTrack::TING);
 					assert(fire == AudioTrack::FIRE);
+					assert(hooray == AudioTrack::HOORAY);
 				}
 
 				{
@@ -725,6 +750,9 @@ int main(int argc, char* argv[])
 					// Setup back-end capabilities flags
 					ImGuiIO& io = ImGui::GetIO();
 					io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;       // We can honor GetMouseCursor() values (optional)
+
+					io.FontGlobalScale = 3.0f;
+
 					io.BackendPlatformName = io.BackendRendererName = "imgui_impl_allegro5";
 
 					io.IniFilename = nullptr;

@@ -50,7 +50,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ShadersIncludePath);$(IMGUIIncludePath);$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(AssetsIncludePath);$(IMGUIIncludePath);$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ALLEGRO_WINDOWS;ALLEGRO_UNSTABLE;IMGUI_IMPL_OPENGL_LOADER_CUSTOM="allegro5/allegro_opengl.h";ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -67,7 +67,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ShadersIncludePath);$(IMGUIIncludePath);$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(AssetsIncludePath);$(IMGUIIncludePath);$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ALLEGRO_WINDOWS;ALLEGRO_UNSTABLE;IMGUI_IMPL_OPENGL_LOADER_CUSTOM="allegro5/allegro_opengl.h";ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>

@@ -17,7 +17,7 @@
     <AllegroIncludePath>$(AllegroFolder)include\;$(CodeExternalFolder)allegro\include\;$(AllegroFolder)addons\acodec\;$(AllegroFolder)addons\audio\;</AllegroIncludePath>
     <Box2DIncludePath>$(Box2DFolder)</Box2DIncludePath>
     <ImGUIIncludePath>$(ImGUIFolder);$(ImGUIFolder)examples\</ImGUIIncludePath>
-    <ShadersIncludePath>$(AssetsFolder)shaders\</ShadersIncludePath>
+    <AssetsIncludePath>$(AssetsFolder)</AssetsIncludePath>
 
     <IntDir>$(ProjectFolder)bin/obj/$(MSBuildProjectName)/$(Configuration)/</IntDir>
     <OutDir>$(ProjectFolder)bin/</OutDir>

@@ -24,6 +24,9 @@
     <Filter Include="Source Files\generated\shaders">
       <UniqueIdentifier>{b0d223ca-3116-4610-862b-bbf3c335f5d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\generated\fonts">
+      <UniqueIdentifier>{75fc5c4d-143c-46a1-ab02-f9673991f3eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -144,8 +147,15 @@
     <None Include="shaders\bvh_node.glsl">
       <Filter>Header Files\bvh</Filter>
     </None>
+    <None Include="generated_fonts\MenuFont.inc">
+      <Filter>Source Files\generated\fonts</Filter>
+    </None>
+    <None Include="generated_fonts\TitleFont.inc">
+      <Filter>Source Files\generated\fonts</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="$(GLMFolder)\util\glm.natvis" />
+    <Natvis Include="..\external\imgui\1.7.4\misc\natvis\imgui.natvis" />
   </ItemGroup>
 </Project>

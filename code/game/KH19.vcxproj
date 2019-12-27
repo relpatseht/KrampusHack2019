@@ -64,7 +64,9 @@
       <AdditionalDependencies>dsound.lib;shlwapi.lib;winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>$(OutDir)GLSLToC_d -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders</Command>
+      <Command>$(OutDir)GLSLToC_d -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders
+$(OutDir)TTFToC_d -base85 $(AssetsFolder)fonts/AlmonteSnow.ttf MenuFont &gt; $(ProjectDir)generated_fonts/MenuFont.inc
+$(OutDir)TTFToC_d -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(ProjectDir)generated_fonts/TitleFont.inc</Command>
       <Message>Generating Assets</Message>
     </PreBuildEvent>
     <PreBuildEvent />
@@ -95,7 +97,9 @@
       <AdditionalDependencies>dsound.lib;shlwapi.lib;winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>$(OutDir)GLSLToC -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders</Command>
+      <Command>$(OutDir)GLSLToC -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders
+$(OutDir)TTFToC -base85 $(AssetsFolder)fonts/AlmonteSnow.ttf MenuFont &gt; $(ProjectDir)generated_fonts/MenuFont.inc
+$(OutDir)TTFToC -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(ProjectDir)generated_fonts/TitleFont.inc</Command>
       <Message>Generating Assets</Message>
     </PreBuildEvent>
     <PreBuildEvent />
@@ -160,11 +164,14 @@
     <ClInclude Include="zip_iterator.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="generated_fonts\MenuFont.inc" />
+    <None Include="generated_fonts\TitleFont.inc" />
     <None Include="shaders\bvh_node.glsl" />
     <None Include="shaders\scene_defines.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="$(GLMFolder)\util\glm.natvis" />
+    <Natvis Include="..\external\imgui\1.7.4\misc\natvis\imgui.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29424.173
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KH19", "game\KH19.vcxproj", "{5E370B26-81AB-4E7A-85B9-0B710E0CF481}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0D730639-2995-4602-A55A-53FA860FAD21} = {0D730639-2995-4602-A55A-53FA860FAD21}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "external", "external", "{EE2241E7-4CFF-4C91-B3AE-3574551CE054}"
 EndProject
@@ -28,6 +31,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OGLCompiler", "external\glslang\OGLCompiler.vcxproj", "{691EA4C0-CB82-3839-83C6-0C527F642BAC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SPIRV", "external\glslang\SPIRV.vcxproj", "{7C0B3059-DE09-3D8A-8B5E-D46806EC86C3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TTFToC", "TTFToC\TTFToC.vcxproj", "{0D730639-2995-4602-A55A-53FA860FAD21}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,6 +102,12 @@ Global
 		{7C0B3059-DE09-3D8A-8B5E-D46806EC86C3}.Release|x64.ActiveCfg = Release|x64
 		{7C0B3059-DE09-3D8A-8B5E-D46806EC86C3}.Release|x64.Build.0 = Release|x64
 		{7C0B3059-DE09-3D8A-8B5E-D46806EC86C3}.Release|x86.ActiveCfg = Release|x64
+		{0D730639-2995-4602-A55A-53FA860FAD21}.Debug|x64.ActiveCfg = Debug|x64
+		{0D730639-2995-4602-A55A-53FA860FAD21}.Debug|x64.Build.0 = Debug|x64
+		{0D730639-2995-4602-A55A-53FA860FAD21}.Debug|x86.ActiveCfg = Debug|x64
+		{0D730639-2995-4602-A55A-53FA860FAD21}.Release|x64.ActiveCfg = Release|x64
+		{0D730639-2995-4602-A55A-53FA860FAD21}.Release|x64.Build.0 = Release|x64
+		{0D730639-2995-4602-A55A-53FA860FAD21}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,6 +123,7 @@ Global
 		{671F5D95-6DC1-3742-921E-34901447D923} = {74E5CD32-A132-4A6E-A6A7-AD0E42A84B60}
 		{691EA4C0-CB82-3839-83C6-0C527F642BAC} = {74E5CD32-A132-4A6E-A6A7-AD0E42A84B60}
 		{7C0B3059-DE09-3D8A-8B5E-D46806EC86C3} = {74E5CD32-A132-4A6E-A6A7-AD0E42A84B60}
+		{0D730639-2995-4602-A55A-53FA860FAD21} = {6B5B0A58-2499-4564-BA17-E39D91CBE9B5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7A21C9C2-6B6E-425D-AC87-25360F024B11}

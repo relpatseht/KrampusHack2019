@@ -20,7 +20,7 @@ namespace
 	const float SNOW_PER_FLAKE = 1.2f;
 	const float SNOW_PER_BALL = 2.1f;
 	const float SNOWBALL_IMPULSE = 20.0f;
-	const float SNOW_METER_START = 99.0f;
+	const float SNOW_METER_START = 5.0f;
 
 	enum class State
 	{
@@ -724,6 +724,12 @@ namespace
 			}
 		}
 	}
+
+	namespace font
+	{
+#include "generated_fonts/MenuFont.inc"
+#include "generated_fonts/TitleFont.inc"
+	}
 }
 
 int main(int argc, char* argv[])
@@ -783,8 +789,8 @@ int main(int argc, char* argv[])
 					ImGuiIO& io = ImGui::GetIO();
 					io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;       // We can honor GetMouseCursor() values (optional)
 					
-					state.titleFont = io.Fonts->AddFontFromFileTTF("fonts/JFSnobiz.ttf", 80.0f);
-					state.menuFont = io.Fonts->AddFontFromFileTTF("fonts/AlmonteSnow.ttf", 50.0f);
+					state.titleFont = io.Fonts->AddFontFromMemoryCompressedBase85TTF(font::TitleFont_compressed_data_base85, 80.0f);
+					state.menuFont = io.Fonts->AddFontFromMemoryCompressedBase85TTF(font::MenuFont_compressed_data_base85, 50.0f);
 
 					io.BackendPlatformName = io.BackendRendererName = "imgui_impl_allegro5";
 

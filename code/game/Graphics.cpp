@@ -486,7 +486,7 @@ namespace
 					*outScene = sceneShader;
 				else
 					*outScene = 0;
-
+				 
 				if (BuildShader(vertShader, blur_frag_shader, &blurShader))
 					*outBlur = blurShader;
 				else

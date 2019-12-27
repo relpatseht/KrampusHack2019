@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="$(GLSLangFolder)SPIRV\SpvPostProcess.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\SPVRemapper.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\SpvTools.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\GlslangToSpv.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\InReadableOrder.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\Logger.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\SpvBuilder.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\doc.cpp" />
+    <ClCompile Include="$(GLSLangFolder)SPIRV\disassemble.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(GLSLangFolder)SPIRV\spirv.hpp" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\GLSL.std.450.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\GlslangToSpv.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\Logger.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\SpvBuilder.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\spvIR.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\doc.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\disassemble.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\hex_float.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\SPVRemapper.h" />
+    <ClInclude Include="$(GLSLangFolder)SPIRV\SpvTools.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{3807A766-3F8F-3DB0-A359-13C65F15A4EF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

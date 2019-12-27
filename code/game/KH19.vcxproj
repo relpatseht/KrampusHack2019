@@ -79,13 +79,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\external\allegro\allegro.vcxproj">
+    <ProjectReference Include="$(AllegroFolder)..\allegro.vcxproj">
       <Project>{b0c6c93f-cea0-44fc-b207-43a35b4876de}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\external\box2d\box2d.vcxproj">
+    <ProjectReference Include="$(Box2DFolder)..\box2d.vcxproj">
       <Project>{b0c6c93f-cea0-44fc-b207-43a35b4876df}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\external\imgui\imgui.vcxproj">
+    <ProjectReference Include="$(ImGUIFolder)..\imgui.vcxproj">
       <Project>{b0c6c93f-cea0-44fc-b207-43b35b4876df}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -123,7 +123,7 @@
     <None Include="shaders\scene_defines.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\external\glm\0.9.9.6\util\glm.natvis" />
+    <Natvis Include="$(GLMFolder)\util\glm.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -72,16 +72,16 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\external\glslang\glslang.vcxproj">
+    <ProjectReference Include="$(GLSLangFolder)..\glslang.vcxproj">
       <Project>{080d2a16-9edf-3cca-a46e-f38a3f968062}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\external\glslang\HLSL.vcxproj">
+    <ProjectReference Include="$(GLSLangFolder)..\HLSL.vcxproj">
       <Project>{671f5d95-6dc1-3742-921e-34901447d923}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\external\glslang\OGLCompiler.vcxproj">
+    <ProjectReference Include="$(GLSLangFolder)..\OGLCompiler.vcxproj">
       <Project>{691ea4c0-cb82-3839-83c6-0c527f642bac}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\external\glslang\SPIRV.vcxproj">
+    <ProjectReference Include="$(GLSLangFolder)..\SPIRV.vcxproj">
       <Project>{7c0b3059-de09-3d8a-8b5e-d46806ec86c3}</Project>
     </ProjectReference>
   </ItemGroup>

@@ -50,8 +50,9 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(Box2DIncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ImGUIIncludePath);$(AllegroIncludePath)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>ALLEGRO_UNSTABLE;ALLEGRO_WINDOWS;IMGUI_IMPL_OPENGL_LOADER_CUSTOM="allegro5/allegro_opengl.h";_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -65,8 +66,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ImGUIIncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ImGUIIncludePath);$(AllegroIncludePath)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>ALLEGRO_UNSTABLE;ALLEGRO_WINDOWS;IMGUI_IMPL_OPENGL_LOADER_CUSTOM="allegro5/allegro_opengl.h";_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -85,6 +87,7 @@
   <ItemGroup>
     <ClCompile Include="$(ImGUIFolder)imgui_widgets.cpp" />
     <ClCompile Include="$(ImGUIFolder)imgui_draw.cpp" />
+    <ClCompile Include="$(ImGUIFolder)imgui.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

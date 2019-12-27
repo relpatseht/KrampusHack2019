@@ -50,8 +50,8 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IMGUIIncludePath);$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ALLEGRO_WINDOWS;ALLEGRO_UNSTABLE;IMGUI_IMPL_OPENGL_LOADER_CUSTOM="allegro5/allegro_opengl.h";ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -67,8 +67,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IMGUIIncludePath);$(GLMIncludePath);$(AllegroIncludePath);$(Box2DIncludePath)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ALLEGRO_WINDOWS;ALLEGRO_UNSTABLE;IMGUI_IMPL_OPENGL_LOADER_CUSTOM="allegro5/allegro_opengl.h";ALLEGRO_STATICLINK;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -90,6 +90,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(ImGUIFolder)examples\imgui_impl_opengl3.cpp" />
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="bvh\box_partitioner.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -98,6 +99,7 @@
     <ClCompile Include="Physics.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(ImGUIFolder)examples\imgui_impl_opengl3.h" />
     <ClInclude Include="apply_permutation.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="Audio.h" />

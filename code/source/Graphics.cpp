@@ -1,5 +1,3 @@
-#define ALLEGRO_UNSTABLE
-#define ALLEGRO_WINDOWS
 #include <vector>
 #include <fstream>
 #include <filesystem>
@@ -981,7 +979,6 @@ namespace
 			glBindVertexArray(0);
 			glUseProgram(0);
 
-			al_flip_display();
 			err::Error();
 		}
 	}

@@ -148,7 +148,7 @@ namespace
 			if (rand() % 2 == 0 && state->fireballCount < state->fireballIds.size())
 			{
 				const uint ySwitch = rand() % 100;
-				const float yOffs = ySwitch <= 60 ? 0 : (ySwitch <= 90 ? 1 : 2);
+				const float yOffs = ySwitch <= 50 ? 0 : (ySwitch <= 80 ? 1 : 2);
 				const float x = (((rand() % 2) * 2) - 1)* (BOUNDS_HALF_WIDTH + 4.0 + FIREBALL_RADIUS);
 				const float y = yOffs*1.5f - (BOUNDS_HALF_HEIGHT - (1.5 + FIREBALL_RADIUS));
 				uint objId = game::CreateObject(state->game);
@@ -376,6 +376,8 @@ namespace
 				if (ImGui::Button("Play Again?", ImVec2(300.0f, 90.0f)))
 				{
 					state->snowMeter = SNOW_METER_START;
+					UpdateSnowmeter(state, 0.0f);
+
 					for (uint flakeIndex = 0; flakeIndex < state->snowflakeCount; ++flakeIndex)
 						state->game->dyingObjects.emplace_back(state->snowflakeIds[flakeIndex]);
 					state->snowflakeCount = 0;

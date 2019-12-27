@@ -36,10 +36,12 @@ namespace phy
 	void GatherTransforms(const Physics &p, std::vector<uint>* outIds, std::vector<Transform>* outTransforms);
 	void GatherContacts(const Physics& p, uint objectId, std::vector<uint>* outIds);
 
+	float GetX(const Physics &p, uint objectId);
+
 	void ApplyImpulse(Physics* p, uint objectId, float x, float y);
 	void SetSoftAnchorTarget(Physics* p, uint objectId, float x, float y);
-	void RequestWalk(Physics* p, uint objectId, float force);
-	void RequestJump(Physics* p, uint objectId, float force);
+	bool RequestWalk(Physics* p, uint objectId, float force);
+	bool RequestJump(Physics* p, uint objectId, float force);
 
 	void DestroyObjects(Physics* p, const std::vector<uint>& objectIds);
 }

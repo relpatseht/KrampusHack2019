@@ -129,7 +129,7 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 		if(objDist.x < dist.x)
 			dist = objDist;
 	}
-	
+
 	{
 		vec2 staticSceneDist = StaticScene(pos);
 
@@ -137,6 +137,17 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 			dist = staticSceneDist;
 	}
 
+	{
+		vec2 treeDist = StaticScene_Tree(pos - vec3(-17, -7.5, -30), 0.0);
+		if(treeDist.x < dist.x)
+		dist = treeDist;
+	}
+
+	{
+		vec2 treeDist = StaticScene_Tree(pos - vec3(-13, -7.5, -30), 0.0);
+		if(treeDist.x < dist.x)
+		dist = treeDist;
+	}
 
 	return dist;
 }

@@ -90,6 +90,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Audio.cpp" />
     <ClCompile Include="bvh\box_partitioner.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Graphics.cpp" />
@@ -99,6 +100,7 @@
   <ItemGroup>
     <ClInclude Include="apply_permutation.h" />
     <ClInclude Include="Assert.h" />
+    <ClInclude Include="Audio.h" />
     <ClInclude Include="Bits.h" />
     <ClInclude Include="bvh\box_partitioner.h" />
     <ClInclude Include="bvh\box_partitioner_internal.h" />

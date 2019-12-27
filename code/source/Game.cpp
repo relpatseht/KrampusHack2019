@@ -1,6 +1,7 @@
 #include "ComponentTypes.h"
 #include "Graphics.h"
 #include "Physics.h"
+#include "Audio.h"
 #include "Game.h"
 #include "glm/gtx/euler_angles.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -19,8 +20,13 @@ namespace game
 
 			if (outGame->phy != nullptr)
 			{
-				outGame->dyingObjects.reserve(1024);
-				return true;
+				outGame->aud = aud::Init();
+
+				if (outGame->aud != nullptr)
+				{
+					outGame->dyingObjects.reserve(1024);
+					return true;
+				}
 			}
 		}
 
@@ -30,6 +36,8 @@ namespace game
 	void Shutdown(Game* game)
 	{
 		gfx::Shutdown(game->gfx);
+		phy::Shutdown(game->phy);
+		aud::Shutdown(game->aud);
 	}
 
 	uint CreateObject(Game* game)

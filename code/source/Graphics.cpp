@@ -1028,7 +1028,6 @@ namespace gfx
 		delete g;
 	}
 
-
 	void Update(Graphics* g)
 	{
 		++g->frameCount;

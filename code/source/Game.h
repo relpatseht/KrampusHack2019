@@ -7,11 +7,13 @@ typedef unsigned uint;
 
 struct Graphics;
 struct Physics;
+struct Audio;
 
 struct Game
 {
 	Graphics* gfx;
 	Physics* phy;
+	Audio* aud;
 	uint nextObjectId;
 	std::vector<uint> dyingObjects;
 };

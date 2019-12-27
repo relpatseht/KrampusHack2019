@@ -527,6 +527,17 @@ namespace phy
 		}
 	}
 
+
+	float GetX(const Physics &p, uint objectId)
+	{
+		const b2Body* const* const bodyPtr = p.bodies.for_object(objectId);
+
+		if (bodyPtr)
+			return (*bodyPtr)->GetPosition().x;
+
+		return 0.0f;
+	}
+
 	void ApplyImpulse(Physics* p, uint objectId, float x, float y)
 	{
 		b2Body** bodyPtr = p->bodies.for_object(objectId);
@@ -550,7 +561,7 @@ namespace phy
 		}
 	}
 
-	void RequestWalk(Physics* p, uint objectId, float force)
+	bool RequestWalk(Physics* p, uint objectId, float force)
 	{
 		b2Vec2 normal;
 		b2Body* body = logic::OnGround(p, objectId, &normal);
@@ -563,14 +574,18 @@ namespace phy
 
 			body->ApplyLinearImpulseToCenter(dir, true);
 		}
+
+		return body != nullptr;
 	}
 
-	void RequestJump(Physics* p, uint objectId, float force)
+	bool RequestJump(Physics* p, uint objectId, float force)
 	{
 		b2Body* body = logic::OnGround(p, objectId);
 
 		if (body)      
 			body->ApplyLinearImpulseToCenter(b2Vec2(0.0f, force), true);
+
+		return body != nullptr;
 	}
 
 	void DestroyObjects(Physics* p, const std::vector<uint>& objectIds)

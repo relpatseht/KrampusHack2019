@@ -47,6 +47,12 @@ void MaterialProperties(in const vec3 pos, in const float time, in const float m
 		metalness = 1.0;
 		roughness = 0.1;
 	}
+	else if(mtl < 5) // evergreen [4, 5)
+	{
+		albedo = vec3(0.02, 0.2, 0.1);
+		metalness = 0.0;
+		roughness = 1.0;
+	}
 	else if(mtl < 11.0) // snow flake, [10, 11)
 	{
 		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);

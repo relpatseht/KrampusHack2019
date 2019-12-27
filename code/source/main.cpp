@@ -6,6 +6,7 @@
 #include "Game.h"
 #include "Graphics.h"
 #include "Physics.h"
+#include "Audio.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/euler_angles.hpp"
@@ -25,6 +26,16 @@ namespace
 		PAUSE_MENU,
 		WIN_SCREEN,
 		SHUTDOWN
+	};
+
+	enum AudioTrack
+	{
+		THEME,
+		FOOTSTEPS,
+		SIZZLE,
+		THROW,
+		TING,
+		FIRE
 	};
 
 	struct GameState
@@ -86,6 +97,23 @@ namespace
 		return false;
 	}
 
+	float XToPan(float x)
+	{
+		return glm::clamp(x / BOUNDS_HALF_WIDTH * 1.75f, -1.0f, 1.0f);
+	}
+
+	float XToVol(float x)
+	{
+		x = std::fabs(x);
+
+		if (x > BOUNDS_HALF_WIDTH * 0.9f)
+		{
+			return glm::clamp(1.0f - (x / BOUNDS_HALF_WIDTH * 2.0f), 0.0f, 1.0f);
+		}
+
+		return 1.0f;
+	}
+
 	// each frame is 1/60 seconds
 	static void AddPeriodics(GameState* state)
 	{
@@ -124,6 +152,7 @@ namespace
 				{
 					phy::AddBody(state->game->phy, objId, phy::BodyType::FIRE_BALL, x, y);
 					phy::ApplyImpulse(state->game->phy, objId, (std::signbit(x) ? 1.0 : -1.0) * 5.0f, 0.25f);
+					aud::AttachTrack(state->game->aud, objId, AudioTrack::FIRE, 1.0f, true);
 
 					state->fireballIds[state->fireballCount++] = objId;
 				}
@@ -181,6 +210,7 @@ namespace
 			phy::ApplyImpulse(state->game->phy, ballId, impulseDir.x, impulseDir.y);
 			phy::ApplyImpulse(state->game->phy, state->playerId, -impulseDir.x, -impulseDir.y);
 			
+			aud::PlayTrackDetached(state->game->aud, AudioTrack::THROW, false, 1.0f, XToPan(state->playerPos.x));
 			UpdateSnowmeter(state, -SNOW_PER_BALL);
 
 			if (state->snowballCount < state->activeSnowballIds.size())
@@ -304,12 +334,22 @@ namespace
 		if (state->state == State::RUNNING)
 		{
 			ALLEGRO_KEYBOARD_STATE keyState;
+			float walking = 0.0f;
+
 			al_get_keyboard_state(&keyState);
+
 			if (al_key_down(&keyState, ALLEGRO_KEY_D))
-				phy::RequestWalk(state->game->phy, state->playerId, 0.8f);
+				walking = 0.8f;
 
 			if (al_key_down(&keyState, ALLEGRO_KEY_A))
-				phy::RequestWalk(state->game->phy, state->playerId, -0.8f);
+				walking = -0.8f;
+
+			if (walking != 0.0f)
+			{
+				phy::RequestWalk(state->game->phy, state->playerId, walking);
+				aud::UpdatePan(state->game->aud, state->playerId, XToPan(state->playerPos.x));
+				aud::RestartIfStopped(state->game->aud, state->playerId);
+			}
 		}
 	}
 
@@ -352,6 +392,8 @@ namespace
 
 				if (fireIt < state->fireballIds.data() + state->fireballCount)
 				{
+					aud::UpdateVolume(state->game->aud, *fireIt, XToVol(phyT.x));
+
 					if (fabs(phyT.x) <= FIREBALL_RADIUS)
 					{
 						const float snowBottom = SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS;
@@ -363,6 +405,8 @@ namespace
 							UpdateSnowmeter(state, -state->maxSnow / 3.0f);
 							game->dyingObjects.emplace_back(*fireIt);
 							*fireIt = state->fireballIds[--state->fireballCount];
+
+							aud::PlayTrackDetached(state->game->aud, AudioTrack::SIZZLE, false, 1.0f, XToPan(phyT.x));
 						}
 					}
 					else if (phyT.y < -BOUNDS_HALF_HEIGHT + FIREBALL_RADIUS)
@@ -410,6 +454,8 @@ namespace
 
 				if (isFlakeIt - state->snowflakeIds.data() < state->snowflakeCount)
 				{
+					aud::PlayTrackDetached(state->game->aud, AudioTrack::TING, false, 1.5f, XToPan(phy::GetX(*state->game->phy, state->helperId)));
+
 					UpdateSnowmeter(state, SNOW_PER_FLAKE);
 					*isFlakeIt = state->snowflakeIds[--state->snowflakeCount];
 					state->game->dyingObjects.emplace_back(hitObj);
@@ -424,26 +470,37 @@ namespace
 
 			phy::GatherContacts(*state->game->phy, fireballId, &fireContacts);
 
-			for (uint hitObj : fireContacts)
+			if (!fireContacts.empty())
 			{
-				auto ballIt = std::find(state->activeSnowballIds.data(), state->activeSnowballIds.data() + state->snowballCount, hitObj);
-
-				if (ballIt < state->activeSnowballIds.data() + state->snowballCount)
+				for (uint hitObj : fireContacts)
 				{
-					state->game->dyingObjects.emplace_back(*ballIt);
-					state->game->dyingObjects.emplace_back(fireballId);
+					auto ballIt = std::find(state->activeSnowballIds.data(), state->activeSnowballIds.data() + state->snowballCount, hitObj);
 
-					state->fireballIds[fireballIndex] = state->fireballIds[--state->fireballCount];
-					*ballIt = state->activeSnowballIds[--state->snowballCount];
-				}
-				else
-				{
-					auto flakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, hitObj);
-
-					if (flakeIt < state->snowflakeIds.data() + state->snowflakeCount)
+					if (ballIt < state->activeSnowballIds.data() + state->snowballCount)
 					{
-						state->game->dyingObjects.emplace_back(*flakeIt);
-						*flakeIt = state->snowflakeIds[--state->snowflakeCount];
+						state->game->dyingObjects.emplace_back(*ballIt);
+						state->game->dyingObjects.emplace_back(fireballId);
+
+						state->fireballIds[fireballIndex] = state->fireballIds[--state->fireballCount];
+						*ballIt = state->activeSnowballIds[--state->snowballCount];
+
+						aud::PlayTrackDetached(state->game->aud, AudioTrack::SIZZLE, false, 0.8f, XToPan(phy::GetX(*state->game->phy, fireballId)));
+					}
+					else
+					{
+						auto flakeIt = std::find(state->snowflakeIds.data(), state->snowflakeIds.data() + state->snowflakeCount, hitObj);
+
+						if (flakeIt < state->snowflakeIds.data() + state->snowflakeCount)
+						{
+							state->game->dyingObjects.emplace_back(*flakeIt);
+							*flakeIt = state->snowflakeIds[--state->snowflakeCount];
+
+							aud::PlayTrackDetached(state->game->aud, AudioTrack::SIZZLE, false, 0.1f, XToPan(phy::GetX(*state->game->phy, fireballId)));
+						}
+						else
+						{
+							aud::PlayTrackDetached(state->game->aud, AudioTrack::SIZZLE, false, 1.0f, XToPan(phy::GetX(*state->game->phy, fireballId)));
+						}
 					}
 				}
 			}
@@ -480,6 +537,22 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
+				{
+					const uint theme = aud::AddTrack(state.game->aud, "audio/snowman.wav");
+					const uint footsteps = aud::AddTrack(state.game->aud, "audio/footsteps.wav");
+					const uint sizzle = aud::AddTrack(state.game->aud, "audio/sizzle.wav");
+					const uint thow = aud::AddTrack(state.game->aud, "audio/throw.wav");
+					const uint ting = aud::AddTrack(state.game->aud, "audio/ting.wav");
+					const uint fire = aud::AddTrack(state.game->aud, "audio/fire.wav");
+
+					assert(theme == AudioTrack::THEME);
+					assert(footsteps == AudioTrack::FOOTSTEPS);
+					assert(sizzle == AudioTrack::SIZZLE);
+					assert(thow == AudioTrack::THROW);
+					assert(ting == AudioTrack::TING);
+					assert(fire == AudioTrack::FIRE);
+				}
+
 				// Create event queue
 				ALLEGRO_EVENT_QUEUE* const eventQueue = al_create_event_queue();
 				al_register_event_source(eventQueue, al_get_mouse_event_source());
@@ -503,13 +576,16 @@ int main(int argc, char* argv[])
 				state.playerId = game::CreateObject(state.game);
 				gfx::AddModel(state.game->gfx, state.playerId, gfx::MeshType::PLAYER, glm::translate(glm::mat4(1.0f), glm::vec3(playerStartX, playerStartY, 0.0f)));
 				phy::AddBody(state.game->phy, state.playerId, phy::BodyType::PLAYER, playerStartX, playerStartY);
-				
+				aud::AttachTrack(state.game->aud, state.playerId, AudioTrack::FOOTSTEPS, 5.0f, false);
+
 				const float helperStartX = 0.0f;
 				const float helperStartY = 4.0f;
 				state.helperId = game::CreateObject(state.game);
 				gfx::AddModel(state.game->gfx, state.helperId, gfx::MeshType::HELPER, glm::translate(glm::mat4(1.0f), glm::vec3(helperStartX, helperStartY, 0.0f)));
 				phy::AddBody(state.game->phy, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
 				phy::AddSoftAnchor(state.game->phy, state.helperId);
+
+				aud::PlayTrackDetached(state.game->aud, AudioTrack::THEME, true, 0.15f);
 
 				state.frameCount = 1; // start at 1 to not fire all periodics immediately
 				while (state.state != State::SHUTDOWN)
@@ -538,6 +614,7 @@ int main(int argc, char* argv[])
 			al_destroy_display(display);
 		}
 
+		al_uninstall_audio();
 		al_uninstall_keyboard();
 		al_uninstall_mouse();
 		al_uninstall_system();

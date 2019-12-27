@@ -529,6 +529,7 @@ namespace
 					{
 						glDetachShader(prog, vertShader);
 						glDetachShader(prog, fragShader);
+						glDeleteShader(fragShader);
 
 						*outShader = prog;
 						return true;
@@ -577,7 +578,10 @@ namespace
 						*outOutShader = outShader;
 					else
 						*outOutShader = 0;
+
+					glDeleteShader(vertShader);
 				}
+
 			}
 
 			for (const std::string& inc : files.includeNames)

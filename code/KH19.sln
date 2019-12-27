@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29424.173
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KH19", "source\KH19.vcxproj", "{5E370B26-81AB-4E7A-85B9-0B710E0CF481}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KH19", "game\KH19.vcxproj", "{5E370B26-81AB-4E7A-85B9-0B710E0CF481}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "external", "external", "{EE2241E7-4CFF-4C91-B3AE-3574551CE054}"
 EndProject

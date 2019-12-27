@@ -58,6 +58,18 @@ void MaterialProperties(in const vec3 pos, in const float time, in const float m
 		metalness = 0.0;
 		roughness = 1.0;
 	}
+	else if(mtl < 6) // coal [5, 6)
+	{
+		albedo = vec3(0.2, 0.2, 0.2);
+		metalness = 1.0;
+		roughness = 0.1;
+	}
+	else if(mtl < 7) // carrot [6, 7)
+	{
+		albedo = vec3(0.8, 0.35, 0.1);
+		metalness = 0.0;
+		roughness = 0.4;
+	}
 	else if(mtl < 11.0) // snow flake, [10, 11)
 	{
 		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
@@ -194,12 +206,37 @@ vec2 Mesh_Snowman(in vec3 pos, float typeFrac)
 	const float mid =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_MID_Y, SNOWMAN_Z), SNOWMAN_MID_RADIUS) / noise;
 	const float top =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_TOP_Y, SNOWMAN_Z), SNOWMAN_TOP_RADIUS) / noise;
 	const float snowman = fOpUnionRound(bottom, fOpUnionRound(mid, top, 0.2), 0.3);
+	vec2 dist = vec2(snowman, snowmanMtl + typeFrac);
 
-	const float snowmanHeight = (SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS) - (SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS);
-	const float visibleBox = fBoxCheap(pos - vec3(SNOWMAN_X, SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS, SNOWMAN_Z), vec3(SNOWMAN_BOT_RADIUS*1.2, snowmanHeight*typeFrac, SNOWMAN_BOT_RADIUS*1.2));
+	if(typeFrac > 0.99)
+	{
+		const float coalMtl = 5.0;
+		const float carrotMtl = 6.0;
+		const vec3 headPos = pos - vec3(SNOWMAN_X, SNOWMAN_TOP_Y, SNOWMAN_Z);
 
-	const float dist = max(snowman, visibleBox);
-	return vec2(dist, snowmanMtl + typeFrac);
+		vec3 eyePos = headPos - vec3(0.0, 0.3, 0.9);
+		pMirror(eyePos.x, 0.0);
+		const float eyes = fSphere(eyePos - vec3(0.3, 0, 0), 0.2);
+
+		if(eyes < dist.x)
+			dist = vec2(eyes, coalMtl);
+
+		vec3 carrotPos = headPos - vec3(0.0, 0.0, SNOWMAN_TOP_RADIUS);
+		pR(carrotPos.yz, PI*0.5);
+		const float nose = fCone(carrotPos, 0.15, 0.4);
+
+		if(nose < dist.x)
+			dist = vec2(nose, carrotMtl);
+	}
+	else
+	{
+		const float snowmanHeight = (SNOWMAN_TOP_Y + SNOWMAN_TOP_RADIUS) - (SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS);
+		const float visibleBox = fBoxCheap(pos - vec3(SNOWMAN_X, SNOWMAN_BOT_Y - SNOWMAN_BOT_RADIUS, SNOWMAN_Z), vec3(SNOWMAN_BOT_RADIUS*1.2, snowmanHeight*typeFrac, SNOWMAN_BOT_RADIUS*1.2));
+
+		dist.x = max(snowman, visibleBox);
+	}
+
+	return dist;
 }
 
 vec2 Mesh_SceneBounds(in const vec3 pos, float typeFrac)

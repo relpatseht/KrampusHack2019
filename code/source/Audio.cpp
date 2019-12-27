@@ -163,6 +163,8 @@ namespace aud
 	{
 		a->trackInstances.remove_objs(objectIds, [a](ALLEGRO_SAMPLE_INSTANCE* inst)
 		{
+			al_set_sample_instance_playing(inst, false);
+			al_detach_sample_instance(inst);
 			al_destroy_sample_instance(inst);
 		});
 	}

@@ -13,7 +13,12 @@ void MaterialProperties(in const vec3 pos, in const float time, in const float m
 		albedo = brightSnow;
 		metalness = 0.0;
 		roughness = 1.6;
-		//albedo *= sin(time*2.0) + 2.0;
+
+		const float typeFrac = fract(mtl);
+		if(typeFrac > 0.95)
+		{
+			albedo += albedo * (sin(time*2.0) + 1.0)*0.5 * (typeFrac - 0.95)*20.0;
+		}
 	}
 	else if(mtl < 1.0) // wood frame, [0, 1)
 	{

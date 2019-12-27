@@ -643,6 +643,9 @@ int main(int argc, char* argv[])
 					io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;       // We can honor GetMouseCursor() values (optional)
 					io.BackendPlatformName = io.BackendRendererName = "imgui_impl_allegro5";
 
+					io.IniFilename = nullptr;
+					io.LogFilename = nullptr;
+
 					int w = al_get_display_width(display);
 					int h = al_get_display_height(display);
 					io.DisplaySize = ImVec2((float)w, (float)h);

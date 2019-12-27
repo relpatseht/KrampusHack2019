@@ -20,7 +20,7 @@ namespace
 	const float SNOW_PER_FLAKE = 1.2f;
 	const float SNOW_PER_BALL = 2.1f;
 	const float SNOWBALL_IMPULSE = 20.0f;
-	const float SNOW_METER_START = 5.0f;
+	const float SNOW_METER_START = 99.0f;
 
 	enum class State
 	{
@@ -46,6 +46,8 @@ namespace
 	{
 		Game *game;
 		ImGuiContext* gui;
+		ImFont* titleFont;
+		ImFont* menuFont;
 
 		uint helperId;
 		uint playerId;
@@ -312,6 +314,24 @@ namespace
 		switch (state->state)
 		{
 			case State::MAIN_MENU:
+			{
+				ImGui::PushFont(state->titleFont);
+
+				const char* const titleText = "Let's Build a Snowman!";
+				const ImVec2 titleSize = ImGui::CalcTextSize(titleText);
+
+				ImGui::SetNextWindowSize(ImVec2(1000.0f, 200.0f));
+				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 500.0f, h * 0.5 - 300.0f));
+				ImGui::Begin("Title", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
+
+				ImGui::SetCursorPosX((1000.0f - titleSize.x) * 0.5);
+				ImGui::Text("%s", titleText);
+
+				ImGui::End();
+				ImGui::PopFont();
+			}
+			{
+				ImGui::PushFont(state->menuFont);
 				ImGui::SetNextWindowSize(ImVec2(300.0f, 200.0f));
 				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 150.0f, h * 0.5 - 150.0f));
 
@@ -328,8 +348,13 @@ namespace
 				ImGui::PopStyleColor(3);
 
 				ImGui::End();
+				ImGui::PopFont();
+			}
 			break;
 			case State::PAUSE_MENU:
+			{
+				ImGui::PushFont(state->menuFont);
+
 				ImGui::SetNextWindowSize(ImVec2(300.0f, 200.0f));
 				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 150.0f, h * 0.5 - 150.0f));
 
@@ -346,26 +371,32 @@ namespace
 				ImGui::PopStyleColor(3);
 
 				ImGui::End();
+				ImGui::PopFont();
+			}
 			break;
 			case State::WIN_SCREEN:
 			{
-				const char* const winText = "You built the snowman in only";
-				const char* const dummyTimeText = "00:00.000!";
-				const ImVec2 winSize = ImGui::CalcTextSize(winText);
-				const ImVec2 timeSize = ImGui::CalcTextSize(dummyTimeText);
+				ImGui::PushFont(state->menuFont);
 
-				ImGui::SetNextWindowSize(ImVec2(700.0f, 200.0f));
-				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 350.0f, h * 0.5 - 250.0f));
-				ImGui::Begin("Win Time", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
+				{
+					const char* const winText = "You built the snowman in only";
+					const char* const dummyTimeText = "00:00.000!";
+					const ImVec2 winSize = ImGui::CalcTextSize(winText);
+					const ImVec2 timeSize = ImGui::CalcTextSize(dummyTimeText);
 
-				ImGui::SetCursorPosX((700 - winSize.x) * 0.5);
-				ImGui::Text("%s", winText);
+					ImGui::SetNextWindowSize(ImVec2(700.0f, 200.0f));
+					ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 350.0f, h * 0.5 - 300.0f));
+					ImGui::Begin("Win Time", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
 
-				ImGui::SetCursorPosX((700 - timeSize.x) * 0.5);
-				ImGui::Text("%02u:%02u.%03u!", minutes, seconds, milliseconds);
+					ImGui::SetCursorPosX((700 - winSize.x) * 0.5);
+					ImGui::Text("%s", winText);
 
-				ImGui::End();
-			}
+					ImGui::SetCursorPosX((700 - timeSize.x) * 0.5);
+					ImGui::Text("%02u:%02u.%03u!", minutes, seconds, milliseconds);
+
+					ImGui::End();
+				}
+
 				ImGui::SetNextWindowSize(ImVec2(300.0f, 200.0f));
 				ImGui::SetNextWindowPos(ImVec2(w * 0.5 - 150.0f, h * 0.5 - 150.0f));
 				ImGui::Begin("Win Menu", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
@@ -399,14 +430,20 @@ namespace
 				ImGui::PopStyleColor(3);
 
 				ImGui::End();
+				ImGui::PopFont();
+			}
 			break;
 			case State::RUNNING:
-				ImGui::SetNextWindowSize(ImVec2(300.0f, 200.0f));
-				ImGui::SetNextWindowPos(ImVec2(w - 300.0f, 0.0f));
+			{
+				ImGui::PushFont(state->menuFont);
+				ImGui::SetNextWindowSize(ImVec2(200.0f, 200.0f));
+				ImGui::SetNextWindowPos(ImVec2(w - 200.0f, 0.0f));
 
 				ImGui::Begin("Timer", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
 					ImGui::Text("%02u:%02u.%03u", minutes, seconds, milliseconds);
 				ImGui::End();
+				ImGui::PopFont();
+			}
 			break;
 		}
 
@@ -752,8 +789,9 @@ int main(int argc, char* argv[])
 					// Setup back-end capabilities flags
 					ImGuiIO& io = ImGui::GetIO();
 					io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;       // We can honor GetMouseCursor() values (optional)
-
-					io.FontGlobalScale = 3.0f;
+					
+					state.titleFont = io.Fonts->AddFontFromFileTTF("fonts/JFSnobiz.ttf", 80.0f);
+					state.menuFont = io.Fonts->AddFontFromFileTTF("fonts/AlmonteSnow.ttf", 50.0f);
 
 					io.BackendPlatformName = io.BackendRendererName = "imgui_impl_allegro5";
 

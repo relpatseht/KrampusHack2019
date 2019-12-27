@@ -10,6 +10,3 @@
 [submodule "code/external/imgui/1.7.4"]
 	path = code/external/imgui/1.7.4
 	url = git@github.com:ocornut/imgui.git
-[submodule "code/external/7.13.3496"]
-	path = code/external/7.13.3496
-	url = git@github.com:KhronosGroup/glslang.git

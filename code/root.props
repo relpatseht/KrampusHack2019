@@ -12,12 +12,14 @@
     <Box2DFolder>$(CodeExternalFolder)box2d\2.3.1\</Box2DFolder>
     <AllegroFolder>$(CodeExternalFolder)allegro\5.2.4\</AllegroFolder>
     <ImGUIFolder>$(CodeExternalFolder)imgui\1.7.4\</ImGUIFolder>
+    <GLSLangFolder>$(CodeExternalFolder)glslang\7.13.3496\</GLSLangFolder>
 
     <GLMIncludePath>$(GLMFolder)</GLMIncludePath>
     <AllegroIncludePath>$(AllegroFolder)include\;$(CodeExternalFolder)allegro\include\;$(AllegroFolder)addons\acodec\;$(AllegroFolder)addons\audio\;</AllegroIncludePath>
     <Box2DIncludePath>$(Box2DFolder)</Box2DIncludePath>
     <ImGUIIncludePath>$(ImGUIFolder);$(ImGUIFolder)examples\</ImGUIIncludePath>
     <AssetsIncludePath>$(AssetsFolder)</AssetsIncludePath>
+    <GLSLangIncludePath>$(GLSLangFolder)</GLSLangIncludePath>
 
     <IntDir>$(ProjectFolder)bin/obj/$(MSBuildProjectName)/$(Configuration)/</IntDir>
     <OutDir>$(ProjectFolder)bin/</OutDir>

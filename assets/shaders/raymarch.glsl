@@ -4,11 +4,11 @@
 #include "hg_sdf.glsl"
 
 #ifndef RM_STEP_MULT
-#define RM_STEP_MULT 1.2
+#define RM_STEP_MULT 1.4
 #endif //#ifndef RM_STEP_MULT
 
 #ifndef RM_MAX_ITERATIONS
-#define RM_MAX_ITERATIONS 512
+#define RM_MAX_ITERATIONS 96
 #endif //#ifndef RM_MAX_ITERATIONS
 
 #ifndef RM_NORMAL_DERIVATIVE_EPSILON
@@ -34,7 +34,7 @@ vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float farP
 	const float originDist = RayMarch_SceneFunc(rayOrigin).x;
 	const float sceneFuncSign = sgn(originDist);
 	float stepMult = RM_STEP_MULT;
-	float t = originDist;
+	vec2 ret = vec2(originDist, 0.0f);
 	float prevRadius = abs(originDist);
 	float stepLength = 0.0;
 
@@ -47,7 +47,7 @@ vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float farP
 	// with the standard algorithm (no increased step size).
 	for(int stepIndex=0; stepIndex < RM_MAX_ITERATIONS; ++stepIndex)
 	{
-		const vec3 worldPos = rayDir*t + rayOrigin;
+		const vec3 worldPos = rayDir*ret.x + rayOrigin;
 		const vec2 sceneRet = RayMarch_SceneFunc(worldPos);
 		const float signedRadius = sceneFuncSign * sceneRet.x;
 		const float radius = abs(signedRadius);
@@ -63,29 +63,26 @@ vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float farP
 		}
 		else
 		{
-			const float sphereError = radius / t;
+			const float sphereError = radius / ret.x;
+			ret = vec2(ret.x, sceneRet.y);
 
 			// If this position is within half a pixel in screen space, call it a hit.
 			if(sphereError < pixelRadius)
-			{
-				return vec2(t, sceneRet.y);
-			}
+				break;
 
 			// If we've gone past the far plane, we're done.
-			if(t >= farPlane)
-			{
+			if(ret.x >= farPlane)
 				break;
-			}
 
 			stepLength = signedRadius * stepMult;
 		}
 
 		prevRadius = radius;
-		t += stepLength;
+		ret.x += stepLength;
 	}
 
 	// Never got within half a pixel of anything. We didn't hit anything.
-	return vec2(RM_INFINITY, 0.0);	
+	return ret;	
 }
 
 vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float farPlane)

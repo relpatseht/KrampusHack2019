@@ -359,10 +359,10 @@ namespace
 					mins -= glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
 					maxs += glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
 					break;
-				case MESH_TYPE_GROUND_PLANE:
+				case MESH_TYPE_GROUND_PLANE: 
 					mins -= glm::vec3(100.0f, 1.5f, 100.0f);
 					maxs += glm::vec3(100.0f, 1.5f, 100.0f);
-					break;  
+					break;
 				case MESH_TYPE_TREE:
 					mins -= glm::vec3(2.0f, 2.0f, 2.0f);
 					maxs += glm::vec3(2.0f, 5.0f, 2.0f);

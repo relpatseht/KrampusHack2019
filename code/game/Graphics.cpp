@@ -576,7 +576,7 @@ namespace
 				return true;
 			}
 
-			static bool GenFrameBufferTexture(uint width, uint height, uint *outFBO, uint *outTex)
+			static bool GenFrameBufferTexture(uint width, uint height, GLenum type, uint *outFBO, uint *outTex)
 			{
 				uint fbo = 0;
 				uint tex = 0;
@@ -589,7 +589,7 @@ namespace
 					glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 					glBindTexture(GL_TEXTURE_2D, tex);
 
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+					glTexImage2D(GL_TEXTURE_2D, 0, type, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -646,7 +646,7 @@ namespace
 				uint w = static_cast<uint>(g->res.x);
 				uint h = static_cast<uint>(g->res.y);
 
-				GenFrameBufferTexture(w, h, &g->sceneFBO, &g->sceneMainTex);
+				GenFrameBufferTexture(w, h, GL_RGB8, &g->sceneFBO, &g->sceneMainTex);
 				if (!g->sceneMainTex)
 				{
 					std::printf("Failed to make scene framebuffer");
@@ -656,7 +656,7 @@ namespace
 
 				for (uint p = 0; p < Graphics::BLUR_PASSES; ++p)
 				{
-					GenFrameBufferTexture(w, h, &g->downsampleFBO[p], &g->sceneBrightTex[p]);
+					GenFrameBufferTexture(w, h, GL_RGB16F, &g->downsampleFBO[p], &g->sceneBrightTex[p]);
 
 					if (!g->sceneBrightTex[p])
 					{
@@ -666,7 +666,7 @@ namespace
 						return false;
 					}
 
-					GenFrameBufferTexture(w, h, &g->blurFBO[p], &g->blurTex[p]);
+					GenFrameBufferTexture(w, h, GL_RGB16F, &g->blurFBO[p], &g->blurTex[p]);
 
 					if (!g->blurTex[p])
 					{

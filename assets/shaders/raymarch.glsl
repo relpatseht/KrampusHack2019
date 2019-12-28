@@ -37,7 +37,8 @@ vec2 RayMarch(in const vec3 rayDir, in const vec3 rayOrigin, in const float farP
 	vec2 ret = vec2(originDist, 0.0f);
 	float prevRadius = abs(originDist);
 	float stepLength = 0.0;
-
+	int stepIndex;
+	
 	// Typically, sphere tracing steps along the ray by the distance to the closest object in the scene.
 	// This ensures each subsequent point will be on the boundary of the sphere of the previous. In this
 	// step format, we will never miss what we're aiming for.

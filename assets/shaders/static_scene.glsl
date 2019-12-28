@@ -5,19 +5,16 @@
 #include "/noise.glsl"
 #include "/scene_defines.glsl"
 
-vec2 GroundHeight(in const vec3 pos)
+float GroundHeight(in const vec3 pos)
 {
-	const float hNoise = noise(pos.xzx*20);
-    const float height = cos(pos.x*0.25 + 0.3)*sin(pos.z*0.25) + 0.006*hNoise; // very regular patern + a little bit of noise
-
-    return vec2(height, hNoise);
+    return cos(pos.x*0.25 + 0.3)*sin(pos.z*0.25);// very regular patern...
 }
 
 vec2 StaticScene_Tree(in vec3 pos, float typeFrac)
 {
 	const float woodMtl = 0.0;
 	const float treeMtl = 4.0;
-	float ground = GroundHeight(pos).x;
+	float ground = GroundHeight(pos);
 
 	pos.y -= ground;
 	float stump = fCylinder(pos, 0.5, 1.0);
@@ -34,8 +31,9 @@ vec2 StaticScene_Tree(in vec3 pos, float typeFrac)
 
 vec2 StaticScene_Ground(in vec3 pos)
 {
-	vec2 h = GroundHeight(pos);
-    return vec2(pos.y - h.x, 1.0 + h.y*0.99);
+	const float mtlNoise = noise(pos.xzx*20);
+	const float height = GroundHeight(pos);
+    return vec2(pos.y - height, 1.0 + mtlNoise*0.99);
 }
 
 vec2 StaticScene(in const vec3 pos)

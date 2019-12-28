@@ -7,94 +7,109 @@
 
 void MaterialProperties(in const vec3 pos, in const float time, in const float mtl, inout vec3 normal, out vec3 albedo, out float metalness, out float roughness)
 {
-	if(mtl < 0.0) // snow man, [-1, 0)
+	switch(int(mtl))
 	{
-		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
-		albedo = brightSnow;
-		metalness = 0.0;
-		roughness = 1.6;
-
-		const float typeFrac = fract(mtl);
-		if(typeFrac > 0.95)
+		case 0: // wood
 		{
-			albedo += albedo * (sin(time*2.0) + 1.0)*0.5 * (typeFrac - 0.95)*20.0;
+			const vec3 bright = vec3(0.31, 0.09, 0.01)*.5;
+			const vec3 dark = vec3(0.23, 0.07, 0.00)*.24;
+			const float lerp = noise(pos.xyx*20);
+			albedo = mix(dark, bright, lerp)*2.6;
+			metalness = 0.01;
+			roughness = 0.01;
 		}
-	}
-	else if(mtl < 1.0) // wood frame, [0, 1)
-	{
-		const vec3 bright = vec3(0.31, 0.09, 0.01)*.5;
-		const vec3 dark = vec3(0.23, 0.07, 0.00)*.24;
-		const float lerp = noise(pos.xyx*20);
-		albedo = mix(dark, bright, lerp)*2.6;
-		metalness = 0.01;
-		roughness = 0.01;
-	}
-	else if(mtl < 2.0) // snow terrain, [1, 2)
-	{
-		const vec3 brightSnow = vec3(0.95, 0.8, 0.75);
-		const vec3 darkSnow = vec3(0.1, 0.2, 0.5);
-		float glint = noise(pos*35)+noise(vec3(mtl));
-		albedo = mix(darkSnow, brightSnow, 0.8);
-		if(glint > 1.5)
-			albedo += darkSnow;
-		metalness = 0.0;
-		roughness = 0.6;
-	}
-	else if(mtl < 3.0) // player [2, 3)
-	{
-		albedo = vec3(1.0, 0.1, 0.1);
-		metalness = 1.0;
-		roughness = 0.1;
-	}
-	else if(mtl < 4.0) // helper [3, 4)
-	{
-		albedo = vec3(0.1, 1.0, 0.1);
-		metalness = 1.0;
-		roughness = 0.1;
-	}
-	else if(mtl < 5) // evergreen [4, 5)
-	{
-		albedo = vec3(0.02, 0.2, 0.1);
-		metalness = 0.0;
-		roughness = 1.0;
-	}
-	else if(mtl < 6) // coal [5, 6)
-	{
-		albedo = vec3(0.2, 0.2, 0.2);
-		metalness = 1.0;
-		roughness = 0.1;
-	}
-	else if(mtl < 7) // carrot [6, 7)
-	{
-		albedo = vec3(0.8, 0.35, 0.1);
-		metalness = 0.0;
-		roughness = 0.4;
-	}
-	else if(mtl < 11.0) // snow flake, [10, 11)
-	{
-		const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
-		const vec3 darkSnow = vec3(0.2, 0.4, 0.6);
-		albedo = mix(darkSnow, brightSnow, noise(vec3(fract(mtl)*19 +94)) * 0.7 + 0.3);
-		metalness = 0.0;
-		roughness = 1.6;
-		albedo *= 1.4;
-	}
-	else if(mtl < 12.0) // fireball [11, 12)
-	{
-		const vec3 Color1 = vec3(4.0, 1.0, 1.0)*2.0;
-		const vec3 Color2 = vec3(1.5, 0.8, 0.2)*1.5;
-		const vec3 Color3 = vec3(1.25, 0.03, 0.0)*1.5;
-		const vec3 Color4 = vec3(0.05, 0.02, 0.02);
-		float noise = fract(mtl);
-		float c1 = saturate(noise*5.0 + 0.5);
-		float c2 = saturate(noise*5.0);
-		float c3 = saturate(noise*3.4 - 0.5);
-		vec3 a = mix(Color1,Color2, c1);
-		vec3 b = mix(a,     Color3, c2);
+		break;
+		case 1: // terrain
+		{
+			const vec3 brightSnow = vec3(0.95, 0.8, 0.75);
+			const vec3 darkSnow = vec3(0.1, 0.2, 0.5);
+			float glint = noise(pos*35)+noise(vec3(mtl));
+			albedo = mix(darkSnow, brightSnow, 0.8);
+			if(glint > 1.5)
+				albedo += darkSnow;
+			metalness = 0.0;
+			roughness = 0.6;
+		}
+		break;
+		case 2: // player
+		{
+			albedo = vec3(1.0, 0.1, 0.1);
+			metalness = 1.0;
+			roughness = 0.1;
+		}
+		break;
+		case 3: // helper
+		{
+			albedo = vec3(0.1, 1.0, 0.1);
+			metalness = 1.0;
+			roughness = 0.1;
+		}
+		break;
+		case 4: // evergreen
+		{
+			const vec3 greenTree = vec3(0.04, 0.3, 0.15);
+			const vec3 blueTree = vec3(0.4, 0.7, 0.86) * 0.5;
+			albedo = mix(greenTree, blueTree, fract(mtl));
+			metalness = 0.0;
+			roughness = 1.0;
+		}
+		break;
+		case 5: // coal eyes
+		{
+			albedo = vec3(0.2, 0.2, 0.2);
+			metalness = 1.0;
+			roughness = 0.1;
+		}
+		break;
+		case 6: // carrot
+		{
+			albedo = vec3(0.8, 0.35, 0.1);
+			metalness = 0.0;
+			roughness = 0.4;
+		}
+		break;
+		case 7: // snowman
+		{
+			const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
+			albedo = brightSnow;
+			metalness = 0.0;
+			roughness = 1.6;
 
-		albedo = mix(b,     Color4, c3) * 1.2;
-		metalness = 1.0;
-		roughness = 0.04;
+			const float typeFrac = fract(mtl);
+			if(typeFrac > 0.95)
+			{
+				albedo += albedo * (sin(time*2.0) + 1.0)*0.5 * (typeFrac - 0.95)*20.0;
+			}
+		}
+		break;
+		case 10: // snow flake
+		{
+			const vec3 brightSnow = vec3(0.95, 0.8, 1.0);
+			const vec3 darkSnow = vec3(0.2, 0.4, 0.6);
+			albedo = mix(darkSnow, brightSnow, noise(vec3(fract(mtl)*19 +94)) * 0.7 + 0.3);
+			metalness = 0.0;
+			roughness = 1.6;
+			albedo *= 1.4;
+		}
+		break;
+		case 11: // fireball
+		{
+			const vec3 Color1 = vec3(4.0, 1.0, 1.0)*2.0;
+			const vec3 Color2 = vec3(1.5, 0.8, 0.2)*1.5;
+			const vec3 Color3 = vec3(1.25, 0.03, 0.0)*1.5;
+			const vec3 Color4 = vec3(0.05, 0.02, 0.02);
+			float noise = fract(mtl);
+			float c1 = saturate(noise*5.0 + 0.5);
+			float c2 = saturate(noise*5.0);
+			float c3 = saturate(noise*3.4 - 0.5);
+			vec3 a = mix(Color1,Color2, c1);
+			vec3 b = mix(a,     Color3, c2);
+
+			albedo = mix(b,     Color4, c3) * 1.2;
+			metalness = 1.0;
+			roughness = 0.04;
+		}
+		break;
 	}
 }
 
@@ -200,7 +215,7 @@ vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
 
 vec2 Mesh_Snowman(in vec3 pos, float typeFrac)
 {
-	const float snowmanMtl = -1.0;
+	const float snowmanMtl = 7.0;
 	const float noise = noise(pos*32)*0.001 + 0.999;
 	const float bottom = fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_BOT_Y, SNOWMAN_Z), SNOWMAN_BOT_RADIUS) / noise;
 	const float mid =    fSphere(pos*noise - vec3(SNOWMAN_X, SNOWMAN_MID_Y, SNOWMAN_Z), SNOWMAN_MID_RADIUS) / noise;

@@ -176,6 +176,7 @@ $(OutDir)TTFToC -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(Proje
     <ClInclude Include="Game.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="Power2.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="tuple_for_each.h" />
     <ClInclude Include="zip_iterator.h" />
   </ItemGroup>
@@ -188,6 +189,12 @@ $(OutDir)TTFToC -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(Proje
   <ItemGroup>
     <Natvis Include="$(GLMFolder)\util\glm.natvis" />
     <Natvis Include="..\external\imgui\1.7.4\misc\natvis\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Icon.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="snowman.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

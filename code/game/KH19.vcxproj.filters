@@ -30,6 +30,12 @@
     <Filter Include="Source Files\generated\audio">
       <UniqueIdentifier>{30cdf4b0-ab6d-460a-aeb5-d3a29f275af4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Natvis">
+      <UniqueIdentifier>{ad9bbb5a-75bb-41c8-b871-80becccacb7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{c2f352f4-3027-48e6-9182-baac24329a36}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -184,6 +190,9 @@
     <ClInclude Include="generated_audio\ting.h">
       <Filter>Source Files\generated\audio</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\scene_defines.glsl">
@@ -200,7 +209,21 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="$(GLMFolder)\util\glm.natvis" />
-    <Natvis Include="..\external\imgui\1.7.4\misc\natvis\imgui.natvis" />
+    <Natvis Include="..\external\imgui\1.7.4\misc\natvis\imgui.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="$(GLMFolder)\util\glm.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="snowman.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Icon.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

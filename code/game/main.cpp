@@ -752,6 +752,8 @@ int main(int argc, char* argv[])
 
 		ALLEGRO_DISPLAY* const display = al_create_display(1024, 768);
 
+		al_set_window_title(display, "Let's Build a Snowman!");
+
 		if (!display)
 		{
 			printf("Failed to create display.\n");

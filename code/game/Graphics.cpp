@@ -149,45 +149,36 @@ namespace
 		{
 			struct CompNode
 			{
-				CompNode* children[4];
-				glm::vec4 childMinX;
-				glm::vec4 childMinY;
-				glm::vec4 childMinZ;
-				glm::vec4 childMaxX;
-				glm::vec4 childMaxY;
-				glm::vec4 childMaxZ;
+				CompNode* children[2];
+				float mins[3];
+				float maxs[3];
 			};
+			static CompNode * const IS_LEAF = reinterpret_cast<CompNode*>(~0ull);
 
-			static CompNode* ConvertToGPU_r(const spatial_tree<uint, 3, 4>& node, std::vector<CompNode>* outNodes)
+			static CompNode* ConvertToGPU_r(const spatial_tree<uint, 3, 2>& node, std::vector<CompNode>* outNodes)
 			{
 				const uint nodeIndex = static_cast<uint>(outNodes->size());
 				CompNode* const outNode = &outNodes->emplace_back();
 
-				glm::vec4* const outMins[] = { &outNode->childMinX, &outNode->childMinY, &outNode->childMinZ };
-				glm::vec4* const outMaxs[] = { &outNode->childMaxX, &outNode->childMaxY, &outNode->childMaxZ };
-
-				for (size_t d = 0; d < 3; ++d)
-				{
-					const float* const mins = node.child_mins(d);
-					const float* const maxs = node.child_maxs(d);
-
-					for (uint c = 0; c < node.child_count(); ++c)
-					{
-						(*outMins[d])[c] = mins[c];
-						(*outMaxs[d])[c] = maxs[c];
-					}
-
-					for (uint c = node.child_count(); c < 4; ++c)
-					{
-						(*outMins[d])[c] = FLT_MAX;
-						(*outMaxs[d])[c] = -FLT_MAX;
-					}
-				}
+				node.bounds(outNode->mins, outNode->maxs);
 
 				if (node.leaf_branch())
 				{
 					for (uint c = 0; c < node.child_count(); ++c)
-						outNode->children[c] = reinterpret_cast<CompNode*>(static_cast<uintptr_t>((node.leaf(c) << 1) | 1));
+					{
+						CompNode* const outChild = &outNodes->emplace_back();
+
+						for (uint d = 0; d < 3; ++d)
+						{
+							outChild->mins[d] = node.child_mins(d)[c];
+							outChild->maxs[d] = node.child_maxs(d)[c];
+						}
+
+						outChild->children[0] = IS_LEAF;
+						outChild->children[1] = reinterpret_cast<CompNode*>(static_cast<uintptr_t>(node.leaf(c)));
+
+						(*outNodes)[nodeIndex].children[c] = outChild;
+					}
 				}
 				else
 				{
@@ -195,66 +186,32 @@ namespace
 						(*outNodes)[nodeIndex].children[c] = ConvertToGPU_r(node.subtree(c), outNodes);
 				}
 
-				for (uint c = node.child_count(); c < 4; ++c)
+				for (uint c = node.child_count(); c < 2; ++c)
 					(*outNodes)[nodeIndex].children[c] = nullptr;
 
 				return outNodes->data() + nodeIndex;
 			}
 
-			static uint CompressGPUTree_r(CompNode* node)
+			static void CompressGPUTree_r(CompNode* node)
 			{
-				uint childChildren[4];
-				uint childCount;
-				uint leafCount = 0;
-
-				for (childCount = 0; childCount < 4; ++childCount)
+				if (node->children[0] != IS_LEAF)
 				{
-					CompNode* const childPtr = node->children[childCount];
+					assert(node->children[0]);
+					CompressGPUTree_r(node->children[0]);
 
-					if (!childPtr)
-						break;
-
-					if (!(reinterpret_cast<uintptr_t>(childPtr) & 1))
-						childChildren[childCount] = CompressGPUTree_r(childPtr);
+					if (node->children[1])
+					{
+						 CompressGPUTree_r(node->children[1]);
+					}
 					else
 					{
-						childChildren[childCount] = 0;
-						++leafCount;
+						CompNode* const leftChild = node->children[0];
+
+						assert(leftChild->children[0] == IS_LEAF);
+
+						*node = *leftChild;
 					}
 				}
-
-				if (leafCount < childCount)
-				{
-					uint newChildCount = childCount;
-					for (uint c = 0; c < childCount; ++c)
-					{
-						if (childChildren[c])
-						{
-							uint emptySlots = 4 - newChildCount;
-							if (childChildren[c] <= emptySlots + 1)
-							{
-								CompNode* const child = node->children[c];
-
-								for (uint childC = 0; childC < childChildren[c]; ++childC)
-								{
-									const uint dest = !childC ? c : newChildCount++;
-
-									node->children[dest] = child->children[childC];
-									node->childMinX[dest] = child->childMinX[childC];
-									node->childMinY[dest] = child->childMinY[childC];
-									node->childMinZ[dest] = child->childMinZ[childC];
-									node->childMaxX[dest] = child->childMaxX[childC];
-									node->childMaxY[dest] = child->childMaxY[childC];
-									node->childMaxZ[dest] = child->childMaxZ[childC];
-								}
-							}
-						}
-					}
-
-					childCount = newChildCount;
-				}
-
-				return childCount;
 			}
 
 			static uint FinalizeGPUTree_r(CompNode* node, std::vector<Node>* outNodes)
@@ -262,33 +219,44 @@ namespace
 				const uint nodeIndex = static_cast<uint>(outNodes->size());
 				Node* outNode = &outNodes->emplace_back();
 
-				outNode->childMinX = node->childMinX;
-				outNode->childMinY = node->childMinY;
-				outNode->childMinZ = node->childMinZ;
-				outNode->childMaxX = node->childMaxX;
-				outNode->childMaxY = node->childMaxY;
-				outNode->childMaxZ = node->childMaxZ;
+				outNode->minX = node->mins[0];
+				outNode->minY = node->mins[1];
+				outNode->minZ = node->mins[2];
+				outNode->maxX = node->maxs[0];
+				outNode->maxY = node->maxs[1];
+				outNode->maxZ = node->maxs[2];
 
-				for (uint c = 0; c < 4; ++c)
+				if (node->children[0] == IS_LEAF)
 				{
-					CompNode* const childNode = node->children[c];
-
-					if (childNode)
+					outNode->leftIndex = LEAF_NODE_ID;
+					outNode->rightIndex = static_cast<uint>(reinterpret_cast<uintptr_t>(node->children[1]));
+				}
+				else
+				{
+					if(node->children[0] != nullptr)
 					{
-						const uintptr_t childNodeBits = reinterpret_cast<uintptr_t>(childNode);
-						const bool isLeaf = childNodeBits & 1;
+						CompNode* const childNode = node->children[0];
+						const uint childNodeOffset = FinalizeGPUTree_r(childNode, outNodes);
 
-						if (isLeaf)
-						{
-							outNode->childOffsets[c] = static_cast<uint>((childNodeBits >> 1) | LEAF_NODE_MASK);
-						}
-						else
-						{
-							const uint childNodeOffset = FinalizeGPUTree_r(childNode, outNodes);
+						outNode = outNodes->data() + nodeIndex;
+						outNode->leftIndex = childNodeOffset;
+					}
+					else
+					{
+						outNode->leftIndex = 0;
+					}
 
-							outNode = outNodes->data() + nodeIndex;
-							outNode->childOffsets[c] = childNodeOffset;
-						}
+					if (node->children[1] != nullptr)
+					{
+						CompNode* const childNode = node->children[1];
+						const uint childNodeOffset = FinalizeGPUTree_r(childNode, outNodes);
+
+						outNode = outNodes->data() + nodeIndex;
+						outNode->rightIndex = childNodeOffset;
+					}
+					else
+					{
+						outNode->rightIndex = 0;
 					}
 				}
 
@@ -302,7 +270,7 @@ namespace
 			const uint entryCount = static_cast<uint>(g.sceneEntries.size());
 			const glm::mat4* const entries = g.sceneEntries.data();
 			uint* const indices = (uint*)_malloca(sizeof(uint) * entryCount);
-			spatial_tree<uint, 3, 4> buildTree;
+			spatial_tree<uint, 3, 2> buildTree;
 
 			std::iota(indices, indices + entryCount, 0);
 			buildTree.insert(indices, indices + entryCount, [entries](uint entryIndex, float(&outMins)[3], float(&outMaxs)[3])
@@ -371,10 +339,11 @@ namespace
 			});
 			 
 			std::vector<CompNode> intGPUNodes;
-			intGPUNodes.reserve(entryCount * 2);
+			intGPUNodes.reserve(entryCount * 4);
 			CompNode* const headIntNode = ConvertToGPU_r(buildTree, &intGPUNodes);
+			assert(intGPUNodes.size() <= entryCount * 4);
 			CompressGPUTree_r(headIntNode);
-
+			 
 			std::vector<Node> gpuNodes;
 			gpuNodes.reserve(intGPUNodes.size());
 			FinalizeGPUTree_r(headIntNode, &gpuNodes);

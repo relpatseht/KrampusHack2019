@@ -4,11 +4,6 @@
 #include <vector>
 #include <algorithm>
 
-namespace
-{
-
-}
-
 struct Audio
 {
 	ALLEGRO_MIXER* mixer;
@@ -108,6 +103,45 @@ namespace aud
 			}
 
 			al_fclose(f);
+		}
+
+		return trackId;
+	}
+
+	uint AddTrack(Audio* a, uint sampleCount, uint sampleRate, const void* samples, uint channelCount, uint bitDepth)
+	{
+		ALLEGRO_CHANNEL_CONF chConf = (ALLEGRO_CHANNEL_CONF)~0u;
+		ALLEGRO_AUDIO_DEPTH depth = (ALLEGRO_AUDIO_DEPTH)~0u;
+		uint trackId = ~0u;
+
+		switch (channelCount)
+		{
+			case 1: chConf = ALLEGRO_CHANNEL_CONF_1; break;
+			case 2: chConf = ALLEGRO_CHANNEL_CONF_2; break;
+			case 3: chConf = ALLEGRO_CHANNEL_CONF_3; break;
+			case 4: chConf = ALLEGRO_CHANNEL_CONF_4; break;
+			case 5: chConf = ALLEGRO_CHANNEL_CONF_5_1; break;
+			case 6: chConf = ALLEGRO_CHANNEL_CONF_6_1; break;
+			case 7: chConf = ALLEGRO_CHANNEL_CONF_7_1; break;
+		}
+
+		switch (bitDepth)
+		{
+		case 8: depth = ALLEGRO_AUDIO_DEPTH_INT8; break;
+		case 16: depth = ALLEGRO_AUDIO_DEPTH_INT16; break;
+		case 24: depth = ALLEGRO_AUDIO_DEPTH_INT24; break;
+		case 32: depth = ALLEGRO_AUDIO_DEPTH_FLOAT32; break;
+		}
+
+		if (depth < ~0u && chConf < ~0u)
+		{
+			ALLEGRO_SAMPLE* const track = al_create_sample((void*)samples, sampleCount, sampleRate, depth, chConf, false);
+
+			if (track)
+			{
+				trackId = static_cast<uint>(a->tracks.size());
+				a->tracks.emplace_back(track);
+			}
 		}
 
 		return trackId;

@@ -27,6 +27,9 @@
     <Filter Include="Source Files\generated\fonts">
       <UniqueIdentifier>{75fc5c4d-143c-46a1-ab02-f9673991f3eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\generated\audio">
+      <UniqueIdentifier>{30cdf4b0-ab6d-460a-aeb5-d3a29f275af4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -64,6 +67,27 @@
     </ClCompile>
     <ClCompile Include="generated_shaders\scene.frag.cpp">
       <Filter>Source Files\generated\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_audio\fire.cpp">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_audio\footsteps.cpp">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_audio\hooray.cpp">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_audio\sizzle.cpp">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_audio\snowman.cpp">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_audio\throw.cpp">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="generated_audio\ting.cpp">
+      <Filter>Source Files\generated\audio</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +162,27 @@
     </ClInclude>
     <ClInclude Include="generated_shaders\ShaderReflection.h">
       <Filter>Source Files\generated\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_audio\fire.h">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_audio\footsteps.h">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_audio\hooray.h">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_audio\sizzle.h">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_audio\snowman.h">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_audio\throw.h">
+      <Filter>Source Files\generated\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="generated_audio\ting.h">
+      <Filter>Source Files\generated\audio</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

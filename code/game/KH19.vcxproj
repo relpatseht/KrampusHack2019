@@ -65,6 +65,7 @@
     </Link>
     <PreBuildEvent>
       <Command>$(OutDir)GLSLToC_d -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders
+$(OutDir)WavToC_d $(AssetsFolder)audio $(ProjectDir)generated_audio
 $(OutDir)TTFToC_d -base85 $(AssetsFolder)fonts/AlmonteSnow.ttf MenuFont &gt; $(ProjectDir)generated_fonts/MenuFont.inc
 $(OutDir)TTFToC_d -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(ProjectDir)generated_fonts/TitleFont.inc</Command>
       <Message>Generating Assets</Message>
@@ -98,6 +99,7 @@ $(OutDir)TTFToC_d -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(Pro
     </Link>
     <PreBuildEvent>
       <Command>$(OutDir)GLSLToC -I$(AssetsFolder)shaders -O$(ProjectDir)generated_shaders $(AssetsFolder)shaders
+$(OutDir)WavToC $(AssetsFolder)audio $(ProjectDir)generated_audio
 $(OutDir)TTFToC -base85 $(AssetsFolder)fonts/AlmonteSnow.ttf MenuFont &gt; $(ProjectDir)generated_fonts/MenuFont.inc
 $(OutDir)TTFToC -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(ProjectDir)generated_fonts/TitleFont.inc</Command>
       <Message>Generating Assets</Message>
@@ -128,6 +130,13 @@ $(OutDir)TTFToC -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(Proje
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="bvh\box_partitioner.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="generated_audio\fire.cpp" />
+    <ClCompile Include="generated_audio\footsteps.cpp" />
+    <ClCompile Include="generated_audio\hooray.cpp" />
+    <ClCompile Include="generated_audio\sizzle.cpp" />
+    <ClCompile Include="generated_audio\snowman.cpp" />
+    <ClCompile Include="generated_audio\throw.cpp" />
+    <ClCompile Include="generated_audio\ting.cpp" />
     <ClCompile Include="generated_shaders\blur.frag.cpp" />
     <ClCompile Include="generated_shaders\downsample.frag.cpp" />
     <ClCompile Include="generated_shaders\fullscreen_quad.vert.cpp" />
@@ -150,6 +159,13 @@ $(OutDir)TTFToC -base85 $(AssetsFolder)fonts/JFSnobiz.ttf TitleFont &gt; $(Proje
     <ClInclude Include="bvh\spatial_tree_common.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentTypes.h" />
+    <ClInclude Include="generated_audio\fire.h" />
+    <ClInclude Include="generated_audio\footsteps.h" />
+    <ClInclude Include="generated_audio\hooray.h" />
+    <ClInclude Include="generated_audio\sizzle.h" />
+    <ClInclude Include="generated_audio\snowman.h" />
+    <ClInclude Include="generated_audio\throw.h" />
+    <ClInclude Include="generated_audio\ting.h" />
     <ClInclude Include="generated_shaders\blur.frag.h" />
     <ClInclude Include="generated_shaders\downsample.frag.h" />
     <ClInclude Include="generated_shaders\fullscreen_quad.vert.h" />

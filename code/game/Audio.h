@@ -12,6 +12,7 @@ namespace aud
 	void Update(Audio* a);
 
 	uint AddTrack(Audio* a, const char* file);
+	uint AddTrack(Audio* a, uint sampleCount, uint sampleRate, const void *samples, uint channelCount = 2, uint bitDepth = 16);
 	void PlayTrackDetached(Audio* a, uint track, bool loop = false, float volume = 1.0, float pan = 0.0);
 
 	void AttachTrack(Audio* a, uint objectId, uint track, float volume = 1.0, bool loop = true);

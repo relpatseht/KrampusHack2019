@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <thread>
 #include "allegro5/allegro.h"
-#include "allegro5/allegro_audio.h"
 #include "allegro5/allegro_acodec.h"
 #include "Game.h"
 #include "Graphics.h"
@@ -14,6 +13,14 @@
 #include "glm/gtx/euler_angles.hpp"
 #include "shaders/scene_defines.glsl"
 #include <array>
+
+#include "generated_audio/fire.h"
+#include "generated_audio/footsteps.h"
+#include "generated_audio/hooray.h"
+#include "generated_audio/sizzle.h"
+#include "generated_audio/snowman.h"
+#include "generated_audio/throw.h"
+#include "generated_audio/ting.h"
 
 namespace
 {
@@ -84,12 +91,7 @@ namespace
 				{
 					if (al_install_audio())
 					{
-						if (al_init_acodec_addon())
-						{
-							return true;
-						}
-
-						al_uninstall_audio();
+						return true;
 					}
 
 					al_uninstall_keyboard();
@@ -309,7 +311,9 @@ namespace
 		const uint totalMilliseconds = (frames * 1000) / 60;
 		const uint minutes = totalMilliseconds / (1000 * 60);
 		const uint seconds = (totalMilliseconds / 1000) - (minutes * 60);
-		const uint milliseconds = totalMilliseconds - (seconds * 60) - (minutes * 360);
+		const uint milliseconds = totalMilliseconds - ((seconds + (minutes * 60)) * 1000);
+
+		assert(seconds < 60 && milliseconds < 1000);
 
 		switch (state->state)
 		{
@@ -764,13 +768,13 @@ int main(int argc, char* argv[])
 			else
 			{
 				{
-					const uint theme = aud::AddTrack(state.game->aud, "audio/snowman.wav");
-					const uint footsteps = aud::AddTrack(state.game->aud, "audio/footsteps.wav");
-					const uint sizzle = aud::AddTrack(state.game->aud, "audio/sizzle.wav");
-					const uint thow = aud::AddTrack(state.game->aud, "audio/throw.wav");
-					const uint ting = aud::AddTrack(state.game->aud, "audio/ting.wav");
-					const uint fire = aud::AddTrack(state.game->aud, "audio/fire.wav");
-					const uint hooray = aud::AddTrack(state.game->aud, "audio/hooray.wav");
+					const uint theme = aud::AddTrack(state.game->aud, snowman_sampleCount, snowman_sampleRate, snowman_pcmData, snowman_channelCount, snowman_bitDepth);
+					const uint footsteps = aud::AddTrack(state.game->aud, footsteps_sampleCount, footsteps_sampleRate, footsteps_pcmData, footsteps_channelCount, footsteps_bitDepth);
+					const uint sizzle = aud::AddTrack(state.game->aud, sizzle_sampleCount, sizzle_sampleRate, sizzle_pcmData, sizzle_channelCount, sizzle_bitDepth);
+					const uint thow = aud::AddTrack(state.game->aud, throw_sampleCount, throw_sampleRate, throw_pcmData, throw_channelCount, throw_bitDepth);
+					const uint ting = aud::AddTrack(state.game->aud, ting_sampleCount, ting_sampleRate, ting_pcmData, ting_channelCount, ting_bitDepth);
+					const uint fire = aud::AddTrack(state.game->aud, fire_sampleCount, fire_sampleRate, fire_pcmData, fire_channelCount, fire_bitDepth);
+					const uint hooray = aud::AddTrack(state.game->aud, hooray_sampleCount, hooray_sampleRate, hooray_pcmData, hooray_channelCount, hooray_bitDepth);
 
 					assert(theme == AudioTrack::THEME);
 					assert(footsteps == AudioTrack::FOOTSTEPS);
@@ -863,7 +867,7 @@ int main(int argc, char* argv[])
 				phy::AddBody(state.game->phy, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
 				phy::AddSoftAnchor(state.game->phy, state.helperId);
 
-				aud::PlayTrackDetached(state.game->aud, AudioTrack::THEME, true, 0.15f);
+				aud::PlayTrackDetached(state.game->aud, AudioTrack::THEME, true, 0.1f);
 				
 				state.frameCount = 1; // start at 1 to not fire all periodics immediately
 				while (state.state != State::SHUTDOWN)

@@ -39,6 +39,8 @@ layout(location = 1) out vec4 out_brightColor;
 uint g_rayHitSceneEntries[MAX_HIT_SCENE_ENTRIES];
 uint g_rayHitSceneEntryCount = 0;
 
+float g_timeSec;
+
 void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 {
 	const uint MAX_STACK = 16;
@@ -102,34 +104,28 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 	for(uint i=0; i<g_rayHitSceneEntryCount; ++i)
 	{
 		mat4 invTransform = in_entries[g_rayHitSceneEntries[i]];
-		float type = invTransform[3][3];
-		float typeFrac = fract(type);
+		float typeVal = invTransform[3][3];
+		float typeFrac = fract(typeVal);
+		uint type = uint(typeVal);
 
 		invTransform[3][3] = 1.0;
 
 		vec3 objPos = (invTransform*vec4(pos, 1.0)).xyz;
 		vec2 objDist;
 
-		if(type < MESH_TYPE_PLAYER + 1.0)
-			objDist = Mesh_Player(objPos, typeFrac);
-		else if(type < MESH_TYPE_HELPER + 1.0)
-			objDist = Mesh_Helper(objPos, typeFrac);
-		else if(type < MESH_TYPE_SNOW_FLAKE + 1.0)
-			objDist = Mesh_Snowflake(objPos, typeFrac);
-		else if(type < MESH_TYPE_SNOW_BALL + 1.0)
-			objDist = Mesh_Snowball(objPos, typeFrac);
-		else if(type < MESH_TYPE_SNOW_MAN + 1.0)
-			objDist = Mesh_Snowman(objPos, typeFrac);
-		else if(type < MESH_TYPE_STATIC_PLATFORMS + 1.0)
-			objDist = Mesh_StaticPlatforms(objPos, typeFrac);
-		else if(type < MESH_TYPE_WORLD_BOUNDS + 1.0)
-			objDist = Mesh_SceneBounds(objPos, typeFrac);
-		else if(type < MESH_TYPE_FIRE_BALL + 1.0)
-			objDist = Mesh_Fireball(objPos, typeFrac, float(in_frameCount) / 60.0);
-		else if(type < MESH_TYPE_GROUND_PLANE + 1.0)
-			objDist = StaticScene_Ground(objPos);
-		else if(type < MESH_TYPE_TREE + 1.0)
-			objDist = StaticScene_Tree(objPos, typeFrac);
+		switch(type)
+		{
+		case MESH_TYPE_PLAYER:				objDist = Mesh_Player(objPos, typeFrac);              break;
+		case MESH_TYPE_HELPER:				objDist = Mesh_Helper(objPos, typeFrac);              break;
+		case MESH_TYPE_SNOW_FLAKE:			objDist = Mesh_Snowflake(objPos, typeFrac);           break;
+		case MESH_TYPE_SNOW_BALL:			objDist = Mesh_Snowball(objPos, typeFrac);            break;
+		case MESH_TYPE_SNOW_MAN:			objDist = Mesh_Snowman(objPos, typeFrac);             break;
+		case MESH_TYPE_STATIC_PLATFORMS:	objDist = Mesh_StaticPlatforms(objPos, typeFrac);     break;
+		case MESH_TYPE_WORLD_BOUNDS:		objDist = Mesh_SceneBounds(objPos, typeFrac);         break;
+		case MESH_TYPE_FIRE_BALL:			objDist = Mesh_Fireball(objPos, typeFrac, g_timeSec); break;
+		case MESH_TYPE_GROUND_PLANE:		objDist = StaticScene_Ground(objPos);                 break;
+		case MESH_TYPE_TREE:				objDist = StaticScene_Tree(objPos, typeFrac);         break;
+		}
 
 		if(objDist.x < dist.x)
 			dist = objDist;
@@ -149,7 +145,7 @@ vec3 RayDir(in const vec3 camDir)
 
 void main()
 {
-	const float timeSec = float(in_frameCount) / 60.0;
+	g_timeSec = float(in_frameCount) / 60.0;
 	vec3 camDir = normalize(in_camTarget - in_camPos);
 	vec3 rayDir = RayDir(camDir);
 
@@ -159,8 +155,8 @@ void main()
 
 	if( objDist.x > g_camFar)
 	{
-		vec3 snow = Background_Snow(timeSec, gl_FragCoord.xy, in_resolution);
-		vec3 backdrop = Background_StarryGradient(timeSec, gl_FragCoord.xy, in_resolution);
+		vec3 snow = Background_Snow(g_timeSec, gl_FragCoord.xy, in_resolution);
+		vec3 backdrop = Background_StarryGradient(g_timeSec, gl_FragCoord.xy, in_resolution);
 		out_color = vec4(snow + backdrop, 1.0);
 	}
 	else
@@ -178,10 +174,10 @@ void main()
 		vec3 albedo = vec3(0.5, 0.0, 0.0);
 		float metalness = 0.95;
 		float roughness = 0.05;
-		MaterialProperties(hitPos, timeSec, objDist.y, hitNormal, albedo, metalness, roughness);
+		MaterialProperties(hitPos, g_timeSec, objDist.y, hitNormal, albedo, metalness, roughness);
 
 		// compute lighting
-		const vec3 ambientLight = vec3(0.3);
+		const vec3 ambientLight = vec3(0.2);
 
 		vec3 light1Color = vec3(700, 700, 1000);
 		vec3 light1Pos = vec3(20, 20, 15);
@@ -189,7 +185,6 @@ void main()
 		float light1Dist = length(light1Pos - hitPos);
 		float light1Attn = 1.0 / (light1Dist * light1Dist);
 		vec3 light1BRDF = BRDF_CookTorrance(hitNormal, viewDir, light1Dir, albedo, metalness, roughness);
-
 
 		BVHRayGatherSceneEntries(light1Dir, hitPos);
 		float light1Shadow = objDist.y < 10 ? RayMarch_Shadow(light1Dir, hitPos, 25.0, g_camFar) : 1.0;

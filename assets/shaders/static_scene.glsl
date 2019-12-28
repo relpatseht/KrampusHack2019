@@ -35,7 +35,7 @@ vec2 StaticScene_Tree(in vec3 pos, float typeFrac)
 vec2 StaticScene_Ground(in vec3 pos)
 {
 	vec2 h = GroundHeight(pos);
-    return vec2(pos.y - h.x + 7.9, 1.0 + h.y*0.99);
+    return vec2(pos.y - h.x, 1.0 + h.y*0.99);
 }
 
 vec2 StaticScene(in const vec3 pos)

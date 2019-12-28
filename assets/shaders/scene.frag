@@ -126,18 +126,13 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 			objDist = Mesh_SceneBounds(objPos, typeFrac);
 		else if(type < MESH_TYPE_FIRE_BALL + 1.0)
 			objDist = Mesh_Fireball(objPos, typeFrac, float(in_frameCount) / 60.0);
+		else if(type < MESH_TYPE_GROUND_PLANE + 1.0)
+			objDist = StaticScene_Ground(objPos);
 		else if(type < MESH_TYPE_TREE + 1.0)
 			objDist = StaticScene_Tree(objPos, typeFrac);
 
 		if(objDist.x < dist.x)
 			dist = objDist;
-	}
-
-	{
-		vec2 staticSceneDist = StaticScene(pos);
-
-		if(staticSceneDist.x < dist.x)
-			dist = staticSceneDist;
 	}
 
 	return dist;

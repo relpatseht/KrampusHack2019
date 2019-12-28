@@ -362,14 +362,14 @@ namespace
 				case MESH_TYPE_GROUND_PLANE:
 					mins -= glm::vec3(100.0f, 1.5f, 100.0f);
 					maxs += glm::vec3(100.0f, 1.5f, 100.0f);
-					break; 
+					break;  
 				case MESH_TYPE_TREE:
 					mins -= glm::vec3(2.0f, 2.0f, 2.0f);
 					maxs += glm::vec3(2.0f, 5.0f, 2.0f);
 					break;
 				}
 			});
-
+			 
 			std::vector<CompNode> intGPUNodes;
 			intGPUNodes.reserve(entryCount * 2);
 			CompNode* const headIntNode = ConvertToGPU_r(buildTree, &intGPUNodes);

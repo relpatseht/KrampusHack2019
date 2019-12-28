@@ -742,7 +742,7 @@ namespace
 
 int main(int argc, char* argv[])
 {
-	srand(5); // chosen for it's aestetics
+	srand(6); // chosen for it's aesthetics
 
 	if (!InitAllegro())
 	{
@@ -855,9 +855,9 @@ int main(int argc, char* argv[])
 				//gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
 				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
 
-				//float groundY = -7.9f;
-				//state.groundId = game::CreateObject(state.game);
-				//gfx::AddModel(state.game->gfx, state.groundId, gfx::MeshType::GROUND_PLANE, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, groundY, 0.0f)));
+				float groundY = -7.9f;
+				state.groundId = game::CreateObject(state.game);
+				gfx::AddModel(state.game->gfx, state.groundId, gfx::MeshType::GROUND_PLANE, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, groundY, 0.0f)));
 				
 				for (uint treeIndex = 0; treeIndex < state.treeIds.size(); ++treeIndex)
 				{

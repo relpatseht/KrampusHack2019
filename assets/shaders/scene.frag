@@ -51,34 +51,45 @@ void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 	while(stackSize != 0)
 	{
 		const uint nodeIndex = nodeStack[--stackSize];
-		const Node curNode = in_bvh[nodeIndex];
-		const vec3 tEnter = (vec3(curNode.minX, curNode.minY, curNode.minZ) - rayOrigin) * invDir;
-		const vec3 tExit = (vec3(curNode.maxX, curNode.maxY, curNode.maxZ) - rayOrigin) * invDir;
-		const vec3 tMin = min(tEnter, tExit);
-		const vec3 tMax = max(tEnter, tExit);
-		const float start = max(tMin.x, max(tMin.y, max(tMin.z, 0.0)));
-		const float end = min(tMax.x, min(tMax.y, tMax.z));
-		const bool intersects = end >= start;
+		vec4 tEnter, tExit;
+		vec4 tMin, tMax;
+		bvec4 intersectsChild;
 
-		if(intersects)
+		tEnter = (in_bvh[nodeIndex].childMinX - rayOrigin.xxxx) * invDir.xxxx;
+		tExit  = (in_bvh[nodeIndex].childMaxX - rayOrigin.xxxx) * invDir.xxxx;
+		tMin = max(min(tEnter, tExit), vec4(0));
+		tMax = max(tEnter, tExit);
+
+		tEnter = (in_bvh[nodeIndex].childMinY - rayOrigin.yyyy) * invDir.yyyy;
+		tExit  = (in_bvh[nodeIndex].childMaxY - rayOrigin.yyyy) * invDir.yyyy;
+		tMin = max(tMin, min(tEnter, tExit));
+		tMax = min(tMax, max(tEnter, tExit));
+
+		tEnter = (in_bvh[nodeIndex].childMinZ - rayOrigin.zzzz) * invDir.zzzz;
+		tExit  = (in_bvh[nodeIndex].childMaxZ - rayOrigin.zzzz) * invDir.zzzz;
+		tMin = max(tMin, min(tEnter, tExit));
+		tMax = min(tMax, max(tEnter, tExit));
+
+		intersectsChild = greaterThanEqual(tMax, tMin);
+
+		for(uint childIndex=0; childIndex<4; ++childIndex)
 		{
-			if(curNode.leftIndex == LEAF_NODE_ID)
+			const uint childOffset = in_bvh[nodeIndex].childOffsets[childIndex];
+
+			if(childOffset != 0 && intersectsChild[childIndex])
 			{
-				if(g_rayHitSceneEntryCount < MAX_HIT_SCENE_ENTRIES)
+				if((childOffset & LEAF_NODE_MASK) == LEAF_NODE_MASK)
 				{
-					g_rayHitSceneEntries[g_rayHitSceneEntryCount++] = curNode.rightIndex;
+					if(g_rayHitSceneEntryCount < MAX_HIT_SCENE_ENTRIES)
+					{
+						g_rayHitSceneEntries[g_rayHitSceneEntryCount++] = childOffset & (~LEAF_NODE_MASK);
+					}
 				}
-			}
-			else
-			{
-				if(curNode.rightIndex != 0)
+				else
 				{
 					if(stackSize < MAX_STACK)
-						nodeStack[stackSize++] = curNode.rightIndex;
+						nodeStack[stackSize++] = childOffset;
 				}
-
-				if(stackSize < MAX_STACK)
-					nodeStack[stackSize++] = curNode.leftIndex;
 			}
 		}
 	}

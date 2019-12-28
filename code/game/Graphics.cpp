@@ -49,6 +49,7 @@ struct Graphics
 	glm::mat3 camViewMtx;
 	glm::vec2 res{ 1024.0f, 768.0f };
 	glm::uint frameCount = 0;
+	uint noiseTex = 0;
 
 	uint sceneFBO = 0;
 	uint sceneVAO = 0;
@@ -149,36 +150,45 @@ namespace
 		{
 			struct CompNode
 			{
-				CompNode* children[2];
-				float mins[3];
-				float maxs[3];
+				CompNode* children[4];
+				glm::vec4 childMinX;
+				glm::vec4 childMinY;
+				glm::vec4 childMinZ;
+				glm::vec4 childMaxX;
+				glm::vec4 childMaxY;
+				glm::vec4 childMaxZ;
 			};
-			static CompNode * const IS_LEAF = reinterpret_cast<CompNode*>(~0ull);
 
-			static CompNode* ConvertToGPU_r(const spatial_tree<uint, 3, 2>& node, std::vector<CompNode>* outNodes)
+			static CompNode* ConvertToGPU_r(const spatial_tree<uint, 3, 4>& node, std::vector<CompNode>* outNodes)
 			{
 				const uint nodeIndex = static_cast<uint>(outNodes->size());
 				CompNode* const outNode = &outNodes->emplace_back();
 
-				node.bounds(outNode->mins, outNode->maxs);
+				glm::vec4* const outMins[] = { &outNode->childMinX, &outNode->childMinY, &outNode->childMinZ };
+				glm::vec4* const outMaxs[] = { &outNode->childMaxX, &outNode->childMaxY, &outNode->childMaxZ };
+
+				for (size_t d = 0; d < 3; ++d)
+				{
+					const float* const mins = node.child_mins(d);
+					const float* const maxs = node.child_maxs(d);
+
+					for (uint c = 0; c < node.child_count(); ++c)
+					{
+						(*outMins[d])[c] = mins[c];
+						(*outMaxs[d])[c] = maxs[c];
+					}
+
+					for (uint c = node.child_count(); c < 4; ++c)
+					{
+						(*outMins[d])[c] = FLT_MAX;
+						(*outMaxs[d])[c] = -FLT_MAX;
+					}
+				}
 
 				if (node.leaf_branch())
 				{
 					for (uint c = 0; c < node.child_count(); ++c)
-					{
-						CompNode* const outChild = &outNodes->emplace_back();
-
-						for (uint d = 0; d < 3; ++d)
-						{
-							outChild->mins[d] = node.child_mins(d)[c];
-							outChild->maxs[d] = node.child_maxs(d)[c];
-						}
-
-						outChild->children[0] = IS_LEAF;
-						outChild->children[1] = reinterpret_cast<CompNode*>(static_cast<uintptr_t>(node.leaf(c)));
-
-						(*outNodes)[nodeIndex].children[c] = outChild;
-					}
+						outNode->children[c] = reinterpret_cast<CompNode*>(static_cast<uintptr_t>((node.leaf(c) << 1) | 1));
 				}
 				else
 				{
@@ -186,32 +196,66 @@ namespace
 						(*outNodes)[nodeIndex].children[c] = ConvertToGPU_r(node.subtree(c), outNodes);
 				}
 
-				for (uint c = node.child_count(); c < 2; ++c)
+				for (uint c = node.child_count(); c < 4; ++c)
 					(*outNodes)[nodeIndex].children[c] = nullptr;
 
 				return outNodes->data() + nodeIndex;
 			}
 
-			static void CompressGPUTree_r(CompNode* node)
+			static uint CompressGPUTree_r(CompNode* node)
 			{
-				if (node->children[0] != IS_LEAF)
-				{
-					assert(node->children[0]);
-					CompressGPUTree_r(node->children[0]);
+				uint childChildren[4];
+				uint childCount;
+				uint leafCount = 0;
 
-					if (node->children[1])
-					{
-						 CompressGPUTree_r(node->children[1]);
-					}
+				for (childCount = 0; childCount < 4; ++childCount)
+				{
+					CompNode* const childPtr = node->children[childCount];
+
+					if (!childPtr)
+						break;
+
+					if (!(reinterpret_cast<uintptr_t>(childPtr) & 1))
+						childChildren[childCount] = CompressGPUTree_r(childPtr);
 					else
 					{
-						CompNode* const leftChild = node->children[0];
-
-						assert(leftChild->children[0] == IS_LEAF);
-
-						*node = *leftChild;
+						childChildren[childCount] = 0;
+						++leafCount;
 					}
 				}
+
+				if (leafCount < childCount)
+				{
+					uint newChildCount = childCount;
+					for (uint c = 0; c < childCount; ++c)
+					{
+						if (childChildren[c])
+						{
+							uint emptySlots = 4 - newChildCount;
+							if (childChildren[c] <= emptySlots + 1)
+							{
+								CompNode* const child = node->children[c];
+
+								for (uint childC = 0; childC < childChildren[c]; ++childC)
+								{
+									const uint dest = !childC ? c : newChildCount++;
+
+									node->children[dest] = child->children[childC];
+									node->childMinX[dest] = child->childMinX[childC];
+									node->childMinY[dest] = child->childMinY[childC];
+									node->childMinZ[dest] = child->childMinZ[childC];
+									node->childMaxX[dest] = child->childMaxX[childC];
+									node->childMaxY[dest] = child->childMaxY[childC];
+									node->childMaxZ[dest] = child->childMaxZ[childC];
+								}
+							}
+						}
+					}
+
+					childCount = newChildCount;
+				}
+
+				return childCount;
 			}
 
 			static uint FinalizeGPUTree_r(CompNode* node, std::vector<Node>* outNodes)
@@ -219,53 +263,42 @@ namespace
 				const uint nodeIndex = static_cast<uint>(outNodes->size());
 				Node* outNode = &outNodes->emplace_back();
 
-				outNode->minX = node->mins[0];
-				outNode->minY = node->mins[1];
-				outNode->minZ = node->mins[2];
-				outNode->maxX = node->maxs[0];
-				outNode->maxY = node->maxs[1];
-				outNode->maxZ = node->maxs[2];
+				outNode->childMinX = node->childMinX;
+				outNode->childMinY = node->childMinY;
+				outNode->childMinZ = node->childMinZ;
+				outNode->childMaxX = node->childMaxX;
+				outNode->childMaxY = node->childMaxY;
+				outNode->childMaxZ = node->childMaxZ;
 
-				if (node->children[0] == IS_LEAF)
+				for (uint c = 0; c < 4; ++c)
 				{
-					outNode->leftIndex = LEAF_NODE_ID;
-					outNode->rightIndex = static_cast<uint>(reinterpret_cast<uintptr_t>(node->children[1]));
-				}
-				else
-				{
-					if(node->children[0] != nullptr)
-					{
-						CompNode* const childNode = node->children[0];
-						const uint childNodeOffset = FinalizeGPUTree_r(childNode, outNodes);
+					CompNode* const childNode = node->children[c];
 
-						outNode = outNodes->data() + nodeIndex;
-						outNode->leftIndex = childNodeOffset;
-					}
-					else
+					if (childNode)
 					{
-						outNode->leftIndex = 0;
-					}
+						const uintptr_t childNodeBits = reinterpret_cast<uintptr_t>(childNode);
+						const bool isLeaf = childNodeBits & 1;
 
-					if (node->children[1] != nullptr)
-					{
-						CompNode* const childNode = node->children[1];
-						const uint childNodeOffset = FinalizeGPUTree_r(childNode, outNodes);
+						if (isLeaf)
+						{
+							outNode->childOffsets[c] = static_cast<uint>((childNodeBits >> 1) | LEAF_NODE_MASK);
+						}
+						else
+						{
+							const uint childNodeOffset = FinalizeGPUTree_r(childNode, outNodes);
 
-						outNode = outNodes->data() + nodeIndex;
-						outNode->rightIndex = childNodeOffset;
-					}
-					else
-					{
-						outNode->rightIndex = 0;
+							outNode = outNodes->data() + nodeIndex;
+							outNode->childOffsets[c] = childNodeOffset;
+						}
 					}
 				}
 
 				return nodeIndex;
 			}
-		}
+		} 
 
 		static std::vector<Node> BuildSceneBVH(const Graphics& g)
-		{
+		{ 
 			using namespace int_tree;
 			const uint entryCount = static_cast<uint>(g.sceneEntries.size());
 			const glm::mat4* const entries = g.sceneEntries.data();
@@ -339,11 +372,11 @@ namespace
 			});
 			 
 			std::vector<CompNode> intGPUNodes;
-			intGPUNodes.reserve(entryCount * 4);
+			intGPUNodes.reserve(entryCount * 2);
 			CompNode* const headIntNode = ConvertToGPU_r(buildTree, &intGPUNodes);
-			assert(intGPUNodes.size() <= entryCount * 4);
+			assert(intGPUNodes.size() < entryCount * 2);
 			CompressGPUTree_r(headIntNode);
-			 
+
 			std::vector<Node> gpuNodes;
 			gpuNodes.reserve(intGPUNodes.size());
 			FinalizeGPUTree_r(headIntNode, &gpuNodes);
@@ -553,7 +586,7 @@ namespace
 				GenFBO(&fbo);
 				glGenTextures(1, &tex);
 
-				if (!err::Error())
+				if (!err::Error() && fbo != 0 && tex != 0)
 				{
 					glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 					glBindTexture(GL_TEXTURE_2D, tex);
@@ -572,6 +605,42 @@ namespace
 
 				*outTex = tex;
 				*outFBO = fbo;
+				return tex != 0;
+			}
+
+			static bool GenNoiseTexture(uint width, uint height, uint* outTex)
+			{
+				uint tex = 0;
+				glGenTextures(1, &tex);
+
+				if (!err::Error() && tex != 0)
+				{
+					uint8_t* const pixels = (uint8_t*)malloc(width * height);
+					uint8_t* const pixEnd = pixels + width * height;
+					uint8_t* pixCur = pixels;
+
+					while (pixCur != pixEnd)
+						*pixCur++ = static_cast<uint8_t>(rand() % 256);
+
+					err::Error();
+					glBindTexture(GL_TEXTURE_2D, tex);
+
+					err::Error();
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
+
+					err::Error();
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+					err::Error();
+					glBindTexture(GL_TEXTURE_2D, 0);
+
+					free(pixels);
+				}
+
+				*outTex = tex;
 				return tex != 0;
 			}
 
@@ -680,6 +749,7 @@ namespace
 				}
 				else
 				{
+					uint noiseTex;
 					uint sceneVAO;
 					uint sceneEntrySSB;
 					uint sceneBVHSSB;
@@ -689,6 +759,7 @@ namespace
 					GenSSB(&sceneBVHSSB, sizeof(tree::Node) * Graphics::MAX_ENTRIES * 2);
 					
 					GenerateFrameBuffers(g);
+					GenNoiseTexture(256, 256, &noiseTex);
 
 					g->downsampleShader = downShader;
 					g->blurShader = blurShader;
@@ -697,6 +768,8 @@ namespace
 					g->sceneBVHSSB = sceneBVHSSB;
 					g->sceneVAO = sceneVAO;
 					g->outputShader = outShader;
+
+					g->noiseTex = noiseTex;
 
 					const float fov = 45.0f;
 					g->camPos = glm::vec3(0.0f, 0.0f, 39.0f);
@@ -730,7 +803,7 @@ namespace
 			glUseProgram(g.sceneShader);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, g.sceneFBO);
-	
+			glBindTexture(GL_TEXTURE_2D, g.noiseTex);
 			scene::UpdateUniforms(g);
 
 			glDrawBuffers(2, sceneAttachments);
@@ -740,6 +813,7 @@ namespace
 
 			glBindVertexArray(0);
 			glDrawBuffers(1, sceneAttachments);
+			glBindTexture(GL_TEXTURE_2D, 0);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glUseProgram(0);
 		}
@@ -904,6 +978,7 @@ namespace gfx
 		glDeleteBuffers(Graphics::BLUR_PASSES, g->downsampleFBO);
 		glDeleteBuffers(1, &g->sceneEntrySSB);
 		glDeleteBuffers(1, &g->sceneBVHSSB);
+		glDeleteTextures(1, &g->noiseTex);
 		glDeleteTextures(1, &g->sceneMainTex);
 		glDeleteTextures(Graphics::BLUR_PASSES, g->sceneBrightTex);
 		glDeleteTextures(Graphics::BLUR_PASSES, g->blurTex);

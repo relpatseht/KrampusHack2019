@@ -1,27 +1,11 @@
 #ifndef NOISE
 #define NOISE
 
-float hash(vec3 p)  // replace this by something better
-{
-    p  = fract( p*0.3183099+.1 );
-	p *= 17.0;
-    return fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
-}
+layout(binding = 0) uniform sampler2D in_noiseTex;
 
 float noise( in vec3 x )
 {
-    vec3 i = floor(x);
-    vec3 f = fract(x);
-    f = f*f*(3.0-2.0*f);
-	
-    return mix(mix(mix( hash(i+vec3(0,0,0)), 
-                        hash(i+vec3(1,0,0)),f.x),
-                   mix( hash(i+vec3(0,1,0)), 
-                        hash(i+vec3(1,1,0)),f.x),f.y),
-               mix(mix( hash(i+vec3(0,0,1)), 
-                        hash(i+vec3(1,0,1)),f.x),
-                   mix( hash(i+vec3(0,1,1)), 
-                        hash(i+vec3(1,1,1)),f.x),f.y),f.z);
+  return texture(in_noiseTex, x.xy + x.zz).x;
 }
 
 // below taken from https://www.shadertoy.com/view/MtXSzS
@@ -83,19 +67,13 @@ float snoise(vec3 v)
 
 float Turbulence(vec3 position, float minFreq, float maxFreq, float qWidth)
 {
-  const int NoiseSteps = 1;
-  float value = 0.0;
   float cutoff = clamp(0.5/qWidth, 0.0, maxFreq);
-  float fade;
-  float fOut = minFreq;
-  for(int i=NoiseSteps ; i>=0 ; i--)
-  {
-    if(fOut >= 0.5 * cutoff) break;
-    fOut *= 2.0;
-    value += abs(snoise(position * fOut))/fOut;
-  }
-  fade = clamp(2.0 * (cutoff-fOut)/cutoff, 0.0, 1.0);
+  float fOut = minFreq * 2.0;
+  float value = abs(snoise(position * fOut))/fOut;
+  float fade = clamp(2.0 * (cutoff-fOut)/cutoff, 0.0, 1.0);
+
   value += fade * abs(snoise(position * fOut))/fOut;
+
   return 1.0-value;
 }
 

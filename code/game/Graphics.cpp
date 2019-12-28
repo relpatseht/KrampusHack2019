@@ -633,7 +633,7 @@ namespace
 
 					glBindTexture(GL_TEXTURE_2D, 0);
 
-					free(pixels);  
+					free(pixels);
 				}
 
 				*outTex = tex; 

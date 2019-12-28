@@ -35,7 +35,7 @@ layout(location = 8) uniform uint in_sceneEntryCount;
 layout (location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_brightColor;
 
-#define MAX_HIT_SCENE_ENTRIES 16
+#define MAX_HIT_SCENE_ENTRIES 8
 uint g_rayHitSceneEntries[MAX_HIT_SCENE_ENTRIES];
 uint g_rayHitSceneEntryCount = 0;
 
@@ -43,11 +43,12 @@ float g_timeSec;
 
 void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 {
-	const uint MAX_STACK = 16;
+	const uint MAX_STACK = 8;
 	const vec3 invDir = 1.0 / rayDir;
 	uint nodeStack[MAX_STACK];
 	uint stackSize = 0;
-
+	
+	g_rayHitSceneEntryCount = 0;
 	nodeStack[stackSize++] = 0;
 
 	while(stackSize != 0)

@@ -19,6 +19,8 @@ namespace gfx
 		FIRE_BALL,
 		STATIC_PLATFORMS,
 		WORLD_BOUNDS,
+		GROUND_PLANE,
+		TREE
 	};
 
 	Graphics* Init();

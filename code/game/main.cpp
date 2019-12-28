@@ -24,10 +24,11 @@
 
 namespace
 {
-	const float SNOW_PER_FLAKE = 1.2f;
-	const float SNOW_PER_BALL = 2.1f;
-	const float SNOWBALL_IMPULSE = 20.0f;
-	const float SNOW_METER_START = 5.0f;
+	static const float SNOW_PER_FLAKE = 1.2f;
+	static const float SNOW_PER_BALL = 2.1f;
+	static const float SNOWBALL_IMPULSE = 20.0f;
+	static const float SNOW_METER_START = 5.0f;
+	static const uint TREE_COUNT = 14;
 
 	enum class State
 	{
@@ -67,6 +68,9 @@ namespace
 		uint snowballCount;
 		std::array<uint, 16> fireballIds;
 		uint fireballCount;
+
+		uint groundId;
+		std::array<uint, TREE_COUNT> treeIds;
 
 		uint frameCount;
 
@@ -738,7 +742,7 @@ namespace
 
 int main(int argc, char* argv[])
 {
-	srand(0);
+	srand(5); // chosen for it's aestetics
 
 	if (!InitAllegro())
 	{
@@ -851,6 +855,23 @@ int main(int argc, char* argv[])
 				//gfx::AddModel(state.game->gfx, state.worldBoundsId, gfx::MeshType::WORLD_BOUNDS, glm::mat4(1.0f));
 				phy::AddBody(state.game->phy, state.worldBoundsId, phy::BodyType::WORLD_BOUNDS);
 
+				//float groundY = -7.9f;
+				//state.groundId = game::CreateObject(state.game);
+				//gfx::AddModel(state.game->gfx, state.groundId, gfx::MeshType::GROUND_PLANE, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, groundY, 0.0f)));
+				
+				for (uint treeIndex = 0; treeIndex < state.treeIds.size(); ++treeIndex)
+				{
+					const float treeY = -7.5f;
+					const float treeZ = -((rand() / static_cast<float>(RAND_MAX)) * 30.0f + 25.0f);
+					const float treeX = ((rand() / static_cast<float>(RAND_MAX)) - 0.5f) * treeZ * 1.25f;
+				
+					const uint treeId = game::CreateObject(state.game);
+					gfx::AddModel(state.game->gfx, treeId, gfx::MeshType::TREE, glm::translate(glm::mat4(1.0f), glm::vec3(treeX, treeY, treeZ)));
+					state.treeIds[treeIndex] = treeId;
+				}
+
+				gfx::UpdateModels(state.game->gfx, {}, {}); // quick hack, so the scene shows up in the main menu
+
 				state.snowmanId = game::CreateObject(state.game);
 				gfx::AddModel(state.game->gfx, state.snowmanId, gfx::MeshType::SNOW_MAN, glm::mat4(1.0f));
 				gfx::UpdateModelSubType(state.game->gfx, state.snowmanId, state.snowMeter / state.maxSnow);
@@ -868,7 +889,7 @@ int main(int argc, char* argv[])
 				gfx::AddModel(state.game->gfx, state.helperId, gfx::MeshType::HELPER, glm::translate(glm::mat4(1.0f), glm::vec3(helperStartX, helperStartY, 0.0f)));
 				phy::AddBody(state.game->phy, state.helperId, phy::BodyType::HELPER, helperStartX, helperStartY);
 				phy::AddSoftAnchor(state.game->phy, state.helperId);
-
+				
 				aud::PlayTrackDetached(state.game->aud, AudioTrack::THEME, true, 0.1f);
 				
 				state.frameCount = 1; // start at 1 to not fire all periodics immediately

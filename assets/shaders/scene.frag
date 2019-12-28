@@ -97,8 +97,7 @@ void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 
 vec2 RayMarch_SceneFunc(in vec3 pos)
 {
-	const float FLT_MAX = 3.402823466e+38;
-	vec2 dist = vec2(FLT_MAX, 0.0);
+	vec2 dist = vec2(RM_INFINITY, 0.0);
 
 	for(uint i=0; i<g_rayHitSceneEntryCount; ++i)
 	{
@@ -127,6 +126,8 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 			objDist = Mesh_SceneBounds(objPos, typeFrac);
 		else if(type < MESH_TYPE_FIRE_BALL + 1.0)
 			objDist = Mesh_Fireball(objPos, typeFrac, float(in_frameCount) / 60.0);
+		else if(type < MESH_TYPE_TREE + 1.0)
+			objDist = StaticScene_Tree(objPos, typeFrac);
 
 		if(objDist.x < dist.x)
 			dist = objDist;
@@ -137,18 +138,6 @@ vec2 RayMarch_SceneFunc(in vec3 pos)
 
 		if(staticSceneDist.x < dist.x)
 			dist = staticSceneDist;
-	}
-
-	{
-		vec2 treeDist = StaticScene_Tree(pos - vec3(-17, -7.5, -30), 0.0);
-		if(treeDist.x < dist.x)
-		dist = treeDist;
-	}
-
-	{
-		vec2 treeDist = StaticScene_Tree(pos - vec3(-13, -7.5, -30), 0.0);
-		if(treeDist.x < dist.x)
-		dist = treeDist;
 	}
 
 	return dist;
@@ -173,7 +162,7 @@ void main()
 
 	vec2 objDist = RayMarch(rayDir, in_camPos, g_camFar);
 
-	if( objDist.x == RM_INFINITY)
+	if( objDist.x > g_camFar)
 	{
 		vec3 snow = Background_Snow(timeSec, gl_FragCoord.xy, in_resolution);
 		vec3 backdrop = Background_StarryGradient(timeSec, gl_FragCoord.xy, in_resolution);

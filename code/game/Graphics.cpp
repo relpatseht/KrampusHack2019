@@ -359,6 +359,14 @@ namespace
 					mins -= glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
 					maxs += glm::vec3(BOUNDS_HALF_WIDTH, BOUNDS_HALF_HEIGHT, 0.1f);
 					break;
+				case MESH_TYPE_GROUND_PLANE:
+					mins -= glm::vec3(100.0f, 1.5f, 100.0f);
+					maxs += glm::vec3(100.0f, 1.5f, 100.0f);
+					break; 
+				case MESH_TYPE_TREE:
+					mins -= glm::vec3(2.0f, 2.0f, 2.0f);
+					maxs += glm::vec3(2.0f, 5.0f, 2.0f);
+					break;
 				}
 			});
 
@@ -736,6 +744,8 @@ namespace
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::FIRE_BALL)] = MESH_TYPE_FIRE_BALL;
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::STATIC_PLATFORMS)] = MESH_TYPE_STATIC_PLATFORMS;
 					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::WORLD_BOUNDS)] = MESH_TYPE_WORLD_BOUNDS;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::GROUND_PLANE)] = MESH_TYPE_GROUND_PLANE;
+					g->meshTypeRemap[static_cast<uint>(gfx::MeshType::TREE)] = MESH_TYPE_TREE;
 
 					return true;
 				}
@@ -936,9 +946,9 @@ namespace gfx
 	void Update(Graphics* g)
 	{
 		++g->frameCount;
-		render::Render(*g);
+		render::Render(*g); 
 	}
-
+	 
 	bool Resize(Graphics* g, uint x, uint y)
 	{
 		g->res = glm::vec2(static_cast<float>(x), static_cast<float>(y));

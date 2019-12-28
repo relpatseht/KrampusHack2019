@@ -27,7 +27,7 @@ namespace
 	static const float SNOW_PER_FLAKE = 1.2f;
 	static const float SNOW_PER_BALL = 2.1f;
 	static const float SNOWBALL_IMPULSE = 20.0f;
-	static const float SNOW_METER_START = 5.0f;
+	static const float SNOW_METER_START = 95.0f;
 	static const uint TREE_COUNT = 14;
 
 	enum class State

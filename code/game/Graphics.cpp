@@ -622,22 +622,18 @@ namespace
 					while (pixCur != pixEnd)
 						*pixCur++ = static_cast<uint8_t>(rand() % 256);
 
-					err::Error();
 					glBindTexture(GL_TEXTURE_2D, tex);
-
-					err::Error();
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
+					glGenerateMipmap(GL_TEXTURE_2D);
 
-					err::Error();
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-					err::Error();
 					glBindTexture(GL_TEXTURE_2D, 0);
 
-					free(pixels);
+					free(pixels); 
 				}
 
 				*outTex = tex;

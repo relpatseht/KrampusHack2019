@@ -67,13 +67,18 @@ float snoise(vec3 v)
 
 float Turbulence(vec3 position, float minFreq, float maxFreq, float qWidth)
 {
+  const int NoiseSteps = 1;
+  float value = 0.0;
   float cutoff = clamp(0.5/qWidth, 0.0, maxFreq);
-  float fOut = minFreq * 2.0;
-  float value = abs(snoise(position * fOut))/fOut;
-  float fade = clamp(2.0 * (cutoff-fOut)/cutoff, 0.0, 1.0);
-
+  float fade;
+  float fOut = minFreq;
+  for(int i=NoiseSteps ; i>=0 ; i--)
+  {
+    fOut *= 2.0;
+    value += abs(snoise(position * fOut))/fOut;
+  }
+  fade = clamp(2.0 * (cutoff-fOut)/cutoff, 0.0, 1.0);
   value += fade * abs(snoise(position * fOut))/fOut;
-
   return 1.0-value;
 }
 

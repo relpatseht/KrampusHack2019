@@ -8,7 +8,7 @@
 vec2 GroundHeight(in const vec3 pos)
 {
 	const float hNoise = noise(pos.xzx*20);
-    const float height = cos(pos.x*0.25 + 0.3)*sin(pos.z*0.25) + 0.02*hNoise; // very regular patern + a little bit of noise
+    const float height = cos(pos.x*0.25 + 0.3)*sin(pos.z*0.25) + 0.006*hNoise; // very regular patern + a little bit of noise
 
     return vec2(height, hNoise);
 }

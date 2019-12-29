@@ -45,10 +45,9 @@ vec3 Background_StarryGradient(in const float time, in const vec2 fragCoord, in 
 {
 	const float starSize = 30.0;
 	const vec2 starPos = floor(1.0 / starSize * fragCoord);
-	const float starValue = noise(vec3(starPos, 0.0));
-	const float starProb = 0.98;
-	const vec3 starColor = vec3(noise(vec3(fragCoord, 0.0)), noise(vec3(fragCoord - vec2(40, 40), 0.0)), noise(vec3(fragCoord + vec2(40, 40), 0.0)));
-	vec3 color;
+	const float starValue = noise(vec3(starPos, 61.7639));
+	const vec2 texel = fragCoord / resolution;
+	const float starProb = 0.92;vec3 color;
 
 	// stars mostly stolen from https://www.shadertoy.com/view/lsfGWH
 	if(starValue > starProb)
@@ -56,20 +55,25 @@ vec3 Background_StarryGradient(in const float time, in const vec2 fragCoord, in 
 		const vec2 starCenter = starSize * starPos + vec2(starSize*0.5);
 		const float t = 0.9 + 0.2 * sin(time + (starValue - starProb) / (1.0 - starProb) * 45.0);
 		float brightness = 1.0 - distance(fragCoord, starCenter) / (0.5 * starSize);
+		const vec3 starColor = vec3(noise(vec3(fragCoord, 53.32)), noise(vec3(fragCoord - vec2(7.65, 3.81), 4.174)), noise(vec3(fragCoord + vec2(2.765, 6.12), 107.876)));
 
 		brightness *= t / (abs(fragCoord.y - starCenter.y)) * t / (abs(fragCoord.x - starCenter.x));
 		color = brightness*starColor;
 	}
 	else
 	{
-		const float starBrightness = noise(vec3(fragCoord, 0.0));
+		const float starBrightness = noise(vec3(fragCoord, -41.428));
 
-		if(starBrightness > 0.92)
-			color = 2.0*starColor;
+		if(starBrightness > 0.81)
+		{
+			const vec3 starColor = vec3(noise(vec3(fragCoord, 53.32)), noise(vec3(fragCoord - vec2(7.65, 3.81), 4.174)), noise(vec3(fragCoord + vec2(2.765, 6.12), 107.876)));
+	
+			color = 1.3*starColor;
+		}
 	}
 
-	const float vertGrad = (1.0 - fragCoord.y / resolution.y) * 0.25;
-	color += vertGrad * vec3(0.4, 0.8, 1.0);
+	const float vertGrad = (1.0 - texel.y) * 0.25;
+	color += vertGrad * vec3(0.4, 0.8, 1.0) + noise(vec3(fragCoord*17.3, 491.03))*0.01; // A little bit of noise to remove banding
 
 	return color;
 }

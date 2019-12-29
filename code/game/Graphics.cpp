@@ -24,6 +24,7 @@
 
 #include "Graphics.h"
 #include <iostream>
+#include <random>
 
 typedef unsigned uint;
 
@@ -615,22 +616,26 @@ namespace
 
 				if (!err::Error() && tex != 0)
 				{
-					uint8_t* const pixels = (uint8_t*)malloc(width * height);
-					uint8_t* const pixEnd = pixels + width * height;
-					uint8_t* pixCur = pixels;
+					uint16_t* const pixels = (uint16_t*)malloc(sizeof(uint16_t) * width * height);
+					std::mt19937 rndGen;
+					std::uniform_real_distribution<float> rnd(0.0f, 1.0f);
 
-					while (pixCur != pixEnd)
-						*pixCur++ = static_cast<uint8_t>(rand() % 256);
-
+					for (int y = 0; y < (int)height; ++y)
+					{
+						for (int x = 0; x < (int)width; ++x)
+						{
+							pixels[y * width + x] = static_cast<uint16_t>(rnd(rndGen) * 65536.0f);
+						}
+					}
+			 
 					glBindTexture(GL_TEXTURE_2D, tex);
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
-					glGenerateMipmap(GL_TEXTURE_2D);
-					  
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, pixels);
+			       
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-					
+			  
 					glBindTexture(GL_TEXTURE_2D, 0);
 
 					free(pixels);

@@ -348,10 +348,10 @@ namespace
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.5f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 0.7f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 0.7f));
-				if (ImGui::Button("Play!", ImVec2(300.0f, 90.0f)))
+				if (ImGui::Button("Play!", ImVec2(280.0f, 90.0f)))
 					state->state = State::RUNNING;
 
-				if (ImGui::Button("Exit", ImVec2(300.0f, 90.0f)))
+				if (ImGui::Button("Exit", ImVec2(280.0f, 90.0f)))
 					state->state = State::SHUTDOWN;
 				ImGui::PopStyleColor(3);
 
@@ -371,10 +371,10 @@ namespace
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.5f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 0.7f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 0.7f));
-				if (ImGui::Button("Resume", ImVec2(300.0f, 90.0f)))
+				if (ImGui::Button("Resume", ImVec2(280.0f, 90.0f)))
 					state->state = State::RUNNING;
 
-				if (ImGui::Button("Exit", ImVec2(300.0f, 90.0f)))
+				if (ImGui::Button("Exit", ImVec2(280.0f, 90.0f)))
 					state->state = State::SHUTDOWN;
 				ImGui::PopStyleColor(3);
 
@@ -412,7 +412,7 @@ namespace
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 0.5f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.1f, 0.1f, 0.7f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 0.7f));
-				if (ImGui::Button("Play Again?", ImVec2(300.0f, 90.0f)))
+				if (ImGui::Button("Play Again?", ImVec2(280.0f, 90.0f)))
 				{
 					state->snowMeter = SNOW_METER_START;
 					UpdateSnowmeter(state, 0.0f);
@@ -432,7 +432,7 @@ namespace
 					state->state = State::RUNNING;
 				}
 
-				if (ImGui::Button("Exit", ImVec2(300.0f, 90.0f)))
+				if (ImGui::Button("Exit", ImVec2(280.0f, 90.0f)))
 					state->state = State::SHUTDOWN;
 
 				ImGui::PopStyleColor(3);

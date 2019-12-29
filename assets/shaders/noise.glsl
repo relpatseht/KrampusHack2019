@@ -3,9 +3,16 @@
 
 layout(binding = 0) uniform sampler2D in_noiseTex;
 
+// stolen from iq at // https://www.shadertoy.com/view/XsX3RB
 float noise( in vec3 x )
 {
-  return texture(in_noiseTex, x.xy + x.zz).x;
+  vec3 p = floor(x);
+  vec3 f = fract(x);
+  f = f*f*(3.0-2.0*f);
+
+  vec2 uv = (p.xy+vec2(37.0,17.0)*p.z) + f.xy;
+  vec2 rg = texture( in_noiseTex, (uv+ 0.5)/256.0 ).yx;
+  return mix( rg.x, rg.y, f.z );
 }
 
 // below taken from https://www.shadertoy.com/view/MtXSzS

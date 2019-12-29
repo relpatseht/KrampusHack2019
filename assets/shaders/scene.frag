@@ -47,7 +47,7 @@ void BVHRayGatherSceneEntries(in const vec3 rayDir, in const vec3 rayOrigin)
 	const vec3 invDir = 1.0 / rayDir;
 	uint nodeStack[MAX_STACK];
 	uint stackSize = 0;
-	
+
 	g_rayHitSceneEntryCount = 0;
 	nodeStack[stackSize++] = 0;
 
@@ -154,7 +154,7 @@ void main()
 
 	vec2 objDist = RayMarch(rayDir, in_camPos, g_camFar);
 
-	if( objDist.x > g_camFar)
+	if( objDist.x >= g_camFar)
 	{
 		vec3 snow = Background_Snow(g_timeSec, gl_FragCoord.xy, in_resolution);
 		vec3 backdrop = Background_StarryGradient(g_timeSec, gl_FragCoord.xy, in_resolution);

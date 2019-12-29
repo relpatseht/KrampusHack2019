@@ -54,3 +54,6 @@ able to play somewhere in the [30, 60] Hz range.
 Tech notes:
 The game assumes vsync and a 60 Hz display. All physics (movement) is done at 60 Hz
 lockstep, but snowflake and fireball creation is done on frame counters. 
+
+Source:
+https://github.com/relpatseht/KrampusHack2019

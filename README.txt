@@ -1,8 +1,15 @@
-////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
 //   Krampus Hack 2019
 //      To: GullRaDriel
 //      From: relpatseht
-////////////////////////////////////////
+//
+//    Wishlist:
+//        I want a game that my 3 yo toddler can understand and 
+//        play with me / along with me.
+//        Anything is allowed, regarding it's targeting a lil' 3 
+//        yo child, who will play together/under supervision of 
+//        his parents, etc.
+///////////////////////////////////////////////////////////////////////////////////
 
    _     U _____ u  _____ _   ____           ____     _   _             _      ____           _           ____     _   _     U  ___ u               __  __      _      _   _     _    
   |"|    \| ___"|/ |_ " _|"| / __"| u     U | __")uU |"|u| |   ___     |"|    |  _"\      U  /"\  u      / __"| u | \ |"|     \/"_ \/__        __ U|' \/ '|uU  /"\  u | \ |"|  U|"|u  

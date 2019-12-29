@@ -5,6 +5,14 @@
 #include "/scene_defines.glsl"
 #include "/noise.glsl"
 
+mat2 rotate2d(float angle)
+{
+	const float c = cos(angle);
+	const float s = sin(angle);
+
+	return mat2(c, -s, s, c);
+}
+
 void MaterialProperties(in const vec3 pos, in const float time, in const float mtl, inout vec3 normal, out vec3 albedo, out float metalness, out float roughness)
 {
 	switch(int(mtl))
@@ -13,7 +21,10 @@ void MaterialProperties(in const vec3 pos, in const float time, in const float m
 		{
 			const vec3 bright = vec3(0.31, 0.09, 0.01)*.5;
 			const vec3 dark = vec3(0.23, 0.07, 0.00)*.24;
-			const float lerp = noise(pos.xyx*20);
+			const float woodNoise = (rotate2d(noise(pos)) * pos.xy).x;
+			const float grainScale = 10;
+			const float lerp = smoothstep(0, 0.75, abs((sin(woodNoise*grainScale*PI) + 0.75*2))*0.5);
+
 			albedo = mix(dark, bright, lerp)*2.6;
 			metalness = 0.01;
 			roughness = 0.01;

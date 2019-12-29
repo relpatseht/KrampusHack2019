@@ -627,15 +627,15 @@ namespace
 							pixels[y * width + x] = static_cast<uint16_t>(rnd(rndGen) * 65536.0f);
 						}
 					}
-		  
+		   
 					glBindTexture(GL_TEXTURE_2D, tex);
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, pixels);
-			       
+			         
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			  
+			   
 					glBindTexture(GL_TEXTURE_2D, 0);
 
 					free(pixels);

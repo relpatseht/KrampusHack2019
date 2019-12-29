@@ -51,7 +51,7 @@ void MaterialProperties(in const vec3 pos, in const float time, in const float m
 		break;
 		case 3: // helper
 		{
-			albedo = vec3(0.1, 1.0, 0.1);
+			albedo = vec3(0.3, 1.5, 0.1);
 			metalness = 1.0;
 			roughness = 0.1;
 		}

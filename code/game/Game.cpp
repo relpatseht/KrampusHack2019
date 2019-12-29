@@ -54,6 +54,7 @@ namespace game
 
 			gfx::DestroyObjects(game->gfx, game->dyingObjects);
 			phy::DestroyObjects(game->phy, game->dyingObjects);
+			aud::DestroyObjects(game->aud, game->dyingObjects);
 
 			game->dyingObjects.clear();
 		}

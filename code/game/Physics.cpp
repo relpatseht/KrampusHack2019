@@ -294,7 +294,7 @@ namespace
 				shape.m_radius = static_cast<float>(FIREBALL_RADIUS) * 0.75;
 
 				fixtureDef.shape = &shape;
-				fixtureDef.density = 1.0f;
+				fixtureDef.density = 3.4f;
 				fixtureDef.friction = 1.0f;
 				fixtureDef.restitution = 5.0f;
 				fixtureDef.filter.categoryBits = BodyGroup::FIRE_BALL;

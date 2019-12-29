@@ -215,7 +215,7 @@ vec2 Mesh_Snowball(in vec3 pos, float typeFrac)
 
 	if(hitBall <= 0.5) // snowball isn't valid dist. need to overestimate
 	{
-		const float snowMtl = -1.0;
+		const float snowMtl = 7.0;
 		float dist = fBlob(pos / SNOWBALL_RADIUS) * SNOWBALL_RADIUS;
 
 		return vec2(dist, snowMtl);

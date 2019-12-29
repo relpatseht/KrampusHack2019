@@ -24,8 +24,8 @@
 
 namespace
 {
-	static const float SNOW_PER_FLAKE = 1.2f;
-	static const float SNOW_PER_BALL = 2.1f;
+	static const float SNOW_PER_FLAKE = 1.5f;
+	static const float SNOW_PER_BALL = 2.0f;
 	static const float SNOWBALL_IMPULSE = 20.0f;
 	static const float SNOW_METER_START = 5.0f;
 	static const uint TREE_COUNT = 14;
@@ -56,6 +56,7 @@ namespace
 		ImGuiContext* gui;
 		ImFont* titleFont;
 		ImFont* menuFont;
+		ALLEGRO_JOYSTICK* js;
 
 		uint helperId;
 		uint playerId;
@@ -95,7 +96,12 @@ namespace
 				{
 					if (al_install_audio())
 					{
-						return true;
+						if (al_install_joystick())
+						{
+							return true;
+						}
+
+						al_uninstall_audio();
 					}
 
 					al_uninstall_keyboard();
@@ -121,7 +127,7 @@ namespace
 
 		if (x > BOUNDS_HALF_WIDTH * 0.9f)
 		{
-			return glm::clamp(1.0f - (x / (BOUNDS_HALF_WIDTH * 2.0f)), 0.0f, 1.0f);
+			return glm::clamp(1.0f - (x / BOUNDS_HALF_WIDTH), 0.0f, 1.0f);
 		}
 
 		return 1.0f;
@@ -188,6 +194,10 @@ namespace
 		{
 			state->state = State::WIN_SCREEN;
 			aud::PlayTrackDetached(state->game->aud, AudioTrack::HOORAY, false, 1.0f, 0.0f);
+
+			for (uint fireIndex = 0; fireIndex < state->fireballCount; ++fireIndex)
+				state->game->dyingObjects.emplace_back(state->fireballIds[fireIndex]);
+			state->fireballCount = 0;
 		}
 	}
 
@@ -205,6 +215,12 @@ namespace
 		{
 			state->gunDir = state->gunRay / rayLen;
 		}
+	}
+
+	static void SetGun(GameState* state, const glm::vec2& vec)
+	{
+		state->gunRay = glm::vec2(0.0f, 0.0f);
+		UpdateGun(state, vec);
 	}
 
 	static void FireGun(GameState* state)
@@ -425,9 +441,6 @@ namespace
 						state->game->dyingObjects.emplace_back(state->activeSnowballIds[ballIndex]);
 					state->snowballCount = 0;
 
-					for (uint fireIndex = 0; fireIndex < state->fireballCount; ++fireIndex)
-						state->game->dyingObjects.emplace_back(state->fireballIds[fireIndex]);
-					state->fireballCount = 0;
 					state->frameCount = 1;
 					state->state = State::RUNNING;
 				}
@@ -476,6 +489,20 @@ namespace
 				case ALLEGRO_EVENT_DISPLAY_RESIZE:
 					al_acknowledge_resize(evt.display.source);
 					gfx::Resize(state->game->gfx, static_cast<uint>(evt.display.width), static_cast<uint>(evt.display.height));
+				break;
+				case ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
+					if(state->state == State::RUNNING)
+					{
+						if (evt.joystick.button == 9 || evt.joystick.button == 5)
+						{
+							if (glm::length(state->gunDir) > 0.5f)
+								FireGun(state);
+						}
+						else
+						{
+							phy::RequestJump(state->game->phy, state->playerId, SNOWBALL_IMPULSE);
+						}
+					}
 				break;
 				case ALLEGRO_EVENT_KEY_DOWN:
 					switch (evt.keyboard.keycode)
@@ -569,6 +596,20 @@ namespace
 
 			if (al_key_down(&keyState, ALLEGRO_KEY_A))
 				walking = -0.8f;
+
+			if (state->js)
+			{
+				ALLEGRO_JOYSTICK_STATE joyState;
+
+				al_get_joystick_state(state->js, &joyState);
+
+				if (fabs(joyState.stick[0].axis[0]) > 0.2f)
+				{
+					walking = 0.8 * joyState.stick[0].axis[0];
+				}
+
+				SetGun(state, glm::vec2(joyState.stick[1].axis[0], -joyState.stick[1].axis[1]));
+			}
 
 			if (walking != 0.0f)
 			{
@@ -847,6 +888,12 @@ int main(int argc, char* argv[])
 				al_register_event_source(eventQueue, al_get_keyboard_event_source());
 				al_register_event_source(eventQueue, al_get_display_event_source(display));
 
+				if (al_get_num_joysticks() > 0)
+				{
+					al_register_event_source(eventQueue, al_get_joystick_event_source());
+					state.js = al_get_joystick(0);
+				}
+
 				state.staticPlatformsId = game::CreateObject(state.game);
 				gfx::AddModel(state.game->gfx, state.staticPlatformsId, gfx::MeshType::STATIC_PLATFORMS, glm::mat4(1.0f));
 				phy::AddBody(state.game->phy, state.staticPlatformsId, phy::BodyType::STATIC_PLATFORMS);
@@ -927,6 +974,7 @@ int main(int argc, char* argv[])
 			al_destroy_display(display);
 		}
 
+		al_uninstall_joystick();
 		al_uninstall_audio();
 		al_uninstall_keyboard();
 		al_uninstall_mouse();
